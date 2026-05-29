@@ -64,7 +64,7 @@ function OrgsTab({ editable }: { editable: boolean }) {
   };
 
   const saveCell = async (row: Org, key: string, value: unknown) => {
-    const { error } = await supabase.from("organisations").update({ [key]: value }).eq("id", row.id);
+    const { error } = await supabase.from("organisations").update({ [key]: value } as never).eq("id", row.id);
     if (error) { toast.error(error.message); return; }
     void load();
   };
@@ -171,7 +171,7 @@ function ContactsTab({ editable }: { editable: boolean }) {
   };
 
   const saveCell = async (row: Contact, key: string, value: unknown) => {
-    const { error } = await supabase.from("contacts").update({ [key]: value }).eq("id", row.id);
+    const { error } = await supabase.from("contacts").update({ [key]: value } as never).eq("id", row.id);
     if (error) { toast.error(error.message); return; }
     void load();
   };

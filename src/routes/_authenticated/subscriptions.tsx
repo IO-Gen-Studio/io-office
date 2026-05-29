@@ -54,7 +54,7 @@ function SubscriptionsPage() {
   };
 
   const saveCell = async (row: Sub, key: string, value: unknown) => {
-    const { error } = await supabase.from("subscriptions").update({ [key]: value }).eq("id", row.id);
+    const { error } = await supabase.from("subscriptions").update({ [key]: value } as never).eq("id", row.id);
     if (error) { toast.error(error.message); return; }
     void load();
   };
