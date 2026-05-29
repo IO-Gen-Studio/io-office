@@ -54,8 +54,8 @@ function LoginPage() {
           <div className="flex items-center gap-3 mb-2">
             <div className="size-10 rounded-lg bg-gradient-primary flex items-center justify-center text-primary-foreground font-bold">IO</div>
             <div>
-              <CardTitle className="text-2xl"> </CardTitle>
-              <CardDescription>Business operations</CardDescription>
+              <CardTitle className="text-2xl">IO-Gen Efficiency Ltd.</CardTitle>
+              <CardDescription>Internal Operations Platform</CardDescription>
             </div>
           </div>
         </CardHeader>
