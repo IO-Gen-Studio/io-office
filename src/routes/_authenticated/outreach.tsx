@@ -468,6 +468,7 @@ function CampaignDetail({ campaign, editable, onBack }: { campaign: Campaign; ed
           <CCDialog open={open} onOpenChange={setOpen} contact={editing} campaignId={campaign.id} leadOpts={leadOpts} onSaved={load} />
         </CardContent>
       </Card>
+      <TemplateDialog open={templateOpen} onOpenChange={setTemplateOpen} template={editTemplate} onSaved={load} />
     </div>
   );
 }
