@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet, Link, useRouterState, redirect } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger, useSidebar,
@@ -16,6 +16,8 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import logoUrl from "@/assets/io-gen-logo.png";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async () => {
@@ -41,11 +43,27 @@ const OPS = [
 
 function AuthLayout() {
   const { profile, signOut, canView, isAdmin, user, loading } = useAuth();
+  const [unread, setUnread] = useState(0);
+
   useEffect(() => {
     if (!loading && profile?.must_change_password) {
       window.location.replace("/reset-password");
     }
   }, [loading, profile]);
+
+  useEffect(() => {
+    if (!user) return;
+    const load = async () => {
+      const { count } = await supabase.from("notifications").select("*", { count: "exact", head: true }).is("read_at", null).eq("user_id", user.id);
+      setUnread(count ?? 0);
+    };
+    void load();
+    const channel = supabase.channel("notif").on("postgres_changes",
+      { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
+      () => void load(),
+    ).subscribe();
+    return () => { void supabase.removeChannel(channel); };
+  }, [user]);
 
   return (
     <SidebarProvider>
@@ -55,8 +73,13 @@ function AuthLayout() {
           <header className="h-14 border-b border-border bg-card/50 backdrop-blur flex items-center px-4 gap-2 sticky top-0 z-10">
             <SidebarTrigger />
             <div className="flex-1" />
-            <Link to="/notifications" className="p-2 rounded-md hover:bg-accent">
+            <Link to="/notifications" className="p-2 rounded-md hover:bg-accent relative">
               <Bell className="h-4 w-4" />
+              {unread > 0 && (
+                <Badge className="absolute -top-1 -right-1 h-4 min-w-4 px-1 text-[10px] bg-primary text-primary-foreground flex items-center justify-center">
+                  {unread > 9 ? "9+" : unread}
+                </Badge>
+              )}
             </Link>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -122,7 +145,7 @@ function AppSidebar({ canView, isAdmin }: { canView: (m: string) => boolean; isA
     <Sidebar collapsible="icon">
       <SidebarContent>
         <div className="p-3 flex items-center gap-2">
-          <div className="size-8 rounded-lg bg-gradient-primary flex items-center justify-center text-primary-foreground font-bold text-sm shrink-0">IO</div>
+          <img src={logoUrl} alt="IO-Gen" className="size-8 rounded-md object-contain shrink-0" />
           {!collapsed && <div className="font-semibold tracking-tight">IO-Gen</div>}
         </div>
         {renderGroup("Overview", NAV)}
