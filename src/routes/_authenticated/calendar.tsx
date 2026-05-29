@@ -37,7 +37,10 @@ function CalendarPage() {
   const { year, month, days, firstDow } = useMemo(() => {
     const y = cursor.getFullYear(); const m = cursor.getMonth();
     const lastDate = new Date(y, m + 1, 0).getDate();
-    return { year: y, month: m, days: Array.from({ length: lastDate }, (_, i) => i + 1), firstDow: new Date(y, m, 1).getDay() };
+    // Week starts Monday (UK). JS getDay(): Sun=0..Sat=6 → Mon=0..Sun=6.
+    const jsDow = new Date(y, m, 1).getDay();
+    const firstDow = (jsDow + 6) % 7;
+    return { year: y, month: m, days: Array.from({ length: lastDate }, (_, i) => i + 1), firstDow };
   }, [cursor]);
 
   const byDay = useMemo(() => {
@@ -48,7 +51,7 @@ function CalendarPage() {
     return map;
   }, [events]);
 
-  const monthName = cursor.toLocaleString(undefined, { month: "long", year: "numeric" });
+  const monthName = cursor.toLocaleString("en-GB", { month: "long", year: "numeric" });
   const today = new Date().toISOString().slice(0, 10);
 
   const kindColor: Record<Ev["kind"], string> = {
@@ -76,7 +79,7 @@ function CalendarPage() {
       <Card className="shadow-soft">
         <CardContent className="pt-6">
           <div className="grid grid-cols-7 gap-1 text-xs font-medium text-muted-foreground mb-2">
-            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => <div key={d} className="px-2 py-1">{d}</div>)}
+            {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => <div key={d} className="px-2 py-1">{d}</div>)}
           </div>
           <div className="grid grid-cols-7 gap-1">
             {Array.from({ length: firstDow }).map((_, i) => <div key={`pad-${i}`} />)}

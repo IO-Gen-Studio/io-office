@@ -3,17 +3,19 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth/auth-context";
 import { logActivity } from "@/lib/activity";
+import { formatGBP, formatDateUK } from "@/lib/format";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Trash2, ArrowLeft, CheckCircle2, Circle } from "lucide-react";
+import { DataTable, type DataTableColumn } from "@/components/DataTable";
+import { Plus, Pencil, Trash2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -25,7 +27,7 @@ type Project = {
   id: string; title: string; description: string | null; type: PType; status: PStatus; priority: Priority;
   team_lead_id: string | null; client_org_id: string | null; client_contact_id: string | null;
   start_date: string | null; end_date: string | null;
-  total_cost: number; supplier_cost: number; business_cost: number;
+  total_cost: number; supplier_cost: number;
 };
 type Profile = { id: string; full_name: string };
 type Org = { id: string; name: string };
@@ -84,6 +86,35 @@ function ProjectList({ editable, onOpen }: { editable: boolean; onOpen: (p: Proj
     toast.success("Deleted"); void load();
   };
 
+  const saveCell = async (row: Project, key: string, value: unknown) => {
+    const { error } = await supabase.from("projects").update({ [key]: value }).eq("id", row.id);
+    if (error) { toast.error(error.message); return; }
+    void load();
+  };
+
+  const columns: DataTableColumn<Project>[] = [
+    { key: "title", header: "Title", accessor: (r) => r.title, editable, editField: "title", type: "text" },
+    { key: "client", header: "Client", accessor: (r) => orgs.find((o) => o.id === r.client_org_id)?.name ?? "" },
+    { key: "lead", header: "Lead", accessor: (r) => profiles.find((u) => u.id === r.team_lead_id)?.full_name ?? "" },
+    {
+      key: "status", header: "Status", accessor: (r) => r.status,
+      render: (r) => <Badge variant="secondary" className="capitalize">{r.status.replace("_", " ")}</Badge>,
+      editable, type: "select",
+      options: [
+        { value: "in_progress", label: "In progress" }, { value: "on_hold", label: "On hold" },
+        { value: "completed", label: "Completed" }, { value: "cancelled", label: "Cancelled" },
+      ],
+    },
+    {
+      key: "priority", header: "Priority", accessor: (r) => r.priority,
+      render: (r) => <Badge variant={r.priority === "high" ? "destructive" : r.priority === "low" ? "outline" : "default"} className="capitalize">{r.priority}</Badge>,
+      editable, type: "select",
+      options: [{ value: "low", label: "Low" }, { value: "medium", label: "Medium" }, { value: "high", label: "High" }],
+    },
+    { key: "end_date", header: "End date", accessor: (r) => r.end_date, render: (r) => formatDateUK(r.end_date), editable, type: "date", align: "right" },
+    { key: "total_cost", header: "Total cost", accessor: (r) => Number(r.total_cost), render: (r) => formatGBP(r.total_cost), editable, type: "number", align: "right" },
+  ];
+
   return (
     <Tabs value={tab} onValueChange={(v) => setTab(v as PType)}>
       <div className="flex justify-between items-center">
@@ -96,29 +127,18 @@ function ProjectList({ editable, onOpen }: { editable: boolean; onOpen: (p: Proj
       <TabsContent value={tab} className="mt-4">
         <Card className="shadow-soft">
           <CardContent className="pt-6">
-            <Table>
-              <TableHeader><TableRow>
-                <TableHead>Title</TableHead><TableHead>Client</TableHead><TableHead>Lead</TableHead>
-                <TableHead>Status</TableHead><TableHead>Priority</TableHead><TableHead className="text-right">Total cost</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow></TableHeader>
-              <TableBody>
-                {filtered.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No {tab}s yet.</TableCell></TableRow> :
-                  filtered.map((p) => (
-                    <TableRow key={p.id} className="cursor-pointer hover:bg-muted/40" onClick={() => onOpen(p)}>
-                      <TableCell className="font-medium">{p.title}</TableCell>
-                      <TableCell className="text-muted-foreground">{orgs.find((o) => o.id === p.client_org_id)?.name ?? "—"}</TableCell>
-                      <TableCell className="text-muted-foreground">{profiles.find((u) => u.id === p.team_lead_id)?.full_name ?? "—"}</TableCell>
-                      <TableCell><Badge variant="secondary" className="capitalize">{p.status.replace("_", " ")}</Badge></TableCell>
-                      <TableCell><Badge variant={p.priority === "high" ? "destructive" : p.priority === "low" ? "outline" : "default"} className="capitalize">{p.priority}</Badge></TableCell>
-                      <TableCell className="text-right">${Number(p.total_cost).toLocaleString()}</TableCell>
-                      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                        {editable && <Button variant="ghost" size="icon" onClick={() => remove(p)}><Trash2 className="size-4" /></Button>}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-              </TableBody>
-            </Table>
+            <DataTable
+              tableKey={`projects.${tab}`}
+              columns={columns}
+              rows={filtered}
+              rowId={(r) => r.id}
+              onSaveCell={saveCell}
+              onRowClick={onOpen}
+              emptyMessage={`No ${tab}s yet.`}
+              actions={editable ? (r) => (
+                <Button variant="ghost" size="icon" onClick={() => remove(r)}><Trash2 className="size-4" /></Button>
+              ) : undefined}
+            />
           </CardContent>
         </Card>
         <ProjectDialog open={open} onOpenChange={setOpen} project={null} defaultType={tab} orgs={orgs} contacts={contacts} profiles={profiles} onSaved={load} />
@@ -149,9 +169,15 @@ function ProjectDetail({ project, editable, onBack, onSaved }: { project: Projec
   };
   useEffect(() => { void load(); }, [project.id]);
 
-  const toggleMilestone = async (m: Milestone) => {
-    const completed_at = m.completed_at ? null : new Date().toISOString();
+  const toggleCompleted = async (m: Milestone, completed: boolean) => {
+    const completed_at = completed ? new Date().toISOString() : null;
     const { error } = await supabase.from("milestones").update({ completed_at }).eq("id", m.id);
+    if (error) { toast.error(error.message); return; }
+    void load();
+  };
+
+  const updateDueDate = async (m: Milestone, due_date: string | null) => {
+    const { error } = await supabase.from("milestones").update({ due_date }).eq("id", m.id);
     if (error) { toast.error(error.message); return; }
     void load();
   };
@@ -172,7 +198,7 @@ function ProjectDetail({ project, editable, onBack, onSaved }: { project: Projec
     void load();
   };
 
-  const profit = Number(project.total_cost) - Number(project.supplier_cost) - Number(project.business_cost);
+  const profit = Number(project.total_cost) - Number(project.supplier_cost);
 
   return (
     <div className="space-y-4">
@@ -185,11 +211,10 @@ function ProjectDetail({ project, editable, onBack, onSaved }: { project: Projec
         {editable && <Button variant="outline" onClick={() => setOpenEdit(true)}><Pencil className="size-4 mr-2" />Edit</Button>}
       </div>
 
-      <div className="grid md:grid-cols-4 gap-4">
-        <StatCard label="Total cost" value={`$${Number(project.total_cost).toLocaleString()}`} />
-        <StatCard label="Supplier cost" value={`$${Number(project.supplier_cost).toLocaleString()}`} />
-        <StatCard label="Business cost" value={`$${Number(project.business_cost).toLocaleString()}`} />
-        <StatCard label="Profit" value={`$${profit.toLocaleString()}`} accent={profit >= 0 ? "text-primary" : "text-destructive"} />
+      <div className="grid md:grid-cols-3 gap-4">
+        <StatCard label="Total cost" value={formatGBP(project.total_cost)} />
+        <StatCard label="Supplier cost" value={formatGBP(project.supplier_cost)} />
+        <StatCard label="Profit" value={formatGBP(profit)} accent={profit >= 0 ? "text-primary" : "text-destructive"} />
       </div>
 
       <Card className="shadow-soft">
@@ -199,7 +224,7 @@ function ProjectDetail({ project, editable, onBack, onSaved }: { project: Projec
             <Info label="Client" value={orgs.find((o) => o.id === project.client_org_id)?.name ?? "—"} />
             <Info label="Contact" value={(() => { const c = contacts.find((x) => x.id === project.client_contact_id); return c ? `${c.first_name} ${c.last_name}` : "—"; })()} />
             <Info label="Team lead" value={profiles.find((u) => u.id === project.team_lead_id)?.full_name ?? "—"} />
-            <Info label="Dates" value={`${project.start_date ?? "—"} → ${project.end_date ?? "—"}`} />
+            <Info label="Dates" value={`${formatDateUK(project.start_date)} → ${formatDateUK(project.end_date)}`} />
           </div>
           {project.description && <p className="text-sm text-muted-foreground whitespace-pre-wrap">{project.description}</p>}
         </CardContent>
@@ -211,19 +236,45 @@ function ProjectDetail({ project, editable, onBack, onSaved }: { project: Projec
           {milestones.length === 0 ? (
             <p className="text-sm text-muted-foreground">No milestones yet.</p>
           ) : (
-            <div className="space-y-2">
-              {milestones.map((m) => (
-                <div key={m.id} className="flex items-center gap-3 p-2 rounded-lg border">
-                  <button onClick={() => editable && toggleMilestone(m)} disabled={!editable} className="shrink-0">
-                    {m.completed_at ? <CheckCircle2 className="size-5 text-primary" /> : <Circle className="size-5 text-muted-foreground" />}
-                  </button>
-                  <div className="flex-1">
-                    <p className={m.completed_at ? "line-through text-muted-foreground" : ""}>{m.label}</p>
-                    {m.due_date && <p className="text-xs text-muted-foreground">Due {m.due_date}</p>}
-                  </div>
-                  {editable && m.is_custom && <Button variant="ghost" size="icon" onClick={() => removeMilestone(m)}><Trash2 className="size-4" /></Button>}
-                </div>
-              ))}
+            <div className="overflow-auto rounded-md border">
+              <table className="w-full text-sm">
+                <thead className="border-b bg-muted/30">
+                  <tr>
+                    <th className="text-left p-2 w-10">Done</th>
+                    <th className="text-left p-2">Milestone</th>
+                    <th className="text-left p-2 w-44">Due date</th>
+                    <th className="text-left p-2 w-32">Completed</th>
+                    {editable && <th className="text-right p-2 w-10" />}
+                  </tr>
+                </thead>
+                <tbody>
+                  {milestones.map((m) => (
+                    <tr key={m.id} className="border-b">
+                      <td className="p-2">
+                        <Checkbox
+                          checked={!!m.completed_at}
+                          onCheckedChange={(c) => editable && toggleCompleted(m, c === true)}
+                          disabled={!editable}
+                        />
+                      </td>
+                      <td className={`p-2 ${m.completed_at ? "line-through text-muted-foreground" : ""}`}>{m.label}</td>
+                      <td className="p-2">
+                        <Input
+                          type="date"
+                          value={m.due_date ?? ""}
+                          disabled={!editable}
+                          onChange={(e) => updateDueDate(m, e.target.value || null)}
+                          className="h-8 text-sm"
+                        />
+                      </td>
+                      <td className="p-2 text-muted-foreground">{formatDateUK(m.completed_at)}</td>
+                      {editable && <td className="p-2 text-right">
+                        {m.is_custom && <Button variant="ghost" size="icon" onClick={() => removeMilestone(m)}><Trash2 className="size-4" /></Button>}
+                      </td>}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
           {editable && (
@@ -267,7 +318,7 @@ function ProjectDialog({ open, onOpenChange, project, defaultType, orgs, contact
   const [clientOrg, setClientOrg] = useState<string>("__none__");
   const [clientContact, setClientContact] = useState<string>("__none__");
   const [startDate, setStartDate] = useState(""); const [endDate, setEndDate] = useState("");
-  const [totalCost, setTotalCost] = useState("0"); const [supplierCost, setSupplierCost] = useState("0"); const [businessCost, setBusinessCost] = useState("0");
+  const [totalCost, setTotalCost] = useState("0"); const [supplierCost, setSupplierCost] = useState("0");
 
   useEffect(() => {
     setTitle(project?.title ?? ""); setDescription(project?.description ?? "");
@@ -280,7 +331,6 @@ function ProjectDialog({ open, onOpenChange, project, defaultType, orgs, contact
     setStartDate(project?.start_date ?? ""); setEndDate(project?.end_date ?? "");
     setTotalCost(String(project?.total_cost ?? 0));
     setSupplierCost(String(project?.supplier_cost ?? 0));
-    setBusinessCost(String(project?.business_cost ?? 0));
   }, [project, open, defaultType]);
 
   const submit = async () => {
@@ -293,7 +343,6 @@ function ProjectDialog({ open, onOpenChange, project, defaultType, orgs, contact
       start_date: startDate || null, end_date: endDate || null,
       total_cost: Number(totalCost) || 0,
       supplier_cost: Number(supplierCost) || 0,
-      business_cost: Number(businessCost) || 0,
     };
     if (project) {
       const { error } = await supabase.from("projects").update(payload).eq("id", project.id);
@@ -302,7 +351,6 @@ function ProjectDialog({ open, onOpenChange, project, defaultType, orgs, contact
     } else {
       const { data, error } = await supabase.from("projects").insert(payload).select().single();
       if (error) { toast.error(error.message); return; }
-      // Seed milestones from templates
       const { data: tpls } = await supabase.from("milestone_templates").select("*").order("position");
       if (tpls && tpls.length > 0) {
         await supabase.from("milestones").insert(
@@ -389,10 +437,9 @@ function ProjectDialog({ open, onOpenChange, project, defaultType, orgs, contact
             <div className="space-y-1"><Label>Start date</Label><Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} /></div>
             <div className="space-y-1"><Label>End date</Label><Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} /></div>
           </div>
-          <div className="grid grid-cols-3 gap-3">
-            <div className="space-y-1"><Label>Total cost</Label><Input type="number" value={totalCost} onChange={(e) => setTotalCost(e.target.value)} /></div>
-            <div className="space-y-1"><Label>Supplier cost</Label><Input type="number" value={supplierCost} onChange={(e) => setSupplierCost(e.target.value)} /></div>
-            <div className="space-y-1"><Label>Business cost</Label><Input type="number" value={businessCost} onChange={(e) => setBusinessCost(e.target.value)} /></div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1"><Label>Total cost (£)</Label><Input type="number" value={totalCost} onChange={(e) => setTotalCost(e.target.value)} /></div>
+            <div className="space-y-1"><Label>Supplier cost (£)</Label><Input type="number" value={supplierCost} onChange={(e) => setSupplierCost(e.target.value)} /></div>
           </div>
         </div>
         <DialogFooter>
