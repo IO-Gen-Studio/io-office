@@ -55,7 +55,7 @@ function OutreachPage() {
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       <div className="flex items-baseline justify-between">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Email Outreach</h1>
+          <h1 className="text-xl font-semibold tracking-tight">Email Outreach</h1>
           <p className="text-muted-foreground mt-1">Plan and track campaigns. Emails are sent from your own mailbox.</p>
         </div>
       </div>

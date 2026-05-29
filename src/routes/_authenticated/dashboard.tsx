@@ -33,7 +33,7 @@ function Dashboard() {
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight">
+        <h1 className="text-xl font-semibold tracking-tight">
           Welcome back{profile?.full_name ? `, ${profile.full_name.split(" ")[0]}` : ""}
         </h1>
         <p className="text-muted-foreground mt-1">Here's a snapshot of your business.</p>

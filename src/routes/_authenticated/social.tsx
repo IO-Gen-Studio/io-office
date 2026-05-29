@@ -54,7 +54,7 @@ function SocialPage() {
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       <div className="flex items-baseline justify-between">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Social Planner</h1>
+          <h1 className="text-xl font-semibold tracking-tight">Social Planner</h1>
           <p className="text-muted-foreground mt-1">Plan, approve and track posts across platforms.</p>
         </div>
         {editable && <Button className="bg-gradient-primary text-primary-foreground" onClick={() => { setEditing(null); setOpen(true); }}><Plus className="size-4 mr-2" />New post</Button>}
