@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/auth/auth-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { formatDistanceToNow } from "date-fns";
+import { relativeTimeUK } from "@/lib/format";
 import { Bell } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/notifications")({ component: NotificationsPage });
@@ -62,7 +62,7 @@ function NotificationsPage() {
                       {!n.read_at && <Badge variant="secondary" className="text-[10px] h-4">New</Badge>}
                     </div>
                     {n.body && <p className="text-sm text-muted-foreground mt-0.5">{n.body}</p>}
-                    <p className="text-xs text-muted-foreground mt-1">{formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{relativeTimeUK(n.created_at)}</p>
                   </div>
                   {!n.read_at && <Button variant="ghost" size="sm" onClick={() => markOne(n.id)}>Mark read</Button>}
                 </li>
