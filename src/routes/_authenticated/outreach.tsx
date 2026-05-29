@@ -560,7 +560,7 @@ function TemplatesTab({ editable }: { editable: boolean }) {
     <Card className="shadow-soft">
       <CardContent className="pt-6 space-y-4">
         <div className="flex justify-end">
-          {editable && <Button className="bg-gradient-primary text-primary-foreground" onClick={() => { setEditing(null); setOpen(true); }}><Plus className="size-4 mr-2" />New template</Button>}
+          {editable && <Button className="bg-gradient-primary text-primary-foreground" onClick={() => { setEditing(null); setOpen(true); }}><Plus className="size-4 mr-2" />New email template</Button>}
         </div>
         <Table>
           <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Subject</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
@@ -611,7 +611,7 @@ function TemplateDialog({ open, onOpenChange, template, onSaved }: { open: boole
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
-        <DialogHeader><DialogTitle>{template ? "Edit template" : "New template"}</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{template ? "Edit email template" : "New email template"}</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1"><Label>Name *</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
           <div className="space-y-1"><Label>Subject *</Label><Input value={subject} onChange={(e) => setSubject(e.target.value)} /></div>
