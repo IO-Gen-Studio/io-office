@@ -1,5 +1,368 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { PagePlaceholder } from "@/components/PagePlaceholder";
-export const Route = createFileRoute("/_authenticated/outreach")({
-  component: () => <PagePlaceholder title="Email Outreach" description="Campaigns, contacts, templates and Gmail sending." />,
-});
+import { useEffect, useMemo, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth/auth-context";
+import { logActivity } from "@/lib/activity";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Pencil, Trash2, ArrowLeft, Search } from "lucide-react";
+import { toast } from "sonner";
+
+export const Route = createFileRoute("/_authenticated/outreach")({ component: OutreachPage });
+
+type Campaign = { id: string; name: string; description: string | null; created_at: string };
+type Template = { id: string; name: string; subject: string; body: string; approved: boolean };
+type CC = {
+  id: string; campaign_id: string; first_name: string; last_name: string;
+  email: string | null; organisation: string | null; industry: string | null;
+  website: string | null; job_title: string | null; lead_status: string;
+  outreach: Record<string, { sent_at?: string; reply?: string }>; notes: string | null;
+};
+type LeadOpt = { key: string; label: string };
+
+function OutreachPage() {
+  const { canEdit } = useAuth();
+  const editable = canEdit("outreach");
+  const [active, setActive] = useState<Campaign | null>(null);
+  return (
+    <div className="p-6 max-w-7xl mx-auto space-y-6">
+      <div className="flex items-baseline justify-between">
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight">Email Outreach</h1>
+          <p className="text-muted-foreground mt-1">Plan and track campaigns. Emails are sent from your own mailbox.</p>
+        </div>
+      </div>
+      {active ? (
+        <CampaignDetail campaign={active} editable={editable} onBack={() => setActive(null)} />
+      ) : (
+        <Tabs defaultValue="campaigns">
+          <TabsList>
+            <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
+            <TabsTrigger value="templates">Templates</TabsTrigger>
+          </TabsList>
+          <TabsContent value="campaigns" className="mt-4"><CampaignsTab editable={editable} onOpen={setActive} /></TabsContent>
+          <TabsContent value="templates" className="mt-4"><TemplatesTab editable={editable} /></TabsContent>
+        </Tabs>
+      )}
+    </div>
+  );
+}
+
+function CampaignsTab({ editable, onOpen }: { editable: boolean; onOpen: (c: Campaign) => void }) {
+  const [rows, setRows] = useState<Campaign[]>([]);
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<Campaign | null>(null);
+
+  const load = async () => {
+    const { data } = await supabase.from("campaigns").select("*").order("created_at", { ascending: false });
+    setRows((data ?? []) as Campaign[]);
+  };
+  useEffect(() => { void load(); }, []);
+
+  const remove = async (c: Campaign) => {
+    if (!confirm(`Delete campaign "${c.name}"?`)) return;
+    const { error } = await supabase.from("campaigns").delete().eq("id", c.id);
+    if (error) { toast.error(error.message); return; }
+    await logActivity({ module: "outreach", entity_type: "campaign", entity_id: c.id, verb: "deleted", summary: `Deleted campaign ${c.name}` });
+    toast.success("Deleted"); void load();
+  };
+
+  return (
+    <Card className="shadow-soft">
+      <CardContent className="pt-6 space-y-4">
+        <div className="flex justify-end">
+          {editable && <Button className="bg-gradient-primary text-primary-foreground" onClick={() => { setEditing(null); setOpen(true); }}><Plus className="size-4 mr-2" />New campaign</Button>}
+        </div>
+        <Table>
+          <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Description</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+          <TableBody>
+            {rows.length === 0 ? <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground py-8">No campaigns yet.</TableCell></TableRow> :
+              rows.map((c) => (
+                <TableRow key={c.id} className="cursor-pointer hover:bg-muted/40" onClick={() => onOpen(c)}>
+                  <TableCell className="font-medium">{c.name}</TableCell>
+                  <TableCell className="text-muted-foreground">{c.description || "—"}</TableCell>
+                  <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                    {editable && <>
+                      <Button variant="ghost" size="icon" onClick={() => { setEditing(c); setOpen(true); }}><Pencil className="size-4" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => remove(c)}><Trash2 className="size-4" /></Button>
+                    </>}
+                  </TableCell>
+                </TableRow>
+              ))}
+          </TableBody>
+        </Table>
+        <CampaignDialog open={open} onOpenChange={setOpen} campaign={editing} onSaved={load} />
+      </CardContent>
+    </Card>
+  );
+}
+
+function CampaignDialog({ open, onOpenChange, campaign, onSaved }: { open: boolean; onOpenChange: (o: boolean) => void; campaign: Campaign | null; onSaved: () => void }) {
+  const [name, setName] = useState(""); const [description, setDescription] = useState("");
+  useEffect(() => { setName(campaign?.name ?? ""); setDescription(campaign?.description ?? ""); }, [campaign, open]);
+  const submit = async () => {
+    if (!name.trim()) return;
+    const payload = { name, description: description || null };
+    if (campaign) {
+      const { error } = await supabase.from("campaigns").update(payload).eq("id", campaign.id);
+      if (error) { toast.error(error.message); return; }
+      await logActivity({ module: "outreach", entity_type: "campaign", entity_id: campaign.id, verb: "updated", summary: `Updated campaign ${name}` });
+    } else {
+      const { data, error } = await supabase.from("campaigns").insert(payload).select().single();
+      if (error) { toast.error(error.message); return; }
+      await logActivity({ module: "outreach", entity_type: "campaign", entity_id: data.id, verb: "created", summary: `Created campaign ${name}` });
+    }
+    toast.success("Saved"); onOpenChange(false); onSaved();
+  };
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>{campaign ? "Edit campaign" : "New campaign"}</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div className="space-y-1"><Label>Name *</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
+          <div className="space-y-1"><Label>Description</Label><Textarea value={description} onChange={(e) => setDescription(e.target.value)} /></div>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button onClick={submit} className="bg-gradient-primary text-primary-foreground" disabled={!name.trim()}>Save</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function CampaignDetail({ campaign, editable, onBack }: { campaign: Campaign; editable: boolean; onBack: () => void }) {
+  const [rows, setRows] = useState<CC[]>([]);
+  const [leadOpts, setLeadOpts] = useState<LeadOpt[]>([]);
+  const [q, setQ] = useState("");
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<CC | null>(null);
+
+  const load = async () => {
+    const [{ data: c }, { data: l }] = await Promise.all([
+      supabase.from("campaign_contacts").select("*").eq("campaign_id", campaign.id).order("created_at"),
+      supabase.from("lead_status_options").select("key,label").order("position"),
+    ]);
+    setRows((c ?? []) as CC[]); setLeadOpts((l ?? []) as LeadOpt[]);
+  };
+  useEffect(() => { void load(); }, [campaign.id]);
+
+  const filtered = useMemo(() => rows.filter((r) => !q || [r.first_name, r.last_name, r.email, r.organisation].some((v) => (v ?? "").toLowerCase().includes(q.toLowerCase()))), [rows, q]);
+
+  const remove = async (r: CC) => {
+    if (!confirm("Delete contact?")) return;
+    const { error } = await supabase.from("campaign_contacts").delete().eq("id", r.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Deleted"); void load();
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft className="size-4 mr-1" />Campaigns</Button>
+        <div>
+          <h2 className="text-xl font-semibold">{campaign.name}</h2>
+          {campaign.description && <p className="text-sm text-muted-foreground">{campaign.description}</p>}
+        </div>
+      </div>
+      <Card className="shadow-soft">
+        <CardContent className="pt-6 space-y-4">
+          <div className="flex gap-2 items-center">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-2 top-2.5 size-4 text-muted-foreground" />
+              <Input className="pl-8" placeholder="Search contacts" value={q} onChange={(e) => setQ(e.target.value)} />
+            </div>
+            {editable && <Button className="bg-gradient-primary text-primary-foreground ml-auto" onClick={() => { setEditing(null); setOpen(true); }}><Plus className="size-4 mr-2" />Add contact</Button>}
+          </div>
+          <Table>
+            <TableHeader><TableRow>
+              <TableHead>Name</TableHead><TableHead>Email</TableHead><TableHead>Organisation</TableHead>
+              <TableHead>Industry</TableHead><TableHead>Lead status</TableHead><TableHead className="text-right">Actions</TableHead>
+            </TableRow></TableHeader>
+            <TableBody>
+              {filtered.length === 0 ? <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">No contacts in this campaign.</TableCell></TableRow> :
+                filtered.map((r) => (
+                  <TableRow key={r.id}>
+                    <TableCell className="font-medium">{r.first_name} {r.last_name}</TableCell>
+                    <TableCell>{r.email || "—"}</TableCell>
+                    <TableCell className="text-muted-foreground">{r.organisation || "—"}</TableCell>
+                    <TableCell className="text-muted-foreground">{r.industry || "—"}</TableCell>
+                    <TableCell><Badge variant="secondary">{leadOpts.find((o) => o.key === r.lead_status)?.label ?? r.lead_status}</Badge></TableCell>
+                    <TableCell className="text-right">
+                      {editable && <>
+                        <Button variant="ghost" size="icon" onClick={() => { setEditing(r); setOpen(true); }}><Pencil className="size-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => remove(r)}><Trash2 className="size-4" /></Button>
+                      </>}
+                    </TableCell>
+                  </TableRow>
+                ))}
+            </TableBody>
+          </Table>
+          <CCDialog open={open} onOpenChange={setOpen} contact={editing} campaignId={campaign.id} leadOpts={leadOpts} onSaved={load} />
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function CCDialog({ open, onOpenChange, contact, campaignId, leadOpts, onSaved }: {
+  open: boolean; onOpenChange: (o: boolean) => void; contact: CC | null; campaignId: string; leadOpts: LeadOpt[]; onSaved: () => void;
+}) {
+  const [first, setFirst] = useState(""); const [last, setLast] = useState("");
+  const [email, setEmail] = useState(""); const [org, setOrg] = useState("");
+  const [industry, setIndustry] = useState(""); const [website, setWebsite] = useState("");
+  const [jobTitle, setJobTitle] = useState(""); const [status, setStatus] = useState("no_reply");
+  const [notes, setNotes] = useState("");
+
+  useEffect(() => {
+    setFirst(contact?.first_name ?? ""); setLast(contact?.last_name ?? "");
+    setEmail(contact?.email ?? ""); setOrg(contact?.organisation ?? "");
+    setIndustry(contact?.industry ?? ""); setWebsite(contact?.website ?? "");
+    setJobTitle(contact?.job_title ?? ""); setStatus(contact?.lead_status ?? "no_reply");
+    setNotes(contact?.notes ?? "");
+  }, [contact, open]);
+
+  const submit = async () => {
+    const payload = {
+      campaign_id: campaignId, first_name: first, last_name: last,
+      email: email || null, organisation: org || null, industry: industry || null,
+      website: website || null, job_title: jobTitle || null, lead_status: status, notes: notes || null,
+    };
+    if (contact) {
+      const { error } = await supabase.from("campaign_contacts").update(payload).eq("id", contact.id);
+      if (error) { toast.error(error.message); return; }
+    } else {
+      const { error } = await supabase.from("campaign_contacts").insert(payload);
+      if (error) { toast.error(error.message); return; }
+    }
+    toast.success("Saved"); onOpenChange(false); onSaved();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-xl">
+        <DialogHeader><DialogTitle>{contact ? "Edit contact" : "Add contact"}</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1"><Label>First name</Label><Input value={first} onChange={(e) => setFirst(e.target.value)} /></div>
+            <div className="space-y-1"><Label>Last name</Label><Input value={last} onChange={(e) => setLast(e.target.value)} /></div>
+            <div className="space-y-1"><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
+            <div className="space-y-1"><Label>Job title</Label><Input value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} /></div>
+            <div className="space-y-1"><Label>Organisation</Label><Input value={org} onChange={(e) => setOrg(e.target.value)} /></div>
+            <div className="space-y-1"><Label>Industry</Label><Input value={industry} onChange={(e) => setIndustry(e.target.value)} /></div>
+            <div className="space-y-1 col-span-2"><Label>Website</Label><Input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://" /></div>
+            <div className="space-y-1 col-span-2">
+              <Label>Lead status</Label>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{leadOpts.map((o) => <SelectItem key={o.key} value={o.key}>{o.label}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="space-y-1"><Label>Notes</Label><Textarea value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button onClick={submit} className="bg-gradient-primary text-primary-foreground">Save</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function TemplatesTab({ editable }: { editable: boolean }) {
+  const [rows, setRows] = useState<Template[]>([]);
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<Template | null>(null);
+
+  const load = async () => {
+    const { data } = await supabase.from("email_templates").select("*").order("name");
+    setRows((data ?? []) as Template[]);
+  };
+  useEffect(() => { void load(); }, []);
+
+  const remove = async (t: Template) => {
+    if (!confirm(`Delete template "${t.name}"?`)) return;
+    const { error } = await supabase.from("email_templates").delete().eq("id", t.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Deleted"); void load();
+  };
+
+  return (
+    <Card className="shadow-soft">
+      <CardContent className="pt-6 space-y-4">
+        <div className="flex justify-end">
+          {editable && <Button className="bg-gradient-primary text-primary-foreground" onClick={() => { setEditing(null); setOpen(true); }}><Plus className="size-4 mr-2" />New template</Button>}
+        </div>
+        <Table>
+          <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Subject</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+          <TableBody>
+            {rows.length === 0 ? <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">No templates yet.</TableCell></TableRow> :
+              rows.map((t) => (
+                <TableRow key={t.id}>
+                  <TableCell className="font-medium">{t.name}</TableCell>
+                  <TableCell className="text-muted-foreground">{t.subject}</TableCell>
+                  <TableCell>{t.approved ? <Badge>Approved</Badge> : <Badge variant="secondary">Draft</Badge>}</TableCell>
+                  <TableCell className="text-right">
+                    {editable && <>
+                      <Button variant="ghost" size="icon" onClick={() => { setEditing(t); setOpen(true); }}><Pencil className="size-4" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => remove(t)}><Trash2 className="size-4" /></Button>
+                    </>}
+                  </TableCell>
+                </TableRow>
+              ))}
+          </TableBody>
+        </Table>
+        <TemplateDialog open={open} onOpenChange={setOpen} template={editing} onSaved={load} />
+      </CardContent>
+    </Card>
+  );
+}
+
+function TemplateDialog({ open, onOpenChange, template, onSaved }: { open: boolean; onOpenChange: (o: boolean) => void; template: Template | null; onSaved: () => void }) {
+  const [name, setName] = useState(""); const [subject, setSubject] = useState("");
+  const [body, setBody] = useState(""); const [approved, setApproved] = useState(false);
+  useEffect(() => {
+    setName(template?.name ?? ""); setSubject(template?.subject ?? "");
+    setBody(template?.body ?? ""); setApproved(template?.approved ?? false);
+  }, [template, open]);
+
+  const submit = async () => {
+    if (!name.trim() || !subject.trim()) return;
+    const payload = { name, subject, body, approved };
+    if (template) {
+      const { error } = await supabase.from("email_templates").update(payload).eq("id", template.id);
+      if (error) { toast.error(error.message); return; }
+    } else {
+      const { error } = await supabase.from("email_templates").insert(payload);
+      if (error) { toast.error(error.message); return; }
+    }
+    toast.success("Saved"); onOpenChange(false); onSaved();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader><DialogTitle>{template ? "Edit template" : "New template"}</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div className="space-y-1"><Label>Name *</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
+          <div className="space-y-1"><Label>Subject *</Label><Input value={subject} onChange={(e) => setSubject(e.target.value)} /></div>
+          <div className="space-y-1"><Label>Body</Label><Textarea rows={10} value={body} onChange={(e) => setBody(e.target.value)} placeholder="Use {{first_name}}, {{organisation}}, etc." /></div>
+          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={approved} onChange={(e) => setApproved(e.target.checked)} />Approved for use</label>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button onClick={submit} className="bg-gradient-primary text-primary-foreground" disabled={!name.trim() || !subject.trim()}>Save</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
