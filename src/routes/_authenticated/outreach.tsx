@@ -13,20 +13,37 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Pencil, Trash2, ArrowLeft, Search, Download, Upload } from "lucide-react";
 import { toast } from "sonner";
+import { formatDate } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/outreach")({ component: OutreachPage });
 
+const STAGES = [
+  { key: "first_email", label: "First email" },
+  { key: "second_email", label: "Second email" },
+  { key: "third_email", label: "Third email" },
+] as const;
+type StageKey = typeof STAGES[number]["key"];
+
 type Campaign = { id: string; name: string; description: string | null; created_at: string };
 type Template = { id: string; name: string; subject: string; body: string; approved: boolean };
+type OutreachMap = Partial<Record<StageKey, { sent_at?: string | null; reply?: string | null }>>;
 type CC = {
   id: string; campaign_id: string; first_name: string; last_name: string;
   email: string | null; organisation: string | null; industry: string | null;
   website: string | null; job_title: string | null; lead_status: string;
-  outreach: Record<string, { sent_at?: string; reply?: string }>; notes: string | null;
+  outreach: OutreachMap; notes: string | null;
 };
 type LeadOpt = { key: string; label: string };
+
+function toDateInput(iso?: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  return d.toISOString().slice(0, 10);
+}
 
 function OutreachPage() {
   const { canEdit } = useAuth();
@@ -58,14 +75,40 @@ function OutreachPage() {
 
 function CampaignsTab({ editable, onOpen }: { editable: boolean; onOpen: (c: Campaign) => void }) {
   const [rows, setRows] = useState<Campaign[]>([]);
+  const [contactsByCampaign, setContactsByCampaign] = useState<Record<string, CC[]>>({});
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Campaign | null>(null);
 
   const load = async () => {
-    const { data } = await supabase.from("campaigns").select("*").order("created_at", { ascending: false });
-    setRows((data ?? []) as Campaign[]);
+    const [{ data: cs }, { data: cc }] = await Promise.all([
+      supabase.from("campaigns").select("*").order("created_at", { ascending: false }),
+      supabase.from("campaign_contacts").select("*"),
+    ]);
+    setRows((cs ?? []) as Campaign[]);
+    const map: Record<string, CC[]> = {};
+    ((cc ?? []) as CC[]).forEach((r) => { (map[r.campaign_id] ||= []).push(r); });
+    setContactsByCampaign(map);
   };
   useEffect(() => { void load(); }, []);
+
+  const computeNext = (contacts: CC[]): { label: string; date: string } => {
+    if (!contacts || contacts.length === 0) return { label: "Add contacts", date: "—" };
+    for (const stage of STAGES) {
+      const pending = contacts.filter((c) => !c.outreach?.[stage.key]?.sent_at);
+      if (pending.length > 0) {
+        // Date = latest sent_at of previous stage, else campaign creation context "—"
+        const idx = STAGES.findIndex((s) => s.key === stage.key);
+        let date = "—";
+        if (idx > 0) {
+          const prev = STAGES[idx - 1].key;
+          const dates = contacts.map((c) => c.outreach?.[prev]?.sent_at).filter(Boolean) as string[];
+          if (dates.length) date = formatDate(dates.sort().slice(-1)[0]);
+        }
+        return { label: stage.label, date };
+      }
+    }
+    return { label: "Complete", date: "—" };
+  };
 
   const remove = async (c: Campaign) => {
     if (!confirm(`Delete campaign "${c.name}"?`)) return;
@@ -82,21 +125,35 @@ function CampaignsTab({ editable, onOpen }: { editable: boolean; onOpen: (c: Cam
           {editable && <Button className="bg-gradient-primary text-primary-foreground" onClick={() => { setEditing(null); setOpen(true); }}><Plus className="size-4 mr-2" />New campaign</Button>}
         </div>
         <Table>
-          <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Description</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+          <TableHeader><TableRow>
+            <TableHead>Name</TableHead>
+            <TableHead>Description</TableHead>
+            <TableHead className="text-right">Contacts</TableHead>
+            <TableHead>Next action</TableHead>
+            <TableHead>Next action date</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableRow></TableHeader>
           <TableBody>
-            {rows.length === 0 ? <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground py-8">No campaigns yet.</TableCell></TableRow> :
-              rows.map((c) => (
-                <TableRow key={c.id} className="cursor-pointer hover:bg-muted/40" onClick={() => onOpen(c)}>
-                  <TableCell className="font-medium">{c.name}</TableCell>
-                  <TableCell className="text-muted-foreground">{c.description || "—"}</TableCell>
-                  <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                    {editable && <>
-                      <Button variant="ghost" size="icon" onClick={() => { setEditing(c); setOpen(true); }}><Pencil className="size-4" /></Button>
-                      <Button variant="ghost" size="icon" onClick={() => remove(c)}><Trash2 className="size-4" /></Button>
-                    </>}
-                  </TableCell>
-                </TableRow>
-              ))}
+            {rows.length === 0 ? <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">No campaigns yet.</TableCell></TableRow> :
+              rows.map((c) => {
+                const contacts = contactsByCampaign[c.id] ?? [];
+                const next = computeNext(contacts);
+                return (
+                  <TableRow key={c.id} className="cursor-pointer hover:bg-muted/40" onClick={() => onOpen(c)}>
+                    <TableCell className="font-medium">{c.name}</TableCell>
+                    <TableCell className="text-muted-foreground">{c.description || "—"}</TableCell>
+                    <TableCell className="text-right">{contacts.length}</TableCell>
+                    <TableCell>{next.label}</TableCell>
+                    <TableCell className="text-muted-foreground">{next.date}</TableCell>
+                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                      {editable && <>
+                        <Button variant="ghost" size="icon" onClick={() => { setEditing(c); setOpen(true); }}><Pencil className="size-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => remove(c)}><Trash2 className="size-4" /></Button>
+                      </>}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
           </TableBody>
         </Table>
         <CampaignDialog open={open} onOpenChange={setOpen} campaign={editing} onSaved={load} />
@@ -230,6 +287,32 @@ function CampaignDetail({ campaign, editable, onBack }: { campaign: Campaign; ed
     toast.success("Deleted"); void load();
   };
 
+  const updateStage = async (r: CC, stage: StageKey, next: { sent_at?: string | null } | null) => {
+    const current: OutreachMap = { ...(r.outreach || {}) };
+    if (next === null) {
+      delete current[stage];
+    } else {
+      current[stage] = { ...(current[stage] || {}), ...next };
+    }
+    // optimistic
+    setRows((prev) => prev.map((x) => x.id === r.id ? { ...x, outreach: current } : x));
+    const { error } = await supabase.from("campaign_contacts").update({ outreach: current as never }).eq("id", r.id);
+    if (error) { toast.error(error.message); void load(); }
+  };
+
+  const toggleStage = (r: CC, stage: StageKey, checked: boolean) => {
+    if (!editable) return;
+    if (checked) void updateStage(r, stage, { sent_at: new Date().toISOString() });
+    else void updateStage(r, stage, null);
+  };
+
+  const setStageDate = (r: CC, stage: StageKey, dateStr: string) => {
+    if (!editable) return;
+    if (!dateStr) { void updateStage(r, stage, null); return; }
+    const iso = new Date(dateStr + "T12:00:00").toISOString();
+    void updateStage(r, stage, { sent_at: iso });
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
@@ -253,20 +336,40 @@ function CampaignDetail({ campaign, editable, onBack }: { campaign: Campaign; ed
               <Button className="bg-gradient-primary text-primary-foreground" onClick={() => { setEditing(null); setOpen(true); }}><Plus className="size-4 mr-2" />Add contact</Button>
             </div>}
           </div>
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader><TableRow>
               <TableHead>Name</TableHead><TableHead>Email</TableHead><TableHead>Organisation</TableHead>
-              <TableHead>Industry</TableHead><TableHead>Lead status</TableHead><TableHead className="text-right">Actions</TableHead>
+              <TableHead>Lead status</TableHead>
+              {STAGES.map((s) => <TableHead key={s.key} className="whitespace-nowrap">{s.label}</TableHead>)}
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              {filtered.length === 0 ? <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">No contacts in this campaign.</TableCell></TableRow> :
+              {filtered.length === 0 ? <TableRow><TableCell colSpan={5 + STAGES.length} className="text-center text-muted-foreground py-8">No contacts in this campaign.</TableCell></TableRow> :
                 filtered.map((r) => (
                   <TableRow key={r.id}>
                     <TableCell className="font-medium">{r.first_name} {r.last_name}</TableCell>
                     <TableCell>{r.email || "—"}</TableCell>
                     <TableCell className="text-muted-foreground">{r.organisation || "—"}</TableCell>
-                    <TableCell className="text-muted-foreground">{r.industry || "—"}</TableCell>
                     <TableCell><Badge variant="secondary">{leadOpts.find((o) => o.key === r.lead_status)?.label ?? r.lead_status}</Badge></TableCell>
+                    {STAGES.map((s) => {
+                      const stageData = r.outreach?.[s.key];
+                      const checked = !!stageData?.sent_at;
+                      return (
+                        <TableCell key={s.key} className="whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            <Checkbox checked={checked} disabled={!editable} onCheckedChange={(v) => toggleStage(r, s.key, !!v)} />
+                            <Input
+                              type="date"
+                              className="h-8 w-[140px]"
+                              value={toDateInput(stageData?.sent_at)}
+                              disabled={!editable}
+                              onChange={(e) => setStageDate(r, s.key, e.target.value)}
+                            />
+                          </div>
+                        </TableCell>
+                      );
+                    })}
                     <TableCell className="text-right">
                       {editable && <>
                         <Button variant="ghost" size="icon" onClick={() => { setEditing(r); setOpen(true); }}><Pencil className="size-4" /></Button>
@@ -277,6 +380,7 @@ function CampaignDetail({ campaign, editable, onBack }: { campaign: Campaign; ed
                 ))}
             </TableBody>
           </Table>
+          </div>
           <CCDialog open={open} onOpenChange={setOpen} contact={editing} campaignId={campaign.id} leadOpts={leadOpts} onSaved={load} />
         </CardContent>
       </Card>
