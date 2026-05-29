@@ -201,6 +201,10 @@ function CampaignDialog({ open, onOpenChange, campaign, onSaved }: { open: boole
 function CampaignDetail({ campaign, editable, onBack }: { campaign: Campaign; editable: boolean; onBack: () => void }) {
   const [rows, setRows] = useState<CC[]>([]);
   const [leadOpts, setLeadOpts] = useState<LeadOpt[]>([]);
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [stages, setStages] = useState<StagesMap>(campaign.stages ?? {});
+  const [editTemplate, setEditTemplate] = useState<Template | null>(null);
+  const [templateOpen, setTemplateOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const TEMPLATE_HEADERS = ["first_name", "last_name", "email", "job_title", "organisation", "industry", "website", "notes"];
