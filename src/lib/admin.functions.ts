@@ -88,7 +88,7 @@ export const adminSetAdminRole = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-const MODULES = ["dashboard","calendar","crm","outreach","social","projects","subscriptions","notifications"] as const;
+const MODULES = ["dashboard","calendar","crm","outreach","social","projects","subscriptions","settings"] as const;
 
 export const adminSetModuleAccess = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
