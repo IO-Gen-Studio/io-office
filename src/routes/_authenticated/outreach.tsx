@@ -142,6 +142,72 @@ function CampaignDialog({ open, onOpenChange, campaign, onSaved }: { open: boole
 function CampaignDetail({ campaign, editable, onBack }: { campaign: Campaign; editable: boolean; onBack: () => void }) {
   const [rows, setRows] = useState<CC[]>([]);
   const [leadOpts, setLeadOpts] = useState<LeadOpt[]>([]);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const TEMPLATE_HEADERS = ["first_name", "last_name", "email", "job_title", "organisation", "industry", "website", "notes"];
+
+  const downloadTemplate = () => {
+    const csv = TEMPLATE_HEADERS.join(",") + "\n";
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "campaign_contacts_template.csv"; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const parseCSV = (text: string): Record<string, string>[] => {
+    const lines = text.split(/\r?\n/).filter((l) => l.trim());
+    if (lines.length < 2) return [];
+    const parseLine = (line: string): string[] => {
+      const out: string[] = []; let cur = ""; let inQ = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (inQ) {
+          if (ch === '"' && line[i + 1] === '"') { cur += '"'; i++; }
+          else if (ch === '"') { inQ = false; }
+          else cur += ch;
+        } else {
+          if (ch === '"') inQ = true;
+          else if (ch === ",") { out.push(cur); cur = ""; }
+          else cur += ch;
+        }
+      }
+      out.push(cur); return out;
+    };
+    const headers = parseLine(lines[0]).map((h) => h.trim().toLowerCase());
+    return lines.slice(1).map((line) => {
+      const cells = parseLine(line);
+      const row: Record<string, string> = {};
+      headers.forEach((h, i) => { row[h] = (cells[i] ?? "").trim(); });
+      return row;
+    });
+  };
+
+  const onImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]; e.target.value = "";
+    if (!file) return;
+    const text = await file.text();
+    const parsed = parseCSV(text);
+    if (parsed.length === 0) { toast.error("CSV is empty"); return; }
+    if (!confirm(`Import ${parsed.length} contact(s) into "${campaign.name}"?`)) return;
+    const payload = parsed.map((r) => ({
+      campaign_id: campaign.id,
+      first_name: r.first_name || "",
+      last_name: r.last_name || "",
+      email: r.email || null,
+      job_title: r.job_title || null,
+      organisation: r.organisation || null,
+      industry: r.industry || null,
+      website: r.website || null,
+      notes: r.notes || null,
+      lead_status: "no_reply",
+    }));
+    const { error } = await supabase.from("campaign_contacts").insert(payload);
+    if (error) { toast.error(error.message); return; }
+    toast.success(`Imported ${payload.length} contact(s)`);
+    void load();
+  };
+
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<CC | null>(null);
