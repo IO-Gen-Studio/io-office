@@ -27,7 +27,9 @@ const STAGES = [
 ] as const;
 type StageKey = typeof STAGES[number]["key"];
 
-type Campaign = { id: string; name: string; description: string | null; created_at: string };
+type StageConfig = { due_date?: string | null; template_id?: string | null };
+type StagesMap = Partial<Record<StageKey, StageConfig>>;
+type Campaign = { id: string; name: string; description: string | null; created_at: string; stages?: StagesMap | null };
 type Template = { id: string; name: string; subject: string; body: string; approved: boolean };
 type OutreachMap = Partial<Record<StageKey, { sent_at?: string | null; reply?: string | null }>>;
 type CC = {
