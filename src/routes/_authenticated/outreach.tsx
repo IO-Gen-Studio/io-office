@@ -348,6 +348,64 @@ function CampaignDetail({ campaign, editable, onBack }: { campaign: Campaign; ed
           {campaign.description && <p className="text-sm text-muted-foreground">{campaign.description}</p>}
         </div>
       </div>
+
+      <Card className="shadow-soft">
+        <CardContent className="pt-6 space-y-3">
+          <div>
+            <h3 className="text-sm font-semibold">Outreach schedule</h3>
+            <p className="text-xs text-muted-foreground">Set a due date and link an email template for each stage of this campaign.</p>
+          </div>
+          <div className="grid gap-3 md:grid-cols-3">
+            {STAGES.map((s) => {
+              const cfg = stages[s.key] || {};
+              const linked = templates.find((t) => t.id === cfg.template_id);
+              return (
+                <div key={s.key} className="rounded-md border bg-card/40 p-3 space-y-2">
+                  <div className="text-sm font-medium">{s.label}</div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Due date</Label>
+                    <Input
+                      type="date"
+                      className="h-8"
+                      value={cfg.due_date ?? ""}
+                      disabled={!editable}
+                      onChange={(e) => void updateStageConfig(s.key, { due_date: e.target.value || null })}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Email template</Label>
+                    <div className="flex gap-1">
+                      <Select
+                        value={cfg.template_id ?? "__none__"}
+                        onValueChange={(v) => void updateStageConfig(s.key, { template_id: v === "__none__" ? null : v })}
+                        disabled={!editable}
+                      >
+                        <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Select template" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__">None</SelectItem>
+                          {templates.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8 shrink-0"
+                        title={linked ? `Open "${linked.name}"` : "Select a template first"}
+                        disabled={!linked}
+                        onClick={() => openTemplate(cfg.template_id)}
+                      >
+                        <ExternalLink className="size-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
       <Card className="shadow-soft">
         <CardContent className="pt-6 space-y-4">
           <div className="flex gap-2 items-center flex-wrap">
