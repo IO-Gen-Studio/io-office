@@ -175,12 +175,17 @@ function CampaignDetail({ campaign, editable, onBack }: { campaign: Campaign; ed
       </div>
       <Card className="shadow-soft">
         <CardContent className="pt-6 space-y-4">
-          <div className="flex gap-2 items-center">
+          <div className="flex gap-2 items-center flex-wrap">
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-2 top-2.5 size-4 text-muted-foreground" />
               <Input className="pl-8" placeholder="Search contacts" value={q} onChange={(e) => setQ(e.target.value)} />
             </div>
-            {editable && <Button className="bg-gradient-primary text-primary-foreground ml-auto" onClick={() => { setEditing(null); setOpen(true); }}><Plus className="size-4 mr-2" />Add contact</Button>}
+            {editable && <div className="flex gap-2 ml-auto">
+              <Button variant="outline" onClick={downloadTemplate}><Download className="size-4 mr-2" />CSV template</Button>
+              <Button variant="outline" onClick={() => fileRef.current?.click()}><Upload className="size-4 mr-2" />Import CSV</Button>
+              <input ref={fileRef} type="file" accept=".csv,text/csv" className="hidden" onChange={onImport} />
+              <Button className="bg-gradient-primary text-primary-foreground" onClick={() => { setEditing(null); setOpen(true); }}><Plus className="size-4 mr-2" />Add contact</Button>
+            </div>}
           </div>
           <Table>
             <TableHeader><TableRow>
