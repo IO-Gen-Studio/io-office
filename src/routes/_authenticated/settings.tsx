@@ -13,7 +13,7 @@ function SettingsLayout() {
   ];
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">
-      <h1 className="text-3xl font-semibold tracking-tight">Settings</h1>
+      <h1 className="text-xl font-semibold tracking-tight">Settings</h1>
       <div className="flex gap-1 border-b border-border">
         {tabs.map((t) => (
           <Link key={t.to} to={t.to} className={cn(

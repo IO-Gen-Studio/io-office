@@ -39,7 +39,7 @@ function NotificationsPage() {
     <div className="p-6 max-w-3xl mx-auto space-y-4">
       <div className="flex items-baseline justify-between">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Notifications</h1>
+          <h1 className="text-xl font-semibold tracking-tight">Notifications</h1>
           <p className="text-muted-foreground mt-1">{unread} unread</p>
         </div>
         {unread > 0 && <Button variant="outline" onClick={markAll}>Mark all read</Button>}

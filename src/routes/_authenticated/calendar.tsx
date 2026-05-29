@@ -65,7 +65,7 @@ function CalendarPage() {
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       <div className="flex items-baseline justify-between">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Calendar</h1>
+          <h1 className="text-xl font-semibold tracking-tight">Calendar</h1>
           <p className="text-muted-foreground mt-1">Milestones, posts, renewals and deadlines.</p>
         </div>
         <div className="flex items-center gap-2">
