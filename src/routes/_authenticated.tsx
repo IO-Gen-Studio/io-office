@@ -44,26 +44,30 @@ const OPS = [
 function AuthLayout() {
   const { profile, signOut, canView, isAdmin, user, loading } = useAuth();
   const [unread, setUnread] = useState(0);
+  const navigate = useNavigate();
+  const redirectedRef = useRef(false);
 
   useEffect(() => {
-    if (!loading && profile?.must_change_password) {
-      window.location.replace("/reset-password");
+    if (!loading && profile?.must_change_password && !redirectedRef.current) {
+      redirectedRef.current = true;
+      void navigate({ to: "/reset-password" });
     }
-  }, [loading, profile]);
+  }, [loading, profile?.must_change_password, navigate]);
 
+  const userId = user?.id;
   useEffect(() => {
-    if (!user) return;
+    if (!userId) return;
     const load = async () => {
-      const { count } = await supabase.from("notifications").select("*", { count: "exact", head: true }).is("read_at", null).eq("user_id", user.id);
+      const { count } = await supabase.from("notifications").select("*", { count: "exact", head: true }).is("read_at", null).eq("user_id", userId);
       setUnread(count ?? 0);
     };
     void load();
-    const channel = supabase.channel("notif").on("postgres_changes",
-      { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
+    const channel = supabase.channel(`notif:${userId}`).on("postgres_changes",
+      { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` },
       () => void load(),
     ).subscribe();
     return () => { void supabase.removeChannel(channel); };
-  }, [user]);
+  }, [userId]);
 
   return (
     <SidebarProvider>
