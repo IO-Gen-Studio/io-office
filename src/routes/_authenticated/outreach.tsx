@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Pencil, Trash2, ArrowLeft, Search, Download, Upload } from "lucide-react";
 import { toast } from "sonner";
-import { formatDate } from "@/lib/format";
+import { formatDateUK } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/outreach")({ component: OutreachPage });
 
@@ -102,7 +102,7 @@ function CampaignsTab({ editable, onOpen }: { editable: boolean; onOpen: (c: Cam
         if (idx > 0) {
           const prev = STAGES[idx - 1].key;
           const dates = contacts.map((c) => c.outreach?.[prev]?.sent_at).filter(Boolean) as string[];
-          if (dates.length) date = formatDate(dates.sort().slice(-1)[0]);
+          if (dates.length) date = formatDateUK(dates.sort().slice(-1)[0]);
         }
         return { label: stage.label, date };
       }
