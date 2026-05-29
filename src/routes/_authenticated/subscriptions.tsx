@@ -3,14 +3,15 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth/auth-context";
 import { logActivity } from "@/lib/activity";
+import { formatGBP, formatDateUK } from "@/lib/format";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { DataTable, type DataTableColumn } from "@/components/DataTable";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
@@ -52,10 +53,38 @@ function SubscriptionsPage() {
     toast.success("Deleted"); void load();
   };
 
+  const saveCell = async (row: Sub, key: string, value: unknown) => {
+    const { error } = await supabase.from("subscriptions").update({ [key]: value }).eq("id", row.id);
+    if (error) { toast.error(error.message); return; }
+    void load();
+  };
+
   const mrr = rows.filter((r) => r.status === "active").reduce((sum, r) => {
     const c = Number(r.cost);
     return sum + (r.billing_cycle === "yearly" ? c / 12 : r.billing_cycle === "quarterly" ? c / 3 : c);
   }, 0);
+
+  const columns: DataTableColumn<Sub>[] = [
+    { key: "plan_name", header: "Plan", accessor: (r) => r.plan_name, editable, type: "text" },
+    { key: "client", header: "Client", accessor: (r) => orgs.find((o) => o.id === r.client_org_id)?.name ?? "" },
+    {
+      key: "billing_cycle", header: "Cycle", accessor: (r) => r.billing_cycle,
+      render: (r) => <span className="capitalize">{r.billing_cycle}</span>,
+      editable, type: "select",
+      options: [{ value: "monthly", label: "Monthly" }, { value: "quarterly", label: "Quarterly" }, { value: "yearly", label: "Yearly" }],
+    },
+    { key: "cost", header: "Cost", accessor: (r) => Number(r.cost), render: (r) => formatGBP(r.cost), editable, type: "number", align: "right" },
+    { key: "renewal_date", header: "Renewal", accessor: (r) => r.renewal_date, render: (r) => formatDateUK(r.renewal_date), editable, type: "date" },
+    {
+      key: "status", header: "Status", accessor: (r) => r.status,
+      render: (r) => <Badge variant={r.status === "active" ? "default" : r.status === "past_due" ? "destructive" : "secondary"} className="capitalize">{r.status.replace("_", " ")}</Badge>,
+      editable, type: "select",
+      options: [
+        { value: "active", label: "Active" }, { value: "paused", label: "Paused" },
+        { value: "past_due", label: "Past due" }, { value: "cancelled", label: "Cancelled" },
+      ],
+    },
+  ];
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
@@ -69,38 +98,26 @@ function SubscriptionsPage() {
 
       <div className="grid md:grid-cols-3 gap-4">
         <Card className="shadow-soft"><CardContent className="pt-6"><p className="text-xs uppercase text-muted-foreground">Active</p><p className="text-2xl font-semibold mt-1">{rows.filter((r) => r.status === "active").length}</p></CardContent></Card>
-        <Card className="shadow-soft"><CardContent className="pt-6"><p className="text-xs uppercase text-muted-foreground">MRR</p><p className="text-2xl font-semibold mt-1">${mrr.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p></CardContent></Card>
+        <Card className="shadow-soft"><CardContent className="pt-6"><p className="text-xs uppercase text-muted-foreground">MRR</p><p className="text-2xl font-semibold mt-1">{formatGBP(mrr)}</p></CardContent></Card>
         <Card className="shadow-soft"><CardContent className="pt-6"><p className="text-xs uppercase text-muted-foreground">Total plans</p><p className="text-2xl font-semibold mt-1">{rows.length}</p></CardContent></Card>
       </div>
 
       <Card className="shadow-soft">
         <CardContent className="pt-6">
-          <Table>
-            <TableHeader><TableRow>
-              <TableHead>Plan</TableHead><TableHead>Client</TableHead><TableHead>Cycle</TableHead>
-              <TableHead className="text-right">Cost</TableHead><TableHead>Renewal</TableHead>
-              <TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead>
-            </TableRow></TableHeader>
-            <TableBody>
-              {rows.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No subscriptions yet.</TableCell></TableRow> :
-                rows.map((s) => (
-                  <TableRow key={s.id}>
-                    <TableCell className="font-medium">{s.plan_name}</TableCell>
-                    <TableCell className="text-muted-foreground">{orgs.find((o) => o.id === s.client_org_id)?.name ?? "—"}</TableCell>
-                    <TableCell className="capitalize">{s.billing_cycle}</TableCell>
-                    <TableCell className="text-right">${Number(s.cost).toLocaleString()}</TableCell>
-                    <TableCell>{s.renewal_date ?? "—"}</TableCell>
-                    <TableCell><Badge variant={s.status === "active" ? "default" : s.status === "past_due" ? "destructive" : "secondary"} className="capitalize">{s.status.replace("_", " ")}</Badge></TableCell>
-                    <TableCell className="text-right">
-                      {editable && <>
-                        <Button variant="ghost" size="icon" onClick={() => { setEditing(s); setOpen(true); }}><Pencil className="size-4" /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => remove(s)}><Trash2 className="size-4" /></Button>
-                      </>}
-                    </TableCell>
-                  </TableRow>
-                ))}
-            </TableBody>
-          </Table>
+          <DataTable
+            tableKey="subscriptions"
+            columns={columns}
+            rows={rows}
+            rowId={(r) => r.id}
+            onSaveCell={saveCell}
+            emptyMessage="No subscriptions yet."
+            actions={editable ? (r) => (
+              <>
+                <Button variant="ghost" size="icon" onClick={() => { setEditing(r); setOpen(true); }}><Pencil className="size-4" /></Button>
+                <Button variant="ghost" size="icon" onClick={() => remove(r)}><Trash2 className="size-4" /></Button>
+              </>
+            ) : undefined}
+          />
         </CardContent>
       </Card>
 
@@ -153,7 +170,7 @@ function SubDialog({ open, onOpenChange, sub, orgs, contacts, onSaved }: {
         <div className="space-y-3">
           <div className="space-y-1"><Label>Plan name *</Label><Input value={plan} onChange={(e) => setPlan(e.target.value)} /></div>
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1"><Label>Cost</Label><Input type="number" value={cost} onChange={(e) => setCost(e.target.value)} /></div>
+            <div className="space-y-1"><Label>Cost (£)</Label><Input type="number" value={cost} onChange={(e) => setCost(e.target.value)} /></div>
             <div className="space-y-1">
               <Label>Billing cycle</Label>
               <Select value={cycle} onValueChange={setCycle}>

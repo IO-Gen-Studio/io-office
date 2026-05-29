@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth/auth-context";
 import { logActivity } from "@/lib/activity";
@@ -9,11 +9,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Pencil, Trash2 } from "lucide-react";
+import { DataTable, type DataTableColumn } from "@/components/DataTable";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/crm")({ component: CrmPage });
@@ -46,7 +46,6 @@ function CrmPage() {
 
 function OrgsTab({ editable }: { editable: boolean }) {
   const [orgs, setOrgs] = useState<Org[]>([]);
-  const [q, setQ] = useState("");
   const [editing, setEditing] = useState<Org | null>(null);
   const [open, setOpen] = useState(false);
 
@@ -56,47 +55,48 @@ function OrgsTab({ editable }: { editable: boolean }) {
   };
   useEffect(() => { void load(); }, []);
 
-  const filtered = useMemo(() => orgs.filter((o) =>
-    !q || o.name.toLowerCase().includes(q.toLowerCase()) || (o.industry ?? "").toLowerCase().includes(q.toLowerCase())
-  ), [orgs, q]);
-
-  const remove = async (id: string, name: string) => {
-    if (!confirm(`Delete organisation "${name}"?`)) return;
-    const { error } = await supabase.from("organisations").delete().eq("id", id);
+  const remove = async (o: Org) => {
+    if (!confirm(`Delete organisation "${o.name}"?`)) return;
+    const { error } = await supabase.from("organisations").delete().eq("id", o.id);
     if (error) { toast.error(error.message); return; }
-    await logActivity({ module: "crm", entity_type: "organisation", entity_id: id, verb: "deleted", summary: `Deleted organisation ${name}` });
+    await logActivity({ module: "crm", entity_type: "organisation", entity_id: o.id, verb: "deleted", summary: `Deleted organisation ${o.name}` });
     toast.success("Deleted"); void load();
   };
 
+  const saveCell = async (row: Org, key: string, value: unknown) => {
+    const { error } = await supabase.from("organisations").update({ [key]: value }).eq("id", row.id);
+    if (error) { toast.error(error.message); return; }
+    void load();
+  };
+
+  const columns: DataTableColumn<Org>[] = [
+    { key: "name", header: "Name", accessor: (r) => r.name, editable, type: "text" },
+    { key: "industry", header: "Industry", accessor: (r) => r.industry ?? "", editable, type: "text" },
+    {
+      key: "website", header: "Website", accessor: (r) => r.website ?? "",
+      render: (r) => r.website ? <a href={r.website} target="_blank" rel="noreferrer" className="text-primary hover:underline" onClick={(e) => e.stopPropagation()}>{r.website}</a> : <span className="text-muted-foreground">—</span>,
+      editable, type: "text",
+    },
+  ];
+
   return (
     <Card className="shadow-soft">
-      <CardContent className="pt-6 space-y-4">
-        <div className="flex gap-2 items-center">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-2 top-2.5 size-4 text-muted-foreground" />
-            <Input className="pl-8" placeholder="Search organisations" value={q} onChange={(e) => setQ(e.target.value)} />
-          </div>
-          {editable && <Button className="bg-gradient-primary text-primary-foreground" onClick={() => { setEditing(null); setOpen(true); }}><Plus className="size-4 mr-2" />New organisation</Button>}
-        </div>
-        <Table>
-          <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Industry</TableHead><TableHead>Website</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
-          <TableBody>
-            {filtered.length === 0 ? <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">No organisations yet.</TableCell></TableRow> :
-              filtered.map((o) => (
-                <TableRow key={o.id}>
-                  <TableCell className="font-medium">{o.name}</TableCell>
-                  <TableCell className="text-muted-foreground">{o.industry || "—"}</TableCell>
-                  <TableCell>{o.website ? <a href={o.website} target="_blank" rel="noreferrer" className="text-primary hover:underline">{o.website}</a> : "—"}</TableCell>
-                  <TableCell className="text-right">
-                    {editable && <>
-                      <Button variant="ghost" size="icon" onClick={() => { setEditing(o); setOpen(true); }}><Pencil className="size-4" /></Button>
-                      <Button variant="ghost" size="icon" onClick={() => remove(o.id, o.name)}><Trash2 className="size-4" /></Button>
-                    </>}
-                  </TableCell>
-                </TableRow>
-              ))}
-          </TableBody>
-        </Table>
+      <CardContent className="pt-6">
+        <DataTable
+          tableKey="crm.orgs"
+          columns={columns}
+          rows={orgs}
+          rowId={(r) => r.id}
+          onSaveCell={saveCell}
+          emptyMessage="No organisations yet."
+          toolbarLeft={editable && <Button className="bg-gradient-primary text-primary-foreground" onClick={() => { setEditing(null); setOpen(true); }}><Plus className="size-4 mr-2" />New organisation</Button>}
+          actions={editable ? (o) => (
+            <>
+              <Button variant="ghost" size="icon" onClick={() => { setEditing(o); setOpen(true); }}><Pencil className="size-4" /></Button>
+              <Button variant="ghost" size="icon" onClick={() => remove(o)}><Trash2 className="size-4" /></Button>
+            </>
+          ) : undefined}
+        />
         <OrgDialog open={open} onOpenChange={setOpen} org={editing} onSaved={load} />
       </CardContent>
     </Card>
@@ -150,8 +150,6 @@ function OrgDialog({ open, onOpenChange, org, onSaved }: { open: boolean; onOpen
 function ContactsTab({ editable }: { editable: boolean }) {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [orgs, setOrgs] = useState<Org[]>([]);
-  const [q, setQ] = useState("");
-  const [filter, setFilter] = useState<"all" | "leads" | "clients">("all");
   const [editing, setEditing] = useState<Contact | null>(null);
   const [open, setOpen] = useState(false);
 
@@ -164,17 +162,6 @@ function ContactsTab({ editable }: { editable: boolean }) {
   };
   useEffect(() => { void load(); }, []);
 
-  const filtered = useMemo(() => contacts.filter((c) => {
-    if (filter === "leads" && !c.is_lead) return false;
-    if (filter === "clients" && c.is_lead) return false;
-    if (q) {
-      const s = q.toLowerCase();
-      const orgName = orgs.find((o) => o.id === c.organisation_id)?.name ?? "";
-      return [c.first_name, c.last_name, c.email, c.phone, orgName].some((v) => (v ?? "").toLowerCase().includes(s));
-    }
-    return true;
-  }), [contacts, q, filter, orgs]);
-
   const remove = async (c: Contact) => {
     if (!confirm(`Delete contact "${c.first_name} ${c.last_name}"?`)) return;
     const { error } = await supabase.from("contacts").delete().eq("id", c.id);
@@ -183,48 +170,53 @@ function ContactsTab({ editable }: { editable: boolean }) {
     toast.success("Deleted"); void load();
   };
 
+  const saveCell = async (row: Contact, key: string, value: unknown) => {
+    const { error } = await supabase.from("contacts").update({ [key]: value }).eq("id", row.id);
+    if (error) { toast.error(error.message); return; }
+    void load();
+  };
+
+  const columns: DataTableColumn<Contact>[] = [
+    { key: "first_name", header: "First name", accessor: (r) => r.first_name, editable, type: "text" },
+    { key: "last_name", header: "Last name", accessor: (r) => r.last_name, editable, type: "text" },
+    { key: "email", header: "Email", accessor: (r) => r.email ?? "", editable, type: "text" },
+    { key: "organisation_id", header: "Organisation", accessor: (r) => orgs.find((o) => o.id === r.organisation_id)?.name ?? "", filterable: true },
+    { key: "job_title", header: "Job title", accessor: (r) => r.job_title ?? "", editable, type: "text" },
+    {
+      key: "is_lead", header: "Type", accessor: (r) => (r.is_lead ? "lead" : "client"),
+      render: (r) => r.is_lead ? <Badge variant="secondary">Lead</Badge> : <Badge>Client</Badge>,
+      editable, type: "select",
+      options: [{ value: "lead", label: "Lead" }, { value: "client", label: "Client" }],
+    },
+  ];
+
+  // Custom saveCell to map "lead"/"client" string back to boolean for the is_lead column
+  const customSave = async (row: Contact, key: string, value: unknown) => {
+    if (key === "is_lead") {
+      await saveCell(row, "is_lead", value === "lead");
+      return;
+    }
+    await saveCell(row, key, value);
+  };
+
   return (
     <Card className="shadow-soft">
-      <CardContent className="pt-6 space-y-4">
-        <div className="flex gap-2 items-center flex-wrap">
-          <div className="relative flex-1 max-w-sm min-w-[200px]">
-            <Search className="absolute left-2 top-2.5 size-4 text-muted-foreground" />
-            <Input className="pl-8" placeholder="Search contacts" value={q} onChange={(e) => setQ(e.target.value)} />
-          </div>
-          <Select value={filter} onValueChange={(v) => setFilter(v as "all" | "leads" | "clients")}>
-            <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="leads">Leads only</SelectItem>
-              <SelectItem value="clients">Clients only</SelectItem>
-            </SelectContent>
-          </Select>
-          {editable && <Button className="bg-gradient-primary text-primary-foreground ml-auto" onClick={() => { setEditing(null); setOpen(true); }}><Plus className="size-4 mr-2" />New contact</Button>}
-        </div>
-        <Table>
-          <TableHeader><TableRow>
-            <TableHead>Name</TableHead><TableHead>Email</TableHead><TableHead>Organisation</TableHead>
-            <TableHead>Job title</TableHead><TableHead>Type</TableHead><TableHead className="text-right">Actions</TableHead>
-          </TableRow></TableHeader>
-          <TableBody>
-            {filtered.length === 0 ? <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">No contacts.</TableCell></TableRow> :
-              filtered.map((c) => (
-                <TableRow key={c.id}>
-                  <TableCell className="font-medium">{c.first_name} {c.last_name}</TableCell>
-                  <TableCell>{c.email || "—"}</TableCell>
-                  <TableCell className="text-muted-foreground">{orgs.find((o) => o.id === c.organisation_id)?.name ?? "—"}</TableCell>
-                  <TableCell className="text-muted-foreground">{c.job_title || "—"}</TableCell>
-                  <TableCell>{c.is_lead ? <Badge variant="secondary">Lead</Badge> : <Badge>Client</Badge>}</TableCell>
-                  <TableCell className="text-right">
-                    {editable && <>
-                      <Button variant="ghost" size="icon" onClick={() => { setEditing(c); setOpen(true); }}><Pencil className="size-4" /></Button>
-                      <Button variant="ghost" size="icon" onClick={() => remove(c)}><Trash2 className="size-4" /></Button>
-                    </>}
-                  </TableCell>
-                </TableRow>
-              ))}
-          </TableBody>
-        </Table>
+      <CardContent className="pt-6">
+        <DataTable
+          tableKey="crm.contacts"
+          columns={columns}
+          rows={contacts}
+          rowId={(r) => r.id}
+          onSaveCell={customSave}
+          emptyMessage="No contacts."
+          toolbarLeft={editable && <Button className="bg-gradient-primary text-primary-foreground" onClick={() => { setEditing(null); setOpen(true); }}><Plus className="size-4 mr-2" />New contact</Button>}
+          actions={editable ? (c) => (
+            <>
+              <Button variant="ghost" size="icon" onClick={() => { setEditing(c); setOpen(true); }}><Pencil className="size-4" /></Button>
+              <Button variant="ghost" size="icon" onClick={() => remove(c)}><Trash2 className="size-4" /></Button>
+            </>
+          ) : undefined}
+        />
         <ContactDialog open={open} onOpenChange={setOpen} contact={editing} orgs={orgs} onSaved={load} />
       </CardContent>
     </Card>
