@@ -145,8 +145,8 @@ function AppSidebar({ canView, isAdmin }: { canView: (m: string) => boolean; isA
     <Sidebar collapsible="icon">
       <SidebarContent>
         <div className="p-3 flex items-center gap-2">
-          <img src={logoUrl} alt="IO-Gen" className="size-8 rounded-md object-contain shrink-0" />
-          {!collapsed && <div className="font-semibold tracking-tight">IO-Gen</div>}
+          <img src={logoUrl} alt="Logo" className="size-8 rounded-md object-contain shrink-0" />
+          {!collapsed && <div className="font-semibold tracking-tight"> </div>}
         </div>
         {renderGroup("Overview", NAV)}
         {renderGroup("Business Development", BIZ_DEV)}

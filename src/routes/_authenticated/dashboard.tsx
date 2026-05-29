@@ -49,7 +49,7 @@ function Dashboard() {
         <h1 className="text-3xl font-semibold tracking-tight">
           Welcome back{profile?.full_name ? `, ${profile.full_name.split(" ")[0]}` : ""}
         </h1>
-        <p className="text-muted-foreground mt-1">Here's what's happening across IO-Gen.</p>
+        <p className="text-muted-foreground mt-1">Here's what's happening.</p>
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {kpis.map((k) => (
