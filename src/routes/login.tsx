@@ -54,7 +54,7 @@ function LoginPage() {
           <div className="flex items-center gap-3 mb-2">
             <div className="size-10 rounded-lg bg-gradient-primary flex items-center justify-center text-primary-foreground font-bold">IO</div>
             <div>
-              <CardTitle className="text-2xl">IO-Gen</CardTitle>
+              <CardTitle className="text-2xl"> </CardTitle>
               <CardDescription>Business operations</CardDescription>
             </div>
           </div>
@@ -85,7 +85,7 @@ function LoginPage() {
                 onClick={() => setMode("login")}>Back to sign in</button>
             )}
             <p className="text-xs text-muted-foreground text-center pt-2">
-              Accounts are created by an administrator. Contact your IO-Gen admin if you need access.
+              Accounts are created by an administrator. Contact your admin if you need access.
             </p>
           </form>
         </CardContent>
