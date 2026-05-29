@@ -276,15 +276,35 @@ function CampaignDetail({ campaign, editable, onBack }: { campaign: Campaign; ed
   const [editing, setEditing] = useState<CC | null>(null);
 
   const load = async () => {
-    const [{ data: c }, { data: l }] = await Promise.all([
+    const [{ data: c }, { data: l }, { data: t }, { data: cm }] = await Promise.all([
       supabase.from("campaign_contacts").select("*").eq("campaign_id", campaign.id).order("created_at"),
       supabase.from("lead_status_options").select("key,label").order("position"),
+      supabase.from("email_templates").select("*").order("name"),
+      supabase.from("campaigns").select("stages").eq("id", campaign.id).maybeSingle(),
     ]);
-    setRows((c ?? []) as CC[]); setLeadOpts((l ?? []) as LeadOpt[]);
+    setRows((c ?? []) as CC[]);
+    setLeadOpts((l ?? []) as LeadOpt[]);
+    setTemplates((t ?? []) as Template[]);
+    setStages(((cm?.stages ?? {}) as StagesMap));
   };
   useEffect(() => { void load(); }, [campaign.id]);
 
   const filtered = useMemo(() => rows.filter((r) => !q || [r.first_name, r.last_name, r.email, r.organisation].some((v) => (v ?? "").toLowerCase().includes(q.toLowerCase()))), [rows, q]);
+
+  const updateStageConfig = async (stage: StageKey, patch: Partial<StageConfig>) => {
+    if (!editable) return;
+    const next: StagesMap = { ...stages, [stage]: { ...(stages[stage] || {}), ...patch } };
+    setStages(next);
+    const { error } = await supabase.from("campaigns").update({ stages: next as never }).eq("id", campaign.id);
+    if (error) { toast.error(error.message); void load(); }
+  };
+
+  const openTemplate = (id: string | null | undefined) => {
+    const t = templates.find((x) => x.id === id);
+    if (!t) { toast.error("Select a template first"); return; }
+    setEditTemplate(t);
+    setTemplateOpen(true);
+  };
 
   const remove = async (r: CC) => {
     if (!confirm("Delete contact?")) return;
