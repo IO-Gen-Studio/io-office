@@ -87,7 +87,7 @@ function ProjectList({ editable, onOpen }: { editable: boolean; onOpen: (p: Proj
   };
 
   const saveCell = async (row: Project, key: string, value: unknown) => {
-    const { error } = await supabase.from("projects").update({ [key]: value }).eq("id", row.id);
+    const { error } = await supabase.from("projects").update({ [key]: value } as never).eq("id", row.id);
     if (error) { toast.error(error.message); return; }
     void load();
   };
