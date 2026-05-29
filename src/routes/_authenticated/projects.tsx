@@ -135,9 +135,12 @@ function ProjectList({ editable, onOpen }: { editable: boolean; onOpen: (p: Proj
               onSaveCell={saveCell}
               onRowClick={onOpen}
               emptyMessage={`No ${tab}s yet.`}
-              actions={editable ? (r) => (
-                <Button variant="ghost" size="icon" onClick={() => remove(r)}><Trash2 className="size-4" /></Button>
-              ) : undefined}
+              actions={(r) => (
+                <div className="flex justify-end gap-1">
+                  <Button variant="ghost" size="icon" title="Open" onClick={() => onOpen(r)}><FolderOpen className="size-4" /></Button>
+                  {editable && <Button variant="ghost" size="icon" title="Delete" onClick={() => remove(r)}><Trash2 className="size-4" /></Button>}
+                </div>
+              )}
             />
           </CardContent>
         </Card>
