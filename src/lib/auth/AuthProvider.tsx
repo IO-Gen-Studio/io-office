@@ -25,21 +25,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    let currentUid: string | null = null;
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_evt, sess) => {
       setSession(sess);
-      setUser(sess?.user ?? null);
-      if (sess?.user) {
-        setTimeout(() => { void loadAux(sess.user.id); }, 0);
-      } else {
-        setProfile(null);
-        setIsAdmin(false);
-        setModuleAccess([]);
+      const nextUser = sess?.user ?? null;
+      const nextUid = nextUser?.id ?? null;
+      // Only update user state when identity actually changes; avoids
+      // re-renders on TOKEN_REFRESHED that cause downstream effects to
+      // re-run and the UI to flicker on every navigation.
+      if (nextUid !== currentUid) {
+        currentUid = nextUid;
+        setUser(nextUser);
+        if (nextUid) {
+          setTimeout(() => { void loadAux(nextUid); }, 0);
+        } else {
+          setProfile(null);
+          setIsAdmin(false);
+          setModuleAccess([]);
+        }
       }
     });
 
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       setUser(data.session?.user ?? null);
+      currentUid = data.session?.user?.id ?? null;
       if (data.session?.user) {
         void loadAux(data.session.user.id).finally(() => setLoading(false));
       } else {
