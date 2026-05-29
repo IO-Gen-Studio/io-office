@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Pencil, Trash2, ArrowLeft, Search, Download, Upload } from "lucide-react";
+import { Plus, Pencil, Trash2, ArrowLeft, Search, Download, Upload, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { formatDateUK } from "@/lib/format";
 
@@ -27,7 +27,9 @@ const STAGES = [
 ] as const;
 type StageKey = typeof STAGES[number]["key"];
 
-type Campaign = { id: string; name: string; description: string | null; created_at: string };
+type StageConfig = { due_date?: string | null; template_id?: string | null };
+type StagesMap = Partial<Record<StageKey, StageConfig>>;
+type Campaign = { id: string; name: string; description: string | null; created_at: string; stages?: StagesMap | null };
 type Template = { id: string; name: string; subject: string; body: string; approved: boolean };
 type OutreachMap = Partial<Record<StageKey, { sent_at?: string | null; reply?: string | null }>>;
 type CC = {
@@ -63,7 +65,7 @@ function OutreachPage() {
         <Tabs defaultValue="campaigns">
           <TabsList>
             <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
-            <TabsTrigger value="templates">Templates</TabsTrigger>
+            <TabsTrigger value="templates">Email Templates</TabsTrigger>
           </TabsList>
           <TabsContent value="campaigns" className="mt-4"><CampaignsTab editable={editable} onOpen={setActive} /></TabsContent>
           <TabsContent value="templates" className="mt-4"><TemplatesTab editable={editable} /></TabsContent>
@@ -199,6 +201,10 @@ function CampaignDialog({ open, onOpenChange, campaign, onSaved }: { open: boole
 function CampaignDetail({ campaign, editable, onBack }: { campaign: Campaign; editable: boolean; onBack: () => void }) {
   const [rows, setRows] = useState<CC[]>([]);
   const [leadOpts, setLeadOpts] = useState<LeadOpt[]>([]);
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [stages, setStages] = useState<StagesMap>(campaign.stages ?? {});
+  const [editTemplate, setEditTemplate] = useState<Template | null>(null);
+  const [templateOpen, setTemplateOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const TEMPLATE_HEADERS = ["first_name", "last_name", "email", "job_title", "organisation", "industry", "website", "notes"];
@@ -270,15 +276,35 @@ function CampaignDetail({ campaign, editable, onBack }: { campaign: Campaign; ed
   const [editing, setEditing] = useState<CC | null>(null);
 
   const load = async () => {
-    const [{ data: c }, { data: l }] = await Promise.all([
+    const [{ data: c }, { data: l }, { data: t }, { data: cm }] = await Promise.all([
       supabase.from("campaign_contacts").select("*").eq("campaign_id", campaign.id).order("created_at"),
       supabase.from("lead_status_options").select("key,label").order("position"),
+      supabase.from("email_templates").select("*").order("name"),
+      supabase.from("campaigns").select("stages").eq("id", campaign.id).maybeSingle(),
     ]);
-    setRows((c ?? []) as CC[]); setLeadOpts((l ?? []) as LeadOpt[]);
+    setRows((c ?? []) as CC[]);
+    setLeadOpts((l ?? []) as LeadOpt[]);
+    setTemplates((t ?? []) as Template[]);
+    setStages(((cm?.stages ?? {}) as StagesMap));
   };
   useEffect(() => { void load(); }, [campaign.id]);
 
   const filtered = useMemo(() => rows.filter((r) => !q || [r.first_name, r.last_name, r.email, r.organisation].some((v) => (v ?? "").toLowerCase().includes(q.toLowerCase()))), [rows, q]);
+
+  const updateStageConfig = async (stage: StageKey, patch: Partial<StageConfig>) => {
+    if (!editable) return;
+    const next: StagesMap = { ...stages, [stage]: { ...(stages[stage] || {}), ...patch } };
+    setStages(next);
+    const { error } = await supabase.from("campaigns").update({ stages: next as never }).eq("id", campaign.id);
+    if (error) { toast.error(error.message); void load(); }
+  };
+
+  const openTemplate = (id: string | null | undefined) => {
+    const t = templates.find((x) => x.id === id);
+    if (!t) { toast.error("Select a template first"); return; }
+    setEditTemplate(t);
+    setTemplateOpen(true);
+  };
 
   const remove = async (r: CC) => {
     if (!confirm("Delete contact?")) return;
@@ -322,6 +348,64 @@ function CampaignDetail({ campaign, editable, onBack }: { campaign: Campaign; ed
           {campaign.description && <p className="text-sm text-muted-foreground">{campaign.description}</p>}
         </div>
       </div>
+
+      <Card className="shadow-soft">
+        <CardContent className="pt-6 space-y-3">
+          <div>
+            <h3 className="text-sm font-semibold">Outreach schedule</h3>
+            <p className="text-xs text-muted-foreground">Set a due date and link an email template for each stage of this campaign.</p>
+          </div>
+          <div className="grid gap-3 md:grid-cols-3">
+            {STAGES.map((s) => {
+              const cfg = stages[s.key] || {};
+              const linked = templates.find((t) => t.id === cfg.template_id);
+              return (
+                <div key={s.key} className="rounded-md border bg-card/40 p-3 space-y-2">
+                  <div className="text-sm font-medium">{s.label}</div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Due date</Label>
+                    <Input
+                      type="date"
+                      className="h-8"
+                      value={cfg.due_date ?? ""}
+                      disabled={!editable}
+                      onChange={(e) => void updateStageConfig(s.key, { due_date: e.target.value || null })}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Email template</Label>
+                    <div className="flex gap-1">
+                      <Select
+                        value={cfg.template_id ?? "__none__"}
+                        onValueChange={(v) => void updateStageConfig(s.key, { template_id: v === "__none__" ? null : v })}
+                        disabled={!editable}
+                      >
+                        <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Select template" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__">None</SelectItem>
+                          {templates.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8 shrink-0"
+                        title={linked ? `Open "${linked.name}"` : "Select a template first"}
+                        disabled={!linked}
+                        onClick={() => openTemplate(cfg.template_id)}
+                      >
+                        <ExternalLink className="size-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
       <Card className="shadow-soft">
         <CardContent className="pt-6 space-y-4">
           <div className="flex gap-2 items-center flex-wrap">
@@ -384,6 +468,7 @@ function CampaignDetail({ campaign, editable, onBack }: { campaign: Campaign; ed
           <CCDialog open={open} onOpenChange={setOpen} contact={editing} campaignId={campaign.id} leadOpts={leadOpts} onSaved={load} />
         </CardContent>
       </Card>
+      <TemplateDialog open={templateOpen} onOpenChange={setTemplateOpen} template={editTemplate} onSaved={load} />
     </div>
   );
 }
@@ -475,7 +560,7 @@ function TemplatesTab({ editable }: { editable: boolean }) {
     <Card className="shadow-soft">
       <CardContent className="pt-6 space-y-4">
         <div className="flex justify-end">
-          {editable && <Button className="bg-gradient-primary text-primary-foreground" onClick={() => { setEditing(null); setOpen(true); }}><Plus className="size-4 mr-2" />New template</Button>}
+          {editable && <Button className="bg-gradient-primary text-primary-foreground" onClick={() => { setEditing(null); setOpen(true); }}><Plus className="size-4 mr-2" />New email template</Button>}
         </div>
         <Table>
           <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Subject</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
@@ -526,7 +611,7 @@ function TemplateDialog({ open, onOpenChange, template, onSaved }: { open: boole
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
-        <DialogHeader><DialogTitle>{template ? "Edit template" : "New template"}</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{template ? "Edit email template" : "New email template"}</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1"><Label>Name *</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
           <div className="space-y-1"><Label>Subject *</Label><Input value={subject} onChange={(e) => setSubject(e.target.value)} /></div>
