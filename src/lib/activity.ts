@@ -14,9 +14,9 @@ export async function logActivity(args: {
   await supabase.rpc("log_activity", {
     _module: args.module,
     _entity_type: args.entity_type,
-    _entity_id: args.entity_id ?? undefined,
+    ...(args.entity_id ? { _entity_id: args.entity_id } : {}),
     _verb: args.verb,
     _summary: args.summary,
     _metadata: (args.metadata ?? {}) as never,
-  });
+  } as never);
 }
