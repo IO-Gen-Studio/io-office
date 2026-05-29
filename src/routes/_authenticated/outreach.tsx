@@ -65,7 +65,7 @@ function OutreachPage() {
         <Tabs defaultValue="campaigns">
           <TabsList>
             <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
-            <TabsTrigger value="templates">Templates</TabsTrigger>
+            <TabsTrigger value="templates">Email Templates</TabsTrigger>
           </TabsList>
           <TabsContent value="campaigns" className="mt-4"><CampaignsTab editable={editable} onOpen={setActive} /></TabsContent>
           <TabsContent value="templates" className="mt-4"><TemplatesTab editable={editable} /></TabsContent>
