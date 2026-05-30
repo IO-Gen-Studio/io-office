@@ -673,6 +673,7 @@ export type Database = {
           platform: Database["public"]["Enums"]["social_platform"]
           post_status: Database["public"]["Enums"]["post_status"]
           scheduled_at: string | null
+          title: string
           updated_at: string
         }
         Insert: {
@@ -685,6 +686,7 @@ export type Database = {
           platform: Database["public"]["Enums"]["social_platform"]
           post_status?: Database["public"]["Enums"]["post_status"]
           scheduled_at?: string | null
+          title?: string
           updated_at?: string
         }
         Update: {
@@ -697,6 +699,7 @@ export type Database = {
           platform?: Database["public"]["Enums"]["social_platform"]
           post_status?: Database["public"]["Enums"]["post_status"]
           scheduled_at?: string | null
+          title?: string
           updated_at?: string
         }
         Relationships: []

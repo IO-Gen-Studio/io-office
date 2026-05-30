@@ -1,0 +1,1 @@
+ALTER TABLE public.social_plans ADD COLUMN title text NOT NULL DEFAULT '';
