@@ -124,7 +124,7 @@ function PlanDialog({ open, onOpenChange, plan, onSaved }: { open: boolean; onOp
 
   const submit = async () => {
     const payload = {
-      platform, copy, media_path: mediaPath,
+      platform, title, copy, media_path: mediaPath,
       scheduled_at: scheduledAt ? new Date(scheduledAt).toISOString() : null,
       approval_status: approval, post_status: status,
     };
