@@ -9,7 +9,10 @@ function SettingsLayout() {
   const path = useRouterState({ select: (r) => r.location.pathname });
   const tabs = [
     { to: "/settings/profile", label: "Profile" },
-    ...(isAdmin ? [{ to: "/settings/users", label: "Users & Access" }] : []),
+    ...(isAdmin ? [
+      { to: "/settings/users", label: "Users & Access" },
+      { to: "/settings/fields", label: "Custom Fields" },
+    ] : []),
   ];
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">

@@ -24,6 +24,7 @@ import { Route as AuthenticatedCrmRouteImport } from './routes/_authenticated/cr
 import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
 import { Route as AuthenticatedSettingsUsersRouteImport } from './routes/_authenticated/settings.users'
 import { Route as AuthenticatedSettingsProfileRouteImport } from './routes/_authenticated/settings.profile'
+import { Route as AuthenticatedSettingsFieldsRouteImport } from './routes/_authenticated/settings.fields'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -103,6 +104,12 @@ const AuthenticatedSettingsProfileRoute =
     path: '/profile',
     getParentRoute: () => AuthenticatedSettingsRoute,
   } as any)
+const AuthenticatedSettingsFieldsRoute =
+  AuthenticatedSettingsFieldsRouteImport.update({
+    id: '/fields',
+    path: '/fields',
+    getParentRoute: () => AuthenticatedSettingsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -117,6 +124,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/social': typeof AuthenticatedSocialRoute
   '/subscriptions': typeof AuthenticatedSubscriptionsRoute
+  '/settings/fields': typeof AuthenticatedSettingsFieldsRoute
   '/settings/profile': typeof AuthenticatedSettingsProfileRoute
   '/settings/users': typeof AuthenticatedSettingsUsersRoute
 }
@@ -133,6 +141,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/social': typeof AuthenticatedSocialRoute
   '/subscriptions': typeof AuthenticatedSubscriptionsRoute
+  '/settings/fields': typeof AuthenticatedSettingsFieldsRoute
   '/settings/profile': typeof AuthenticatedSettingsProfileRoute
   '/settings/users': typeof AuthenticatedSettingsUsersRoute
 }
@@ -151,6 +160,7 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/_authenticated/social': typeof AuthenticatedSocialRoute
   '/_authenticated/subscriptions': typeof AuthenticatedSubscriptionsRoute
+  '/_authenticated/settings/fields': typeof AuthenticatedSettingsFieldsRoute
   '/_authenticated/settings/profile': typeof AuthenticatedSettingsProfileRoute
   '/_authenticated/settings/users': typeof AuthenticatedSettingsUsersRoute
 }
@@ -169,6 +179,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/social'
     | '/subscriptions'
+    | '/settings/fields'
     | '/settings/profile'
     | '/settings/users'
   fileRoutesByTo: FileRoutesByTo
@@ -185,6 +196,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/social'
     | '/subscriptions'
+    | '/settings/fields'
     | '/settings/profile'
     | '/settings/users'
   id:
@@ -202,6 +214,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/social'
     | '/_authenticated/subscriptions'
+    | '/_authenticated/settings/fields'
     | '/_authenticated/settings/profile'
     | '/_authenticated/settings/users'
   fileRoutesById: FileRoutesById
@@ -320,15 +333,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsProfileRouteImport
       parentRoute: typeof AuthenticatedSettingsRoute
     }
+    '/_authenticated/settings/fields': {
+      id: '/_authenticated/settings/fields'
+      path: '/fields'
+      fullPath: '/settings/fields'
+      preLoaderRoute: typeof AuthenticatedSettingsFieldsRouteImport
+      parentRoute: typeof AuthenticatedSettingsRoute
+    }
   }
 }
 
 interface AuthenticatedSettingsRouteChildren {
+  AuthenticatedSettingsFieldsRoute: typeof AuthenticatedSettingsFieldsRoute
   AuthenticatedSettingsProfileRoute: typeof AuthenticatedSettingsProfileRoute
   AuthenticatedSettingsUsersRoute: typeof AuthenticatedSettingsUsersRoute
 }
 
 const AuthenticatedSettingsRouteChildren: AuthenticatedSettingsRouteChildren = {
+  AuthenticatedSettingsFieldsRoute: AuthenticatedSettingsFieldsRoute,
   AuthenticatedSettingsProfileRoute: AuthenticatedSettingsProfileRoute,
   AuthenticatedSettingsUsersRoute: AuthenticatedSettingsUsersRoute,
 }
