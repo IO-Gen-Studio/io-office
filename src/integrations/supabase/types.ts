@@ -844,6 +844,9 @@ export type Database = {
         | "dropdown"
         | "checklist"
         | "long_text"
+        | "checkbox"
+        | "attachment"
+        | "reference"
       post_status: "posted" | "not_posted" | "cancelled"
       priority_level: "low" | "medium" | "high"
       project_status: "in_progress" | "on_hold" | "cancelled" | "completed"
@@ -1003,6 +1006,9 @@ export const Constants = {
         "dropdown",
         "checklist",
         "long_text",
+        "checkbox",
+        "attachment",
+        "reference",
       ],
       post_status: ["posted", "not_posted", "cancelled"],
       priority_level: ["low", "medium", "high"],
