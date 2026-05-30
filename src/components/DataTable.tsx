@@ -213,7 +213,7 @@ export function DataTable<T>(props: DataTableProps<T>) {
                       c.sortable === false && "cursor-default hover:text-muted-foreground",
                     )}
                   >
-                    <span className="cursor-grab" title="Drag to reorder">⋮⋮Project\nDescription</span>
+                    <span className="cursor-grab whitespace-pre-wrap" title="Drag to reorder">⋮⋮Project{"\n"}Description</span>
                     {c.header}
                     {c.sortable !== false && (
                       prefs.sort?.key === c.key
