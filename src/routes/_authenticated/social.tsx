@@ -153,7 +153,7 @@ function PlanDialog({ open, onOpenChange, plan, onSaved }: { open: boolean; onOp
                 <SelectContent>{PLATFORMS.map((p) => <SelectItem key={p} value={p} className="capitalize">{p}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div className="space-y-1"><Label>Scheduled at</Label><Input type="datetime-local" value={scheduledAt} onChange={(e) => setScheduledAt(e.target.value)} /></div>
+            <div className="space-y-1"><Label>Scheduled date</Label><Input type="date" value={scheduledAt} onChange={(e) => setScheduledAt(e.target.value)} /></div>
             <div className="space-y-1">
               <Label>Approval</Label>
               <Select value={approval} onValueChange={(v) => setApproval(v as ApprovalStatus)}>
