@@ -63,16 +63,17 @@ function SocialPage() {
         <CardContent className="pt-6">
           <Table>
             <TableHeader><TableRow>
-              <TableHead>Platform</TableHead><TableHead>Copy</TableHead><TableHead>Scheduled</TableHead>
+              <TableHead>Platform</TableHead><TableHead>Title</TableHead><TableHead>Copy</TableHead><TableHead>Scheduled</TableHead>
               <TableHead>Approval</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              {rows.length === 0 ? <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">No posts planned.</TableCell></TableRow> :
+              {rows.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No posts planned.</TableCell></TableRow> :
                 rows.map((p) => (
                   <TableRow key={p.id}>
                     <TableCell><Badge variant="secondary" className="capitalize">{p.platform}</Badge></TableCell>
+                    <TableCell className="font-medium">{p.title || "—"}</TableCell>
                     <TableCell className="max-w-md truncate text-muted-foreground">{p.copy || "—"}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{p.scheduled_at ? new Date(p.scheduled_at).toLocaleString() : "—"}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{p.scheduled_at ? new Date(p.scheduled_at).toLocaleDateString() : "—"}</TableCell>
                     <TableCell>{p.approval_status === "approved" ? <Badge>Approved</Badge> : <Badge variant="outline">Not approved</Badge>}</TableCell>
                     <TableCell><Badge variant={p.post_status === "posted" ? "default" : p.post_status === "cancelled" ? "destructive" : "secondary"} className="capitalize">{p.post_status.replace("_", " ")}</Badge></TableCell>
                     <TableCell className="text-right">
