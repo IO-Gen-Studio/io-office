@@ -23,7 +23,7 @@ type ApprovalStatus = Database["public"]["Enums"]["approval_status"];
 const PLATFORMS: Platform[] = ["linkedin", "instagram", "x", "threads", "facebook", "tiktok", "youtube"];
 
 type Plan = {
-  id: string; platform: Platform; copy: string; media_path: string | null;
+  id: string; platform: Platform; title: string; copy: string; media_path: string | null;
   scheduled_at: string | null; post_status: PostStatus; approval_status: ApprovalStatus;
 };
 
