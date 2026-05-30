@@ -61,10 +61,10 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.2 0.018 170);
 
-  /* Primary: deep navy (EPCR cue) */
-  --primary: oklch(0.36 0.13 258);
+  /* Primary: IO-Gen brand green */
+  --primary: oklch(0.379 0.087 146.4);
   --primary-foreground: oklch(0.99 0 0);
-  --primary-glow: oklch(0.52 0.16 258);
+  --primary-glow: oklch(0.52 0.10 146.4);
 
   --secondary: oklch(0.94 0.01 85);
   --secondary-foreground: oklch(0.22 0.02 170);
