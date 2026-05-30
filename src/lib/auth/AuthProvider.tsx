@@ -19,7 +19,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       supabase.from("user_roles").select("role").eq("user_id", uid),
       supabase.from("module_access").select("*").eq("user_id", uid),
     ]);
-    setProfile(p as ProfileRow | null);
+    const profileRow = p as ProfileRow | null;
+    // Enforce deactivation: signed-in but inactive users are signed out.
+    if (profileRow && profileRow.active === false) {
+      await supabase.auth.signOut();
+      setProfile(null);
+      setIsAdmin(false);
+      setModuleAccess([]);
+      navigate({ to: "/login" });
+      return;
+    }
+    setProfile(profileRow);
     setIsAdmin(!!roles?.some((r) => r.role === "admin"));
     setModuleAccess((ma as ModuleAccessRow[] | null) ?? []);
   };
