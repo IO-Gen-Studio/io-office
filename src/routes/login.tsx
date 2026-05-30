@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
+import logoUrl from "@/assets/io-gen-logo.png";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -51,12 +52,8 @@ function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-subtle p-4">
       <Card className="w-full max-w-md shadow-elegant border-border/60">
         <CardHeader className="space-y-1">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="size-10 rounded-lg bg-gradient-primary flex items-center justify-center text-primary-foreground font-bold">IO</div>
-            <div>
-              <CardTitle className="text-2xl">IO-Gen Efficiency Ltd.</CardTitle>
-              <CardDescription>Internal Operations Platform</CardDescription>
-            </div>
+          <div className="flex justify-center py-2">
+            <img src={logoUrl} alt="IO-Gen" className="h-16 w-auto object-contain" />
           </div>
         </CardHeader>
         <CardContent>
@@ -68,11 +65,7 @@ function LoginPage() {
             </div>
             {mode === "login" && (
               <div className="space-y-2">
-                <div className="flex justify-between">
-                  <Label htmlFor="password">Password</Label>
-                  <button type="button" className="text-xs text-primary hover:underline"
-                    onClick={() => setMode("forgot")}>Forgot?</button>
-                </div>
+                <Label htmlFor="password">Password</Label>
                 <Input id="password" type="password" required value={password}
                   onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
               </div>
@@ -80,7 +73,12 @@ function LoginPage() {
             <Button type="submit" disabled={submitting} className="w-full bg-gradient-primary text-primary-foreground">
               {submitting ? "Please wait..." : mode === "login" ? "Sign in" : "Send reset link"}
             </Button>
-            {mode === "forgot" && (
+            {mode === "login" ? (
+              <div className="text-center">
+                <button type="button" className="text-xs text-primary hover:underline"
+                  onClick={() => setMode("forgot")}>Forgot password?</button>
+              </div>
+            ) : (
               <button type="button" className="w-full text-xs text-muted-foreground hover:underline"
                 onClick={() => setMode("login")}>Back to sign in</button>
             )}
