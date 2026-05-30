@@ -23,7 +23,7 @@ type ApprovalStatus = Database["public"]["Enums"]["approval_status"];
 const PLATFORMS: Platform[] = ["linkedin", "instagram", "x", "threads", "facebook", "tiktok", "youtube"];
 
 type Plan = {
-  id: string; platform: Platform; copy: string; media_path: string | null;
+  id: string; platform: Platform; title: string; copy: string; media_path: string | null;
   scheduled_at: string | null; post_status: PostStatus; approval_status: ApprovalStatus;
 };
 
@@ -63,16 +63,17 @@ function SocialPage() {
         <CardContent className="pt-6">
           <Table>
             <TableHeader><TableRow>
-              <TableHead>Platform</TableHead><TableHead>Copy</TableHead><TableHead>Scheduled</TableHead>
+              <TableHead>Platform</TableHead><TableHead>Title</TableHead><TableHead>Copy</TableHead><TableHead>Scheduled</TableHead>
               <TableHead>Approval</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              {rows.length === 0 ? <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">No posts planned.</TableCell></TableRow> :
+              {rows.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No posts planned.</TableCell></TableRow> :
                 rows.map((p) => (
                   <TableRow key={p.id}>
                     <TableCell><Badge variant="secondary" className="capitalize">{p.platform}</Badge></TableCell>
+                    <TableCell className="font-medium">{p.title || "—"}</TableCell>
                     <TableCell className="max-w-md truncate text-muted-foreground">{p.copy || "—"}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{p.scheduled_at ? new Date(p.scheduled_at).toLocaleString() : "—"}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{p.scheduled_at ? new Date(p.scheduled_at).toLocaleDateString() : "—"}</TableCell>
                     <TableCell>{p.approval_status === "approved" ? <Badge>Approved</Badge> : <Badge variant="outline">Not approved</Badge>}</TableCell>
                     <TableCell><Badge variant={p.post_status === "posted" ? "default" : p.post_status === "cancelled" ? "destructive" : "secondary"} className="capitalize">{p.post_status.replace("_", " ")}</Badge></TableCell>
                     <TableCell className="text-right">
@@ -94,6 +95,7 @@ function SocialPage() {
 
 function PlanDialog({ open, onOpenChange, plan, onSaved }: { open: boolean; onOpenChange: (o: boolean) => void; plan: Plan | null; onSaved: () => void }) {
   const [platform, setPlatform] = useState<Platform>("linkedin");
+  const [title, setTitle] = useState("");
   const [copy, setCopy] = useState(""); const [scheduledAt, setScheduledAt] = useState("");
   const [approval, setApproval] = useState<ApprovalStatus>("not_approved");
   const [status, setStatus] = useState<PostStatus>("not_posted");
@@ -102,8 +104,9 @@ function PlanDialog({ open, onOpenChange, plan, onSaved }: { open: boolean; onOp
 
   useEffect(() => {
     setPlatform(plan?.platform ?? "linkedin");
+    setTitle(plan?.title ?? "");
     setCopy(plan?.copy ?? "");
-    setScheduledAt(plan?.scheduled_at ? new Date(plan.scheduled_at).toISOString().slice(0, 16) : "");
+    setScheduledAt(plan?.scheduled_at ? new Date(plan.scheduled_at).toISOString().slice(0, 10) : "");
     setApproval(plan?.approval_status ?? "not_approved");
     setStatus(plan?.post_status ?? "not_posted");
     setMediaPath(plan?.media_path ?? null);
@@ -121,7 +124,7 @@ function PlanDialog({ open, onOpenChange, plan, onSaved }: { open: boolean; onOp
 
   const submit = async () => {
     const payload = {
-      platform, copy, media_path: mediaPath,
+      platform, title, copy, media_path: mediaPath,
       scheduled_at: scheduledAt ? new Date(scheduledAt).toISOString() : null,
       approval_status: approval, post_status: status,
     };
@@ -150,7 +153,7 @@ function PlanDialog({ open, onOpenChange, plan, onSaved }: { open: boolean; onOp
                 <SelectContent>{PLATFORMS.map((p) => <SelectItem key={p} value={p} className="capitalize">{p}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div className="space-y-1"><Label>Scheduled at</Label><Input type="datetime-local" value={scheduledAt} onChange={(e) => setScheduledAt(e.target.value)} /></div>
+            <div className="space-y-1"><Label>Scheduled date</Label><Input type="date" value={scheduledAt} onChange={(e) => setScheduledAt(e.target.value)} /></div>
             <div className="space-y-1">
               <Label>Approval</Label>
               <Select value={approval} onValueChange={(v) => setApproval(v as ApprovalStatus)}>
@@ -173,6 +176,7 @@ function PlanDialog({ open, onOpenChange, plan, onSaved }: { open: boolean; onOp
               </Select>
             </div>
           </div>
+          <div className="space-y-1"><Label>Title</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} /></div>
           <div className="space-y-1"><Label>Copy</Label><Textarea rows={6} value={copy} onChange={(e) => setCopy(e.target.value)} /></div>
           <div className="space-y-1">
             <Label>Media</Label>
