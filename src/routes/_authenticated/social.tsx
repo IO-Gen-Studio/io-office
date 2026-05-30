@@ -95,6 +95,7 @@ function SocialPage() {
 
 function PlanDialog({ open, onOpenChange, plan, onSaved }: { open: boolean; onOpenChange: (o: boolean) => void; plan: Plan | null; onSaved: () => void }) {
   const [platform, setPlatform] = useState<Platform>("linkedin");
+  const [title, setTitle] = useState("");
   const [copy, setCopy] = useState(""); const [scheduledAt, setScheduledAt] = useState("");
   const [approval, setApproval] = useState<ApprovalStatus>("not_approved");
   const [status, setStatus] = useState<PostStatus>("not_posted");
@@ -103,8 +104,9 @@ function PlanDialog({ open, onOpenChange, plan, onSaved }: { open: boolean; onOp
 
   useEffect(() => {
     setPlatform(plan?.platform ?? "linkedin");
+    setTitle(plan?.title ?? "");
     setCopy(plan?.copy ?? "");
-    setScheduledAt(plan?.scheduled_at ? new Date(plan.scheduled_at).toISOString().slice(0, 16) : "");
+    setScheduledAt(plan?.scheduled_at ? new Date(plan.scheduled_at).toISOString().slice(0, 10) : "");
     setApproval(plan?.approval_status ?? "not_approved");
     setStatus(plan?.post_status ?? "not_posted");
     setMediaPath(plan?.media_path ?? null);
