@@ -176,6 +176,7 @@ function PlanDialog({ open, onOpenChange, plan, onSaved }: { open: boolean; onOp
               </Select>
             </div>
           </div>
+          <div className="space-y-1"><Label>Title</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} /></div>
           <div className="space-y-1"><Label>Copy</Label><Textarea rows={6} value={copy} onChange={(e) => setCopy(e.target.value)} /></div>
           <div className="space-y-1">
             <Label>Media</Label>
