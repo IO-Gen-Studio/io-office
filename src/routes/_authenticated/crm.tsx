@@ -116,7 +116,7 @@ function OrgDialog({ open, onOpenChange, org, onSaved }: { open: boolean; onOpen
 
   const submit = async () => {
     if (!name.trim()) return;
-    const payload = { name, industry: industry || null, website: website || null, notes: notes || null, custom };
+    const payload = { name, industry: industry || null, website: website || null, notes: notes || null, custom: custom as never };
     if (org) {
       const { error } = await supabase.from("organisations").update(payload).eq("id", org.id);
       if (error) { toast.error(error.message); return; }
