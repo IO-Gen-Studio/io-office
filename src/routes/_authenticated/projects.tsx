@@ -252,6 +252,7 @@ function ProjectDetail({ project, editable, onBack, onSaved }: { project: Projec
             <Info label="Dates" value={`${formatDateUK(project.start_date)} → ${formatDateUK(project.end_date)}`} />
           </div>
           {project.description && <p className="text-sm text-muted-foreground whitespace-pre-wrap">{project.description}</p>}
+          <CustomFieldDisplay module="projects" value={project.custom} />
         </CardContent>
       </Card>
 
