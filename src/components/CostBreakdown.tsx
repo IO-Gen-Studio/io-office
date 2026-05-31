@@ -169,10 +169,20 @@ export function CostBreakdown({
     return rows.filter((r) => r.some((c) => c.trim() !== ""));
   };
 
-  const importCSV = async (file: File) => {
+  const importFile = async (file: File) => {
     if (!activeId) { toast.error("Create a version first"); return; }
-    const text = await file.text();
-    const rows = parseCSV(text);
+    const ext = file.name.toLowerCase().split(".").pop() ?? "";
+    let rows: string[][] = [];
+    if (ext === "xlsx" || ext === "xls") {
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { type: "array" });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const aoa = XLSX.utils.sheet_to_json<unknown[]>(ws, { header: 1, blankrows: false, defval: "" });
+      rows = aoa.map((r) => (r as unknown[]).map((c) => (c == null ? "" : String(c))));
+    } else {
+      const text = await file.text();
+      rows = parseCSV(text);
+    }
     if (rows.length === 0) { toast.error("Empty CSV"); return; }
     // Detect header
     const first = rows[0].map((c) => c.toLowerCase().trim());
