@@ -14,6 +14,8 @@ import { Badge } from "@/components/ui/badge";
 import { DataTable, type DataTableColumn } from "@/components/DataTable";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { CustomFieldValues } from "@/components/CustomFieldValues";
+import { CostBreakdown } from "@/components/CostBreakdown";
 import type { Database } from "@/integrations/supabase/types";
 
 type SStatus = Database["public"]["Enums"]["subscription_status"];
