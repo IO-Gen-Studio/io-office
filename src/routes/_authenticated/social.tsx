@@ -26,6 +26,7 @@ const PLATFORMS: Platform[] = ["linkedin", "instagram", "x", "threads", "faceboo
 type Plan = {
   id: string; platform: Platform; title: string; copy: string; media_path: string | null;
   scheduled_at: string | null; post_status: PostStatus; approval_status: ApprovalStatus;
+  custom?: Record<string, unknown> | null;
 };
 
 export const Route = createFileRoute("/_authenticated/social")({ component: SocialPage });
