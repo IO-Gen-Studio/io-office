@@ -30,6 +30,7 @@ type Project = {
   team_lead_id: string | null; client_org_id: string | null; client_contact_id: string | null;
   start_date: string | null; end_date: string | null;
   total_cost: number; supplier_cost: number;
+  custom: Record<string, unknown> | null;
 };
 type Profile = { id: string; full_name: string };
 type Org = { id: string; name: string };
