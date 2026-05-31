@@ -17,6 +17,8 @@ import { Badge } from "@/components/ui/badge";
 import { DataTable, type DataTableColumn } from "@/components/DataTable";
 import { Plus, Pencil, Trash2, ArrowLeft, FolderOpen } from "lucide-react";
 import { toast } from "sonner";
+import { CustomFieldValues } from "@/components/CustomFieldValues";
+import { CostBreakdown } from "@/components/CostBreakdown";
 import type { Database } from "@/integrations/supabase/types";
 
 type PType = Database["public"]["Enums"]["project_type"];
