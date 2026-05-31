@@ -436,7 +436,23 @@ function CampaignDetail({ campaign, editable, onBack }: { campaign: Campaign; ed
                     <TableCell className="font-medium">{r.first_name} {r.last_name}</TableCell>
                     <TableCell>{r.email || "—"}</TableCell>
                     <TableCell className="text-muted-foreground">{r.organisation || "—"}</TableCell>
-                    <TableCell><Badge variant="secondary">{leadOpts.find((o) => o.key === r.lead_status)?.label ?? r.lead_status}</Badge></TableCell>
+                    <TableCell>
+                      {editable ? (
+                        <Select
+                          value={r.lead_status}
+                          onValueChange={async (v) => {
+                            setRows((prev) => prev.map((x) => x.id === r.id ? { ...x, lead_status: v } : x));
+                            const { error } = await supabase.from("campaign_contacts").update({ lead_status: v }).eq("id", r.id);
+                            if (error) { toast.error(error.message); void load(); }
+                          }}
+                        >
+                          <SelectTrigger className="h-8 w-[150px]"><SelectValue /></SelectTrigger>
+                          <SelectContent>{leadOpts.map((o) => <SelectItem key={o.key} value={o.key}>{o.label}</SelectItem>)}</SelectContent>
+                        </Select>
+                      ) : (
+                        <Badge variant="secondary">{leadOpts.find((o) => o.key === r.lead_status)?.label ?? r.lead_status}</Badge>
+                      )}
+                    </TableCell>
                     {STAGES.map((s) => {
                       const stageData = r.outreach?.[s.key];
                       const checked = !!stageData?.sent_at;
