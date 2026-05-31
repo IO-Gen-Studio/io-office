@@ -299,7 +299,19 @@ export function CostBreakdown({
       )}
 
       {editable && active && (
-        <Button size="sm" variant="outline" onClick={addItem}><Plus className="size-4 mr-1" />Add item</Button>
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" variant="outline" onClick={addItem}><Plus className="size-4 mr-1" />Add item</Button>
+          <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()}>
+            <Upload className="size-4 mr-1" />Import CSV
+          </Button>
+          <Button size="sm" variant="ghost" onClick={downloadTemplate}>
+            <Download className="size-4 mr-1" />Template
+          </Button>
+          <input
+            ref={fileInputRef} type="file" accept=".csv,text/csv" className="hidden"
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) void importCSV(f); e.target.value = ""; }}
+          />
+        </div>
       )}
     </div>
   );
