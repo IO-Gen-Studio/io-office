@@ -22,6 +22,7 @@ type SStatus = Database["public"]["Enums"]["subscription_status"];
 type Sub = {
   id: string; plan_name: string; cost: number; billing_cycle: string;
   renewal_date: string | null; status: SStatus; client_org_id: string | null; client_contact_id: string | null;
+  custom: Record<string, unknown> | null;
 };
 type Org = { id: string; name: string };
 type Contact = { id: string; first_name: string; last_name: string; organisation_id: string | null };
