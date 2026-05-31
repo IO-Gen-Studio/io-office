@@ -153,6 +153,7 @@ function SubDialog({ open, onOpenChange, sub, orgs, contacts, onSaved }: {
       renewal_date: renewal || null, status,
       client_org_id: org === "__none__" ? null : org,
       client_contact_id: contact === "__none__" ? null : contact,
+      custom: customVals as never,
     };
     if (sub) {
       const { error } = await supabase.from("subscriptions").update(payload).eq("id", sub.id);
