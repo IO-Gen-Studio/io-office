@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
+import { CustomFieldValues } from "@/components/CustomFieldValues";
 
 type Platform = Database["public"]["Enums"]["social_platform"];
 type PostStatus = Database["public"]["Enums"]["post_status"];
