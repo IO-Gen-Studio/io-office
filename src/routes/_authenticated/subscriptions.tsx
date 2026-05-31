@@ -14,12 +14,15 @@ import { Badge } from "@/components/ui/badge";
 import { DataTable, type DataTableColumn } from "@/components/DataTable";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { CustomFieldValues } from "@/components/CustomFieldValues";
+import { CostBreakdown } from "@/components/CostBreakdown";
 import type { Database } from "@/integrations/supabase/types";
 
 type SStatus = Database["public"]["Enums"]["subscription_status"];
 type Sub = {
   id: string; plan_name: string; cost: number; billing_cycle: string;
   renewal_date: string | null; status: SStatus; client_org_id: string | null; client_contact_id: string | null;
+  custom: Record<string, unknown> | null;
 };
 type Org = { id: string; name: string };
 type Contact = { id: string; first_name: string; last_name: string; organisation_id: string | null };
@@ -73,7 +76,7 @@ function SubscriptionsPage() {
       editable, type: "select",
       options: [{ value: "monthly", label: "Monthly" }, { value: "quarterly", label: "Quarterly" }, { value: "yearly", label: "Yearly" }],
     },
-    { key: "cost", header: "Cost", accessor: (r) => Number(r.cost), render: (r) => formatGBP(r.cost), editable, type: "number", align: "right" },
+    { key: "cost", header: "Final Costs", accessor: (r) => Number(r.cost), render: (r) => formatGBP(r.cost), editable, type: "number", align: "right" },
     { key: "renewal_date", header: "Renewal", accessor: (r) => r.renewal_date, render: (r) => formatDateUK(r.renewal_date), editable, type: "date" },
     {
       key: "status", header: "Status", accessor: (r) => r.status,
@@ -133,12 +136,14 @@ function SubDialog({ open, onOpenChange, sub, orgs, contacts, onSaved }: {
   const [cycle, setCycle] = useState("monthly");
   const [renewal, setRenewal] = useState(""); const [status, setStatus] = useState<SStatus>("active");
   const [org, setOrg] = useState<string>("__none__"); const [contact, setContact] = useState<string>("__none__");
+  const [customVals, setCustomVals] = useState<Record<string, unknown>>({});
 
   useEffect(() => {
     setPlan(sub?.plan_name ?? ""); setCost(String(sub?.cost ?? 0));
     setCycle(sub?.billing_cycle ?? "monthly"); setRenewal(sub?.renewal_date ?? "");
     setStatus(sub?.status ?? "active");
     setOrg(sub?.client_org_id ?? "__none__"); setContact(sub?.client_contact_id ?? "__none__");
+    setCustomVals((sub?.custom ?? {}) as Record<string, unknown>);
   }, [sub, open]);
 
   const submit = async () => {
@@ -148,6 +153,7 @@ function SubDialog({ open, onOpenChange, sub, orgs, contacts, onSaved }: {
       renewal_date: renewal || null, status,
       client_org_id: org === "__none__" ? null : org,
       client_contact_id: contact === "__none__" ? null : contact,
+      custom: customVals as never,
     };
     if (sub) {
       const { error } = await supabase.from("subscriptions").update(payload).eq("id", sub.id);
@@ -165,12 +171,12 @@ function SubDialog({ open, onOpenChange, sub, orgs, contacts, onSaved }: {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>{sub ? "Edit subscription" : "New subscription"}</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1"><Label>Plan name *</Label><Input value={plan} onChange={(e) => setPlan(e.target.value)} /></div>
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1"><Label>Cost (£)</Label><Input type="number" value={cost} onChange={(e) => setCost(e.target.value)} /></div>
+            <div className="space-y-1"><Label>Final Costs (£)</Label><Input type="number" value={cost} onChange={(e) => setCost(e.target.value)} /><p className="text-xs text-muted-foreground">Use the breakdown below to auto-calculate this.</p></div>
             <div className="space-y-1">
               <Label>Billing cycle</Label>
               <Select value={cycle} onValueChange={setCycle}>
@@ -216,6 +222,21 @@ function SubDialog({ open, onOpenChange, sub, orgs, contacts, onSaved }: {
               </Select>
             </div>
           </div>
+          <CustomFieldValues module="subscriptions" value={customVals} onChange={setCustomVals} />
+          {sub && (
+            <div className="space-y-2 pt-3 border-t">
+              <h4 className="text-sm font-semibold">Final Costs breakdown</h4>
+              <CostBreakdown
+                parentType="subscription"
+                parentId={sub.id}
+                editable
+                onTotalsChange={({ final }) => {
+                  if (final > 0 && String(final) !== cost) setCost(String(final));
+                }}
+              />
+            </div>
+          )}
+          {!sub && <p className="text-xs text-muted-foreground">Save the subscription to add an itemised breakdown.</p>}
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>

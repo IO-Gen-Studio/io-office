@@ -17,6 +17,8 @@ import { Badge } from "@/components/ui/badge";
 import { DataTable, type DataTableColumn } from "@/components/DataTable";
 import { Plus, Pencil, Trash2, ArrowLeft, FolderOpen } from "lucide-react";
 import { toast } from "sonner";
+import { CustomFieldValues } from "@/components/CustomFieldValues";
+import { CostBreakdown } from "@/components/CostBreakdown";
 import type { Database } from "@/integrations/supabase/types";
 
 type PType = Database["public"]["Enums"]["project_type"];
@@ -28,6 +30,7 @@ type Project = {
   team_lead_id: string | null; client_org_id: string | null; client_contact_id: string | null;
   start_date: string | null; end_date: string | null;
   total_cost: number; supplier_cost: number;
+  custom: Record<string, unknown> | null;
 };
 type Profile = { id: string; full_name: string };
 type Org = { id: string; name: string };
@@ -112,7 +115,7 @@ function ProjectList({ editable, onOpen }: { editable: boolean; onOpen: (p: Proj
       options: [{ value: "low", label: "Low" }, { value: "medium", label: "Medium" }, { value: "high", label: "High" }],
     },
     { key: "end_date", header: "End date", accessor: (r) => r.end_date, render: (r) => formatDateUK(r.end_date), editable, type: "date", align: "right" },
-    { key: "total_cost", header: "Total cost", accessor: (r) => Number(r.total_cost), render: (r) => formatGBP(r.total_cost), editable, type: "number", align: "right" },
+    { key: "total_cost", header: "Final Costs", accessor: (r) => Number(r.total_cost), render: (r) => formatGBP(r.total_cost), editable, type: "number", align: "right" },
   ];
 
   return (
@@ -215,10 +218,26 @@ function ProjectDetail({ project, editable, onBack, onSaved }: { project: Projec
       </div>
 
       <div className="grid md:grid-cols-3 gap-4">
-        <StatCard label="Total cost" value={formatGBP(project.total_cost)} />
+        <StatCard label="Final Costs" value={formatGBP(project.total_cost)} />
         <StatCard label="Supplier cost" value={formatGBP(project.supplier_cost)} />
         <StatCard label="Profit" value={formatGBP(profit)} accent={profit >= 0 ? "text-primary" : "text-destructive"} />
       </div>
+
+      <Card className="shadow-soft">
+        <CardContent className="pt-6 space-y-4">
+          <h3 className="font-semibold">Final Costs breakdown</h3>
+          <CostBreakdown
+            parentType="project"
+            parentId={project.id}
+            editable={editable}
+            onTotalsChange={async ({ final, supplier }) => {
+              if (Number(project.total_cost) === final && Number(project.supplier_cost) === supplier) return;
+              await supabase.from("projects").update({ total_cost: final, supplier_cost: supplier }).eq("id", project.id);
+              void load();
+            }}
+          />
+        </CardContent>
+      </Card>
 
       <Card className="shadow-soft">
         <CardContent className="pt-6 space-y-3">
@@ -322,6 +341,7 @@ function ProjectDialog({ open, onOpenChange, project, defaultType, orgs, contact
   const [clientContact, setClientContact] = useState<string>("__none__");
   const [startDate, setStartDate] = useState(""); const [endDate, setEndDate] = useState("");
   const [totalCost, setTotalCost] = useState("0"); const [supplierCost, setSupplierCost] = useState("0");
+  const [customVals, setCustomVals] = useState<Record<string, unknown>>({});
 
   useEffect(() => {
     setTitle(project?.title ?? ""); setDescription(project?.description ?? "");
@@ -334,6 +354,7 @@ function ProjectDialog({ open, onOpenChange, project, defaultType, orgs, contact
     setStartDate(project?.start_date ?? ""); setEndDate(project?.end_date ?? "");
     setTotalCost(String(project?.total_cost ?? 0));
     setSupplierCost(String(project?.supplier_cost ?? 0));
+    setCustomVals((project?.custom ?? {}) as Record<string, unknown>);
   }, [project, open, defaultType]);
 
   const submit = async () => {
@@ -346,6 +367,7 @@ function ProjectDialog({ open, onOpenChange, project, defaultType, orgs, contact
       start_date: startDate || null, end_date: endDate || null,
       total_cost: Number(totalCost) || 0,
       supplier_cost: Number(supplierCost) || 0,
+      custom: customVals as never,
     };
     if (project) {
       const { error } = await supabase.from("projects").update(payload).eq("id", project.id);
@@ -441,9 +463,10 @@ function ProjectDialog({ open, onOpenChange, project, defaultType, orgs, contact
             <div className="space-y-1"><Label>End date</Label><Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} /></div>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1"><Label>Total cost (£)</Label><Input type="number" value={totalCost} onChange={(e) => setTotalCost(e.target.value)} /></div>
+            <div className="space-y-1"><Label>Final Costs (£)</Label><Input type="number" value={totalCost} onChange={(e) => setTotalCost(e.target.value)} /><p className="text-xs text-muted-foreground">Use the itemised breakdown below to auto-calculate this.</p></div>
             <div className="space-y-1"><Label>Supplier cost (£)</Label><Input type="number" value={supplierCost} onChange={(e) => setSupplierCost(e.target.value)} /></div>
           </div>
+          <CustomFieldValues module="projects" value={customVals} onChange={setCustomVals} />
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>

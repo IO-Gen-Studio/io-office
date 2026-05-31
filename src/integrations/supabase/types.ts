@@ -252,6 +252,83 @@ export type Database = {
           },
         ]
       }
+      cost_items: {
+        Row: {
+          created_at: string
+          description: string
+          final_cost: number
+          id: string
+          item_no: string | null
+          position: number
+          quantity: number
+          supplier_cost: number
+          version_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          final_cost?: number
+          id?: string
+          item_no?: string | null
+          position?: number
+          quantity?: number
+          supplier_cost?: number
+          version_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          final_cost?: number
+          id?: string
+          item_no?: string | null
+          position?: number
+          quantity?: number
+          supplier_cost?: number
+          version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cost_items_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "cost_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cost_versions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          is_current: boolean
+          label: string | null
+          parent_id: string
+          parent_type: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_current?: boolean
+          label?: string | null
+          parent_id: string
+          parent_type: string
+          version: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_current?: boolean
+          label?: string | null
+          parent_id?: string
+          parent_type?: string
+          version?: number
+        }
+        Relationships: []
+      }
       custom_field_defs: {
         Row: {
           created_at: string
@@ -668,6 +745,7 @@ export type Database = {
           copy: string
           created_at: string
           created_by: string | null
+          custom: Json
           id: string
           media_path: string | null
           platform: Database["public"]["Enums"]["social_platform"]
@@ -681,6 +759,7 @@ export type Database = {
           copy?: string
           created_at?: string
           created_by?: string | null
+          custom?: Json
           id?: string
           media_path?: string | null
           platform: Database["public"]["Enums"]["social_platform"]
@@ -694,6 +773,7 @@ export type Database = {
           copy?: string
           created_at?: string
           created_by?: string | null
+          custom?: Json
           id?: string
           media_path?: string | null
           platform?: Database["public"]["Enums"]["social_platform"]
