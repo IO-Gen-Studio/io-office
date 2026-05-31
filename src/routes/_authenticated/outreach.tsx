@@ -41,12 +41,6 @@ type CC = {
 };
 type LeadOpt = { key: string; label: string };
 
-function toDateInput(iso?: string | null): string {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return "";
-  return d.toISOString().slice(0, 10);
-}
 
 function OutreachPage() {
   const { canEdit } = useAuth();
