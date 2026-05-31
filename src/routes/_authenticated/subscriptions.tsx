@@ -220,6 +220,7 @@ function SubDialog({ open, onOpenChange, sub, orgs, contacts, onSaved }: {
                   {filteredContacts.map((c) => <SelectItem key={c.id} value={c.id}>{c.first_name} {c.last_name}</SelectItem>)}
                 </SelectContent>
               </Select>
+            </div>
           </div>
           <CustomFieldValues module="subscriptions" value={customVals} onChange={setCustomVals} />
           {sub && (
