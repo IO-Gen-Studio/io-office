@@ -327,12 +327,6 @@ function CampaignDetail({ campaign, editable, onBack }: { campaign: Campaign; ed
     else void updateStage(r, stage, null);
   };
 
-  const setStageDate = (r: CC, stage: StageKey, dateStr: string) => {
-    if (!editable) return;
-    if (!dateStr) { void updateStage(r, stage, null); return; }
-    const iso = new Date(dateStr + "T12:00:00").toISOString();
-    void updateStage(r, stage, { sent_at: iso });
-  };
 
   return (
     <div className="space-y-4">
