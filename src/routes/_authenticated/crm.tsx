@@ -107,14 +107,16 @@ function OrgsTab({ editable }: { editable: boolean }) {
 function OrgDialog({ open, onOpenChange, org, onSaved }: { open: boolean; onOpenChange: (o: boolean) => void; org: Org | null; onSaved: () => void }) {
   const [name, setName] = useState(""); const [industry, setIndustry] = useState("");
   const [website, setWebsite] = useState(""); const [notes, setNotes] = useState("");
+  const [custom, setCustom] = useState<Record<string, unknown>>({});
   useEffect(() => {
     setName(org?.name ?? ""); setIndustry(org?.industry ?? "");
     setWebsite(org?.website ?? ""); setNotes(org?.notes ?? "");
+    setCustom((org?.custom as Record<string, unknown>) ?? {});
   }, [org, open]);
 
   const submit = async () => {
     if (!name.trim()) return;
-    const payload = { name, industry: industry || null, website: website || null, notes: notes || null };
+    const payload = { name, industry: industry || null, website: website || null, notes: notes || null, custom: custom as never };
     if (org) {
       const { error } = await supabase.from("organisations").update(payload).eq("id", org.id);
       if (error) { toast.error(error.message); return; }
@@ -129,7 +131,7 @@ function OrgDialog({ open, onOpenChange, org, onSaved }: { open: boolean; onOpen
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>{org ? "Edit organisation" : "New organisation"}</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1"><Label>Name *</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
@@ -138,6 +140,7 @@ function OrgDialog({ open, onOpenChange, org, onSaved }: { open: boolean; onOpen
             <div className="space-y-1"><Label>Website</Label><Input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://" /></div>
           </div>
           <div className="space-y-1"><Label>Notes</Label><Textarea value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
+          <CustomFieldValues module="crm" value={custom} onChange={setCustom} />
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
@@ -231,12 +234,14 @@ function ContactDialog({ open, onOpenChange, contact, orgs, onSaved }: {
   const [email, setEmail] = useState(""); const [phone, setPhone] = useState("");
   const [jobTitle, setJobTitle] = useState(""); const [orgId, setOrgId] = useState<string>("__none__");
   const [isLead, setIsLead] = useState(true); const [notes, setNotes] = useState("");
+  const [custom, setCustom] = useState<Record<string, unknown>>({});
 
   useEffect(() => {
     setFirst(contact?.first_name ?? ""); setLast(contact?.last_name ?? "");
     setEmail(contact?.email ?? ""); setPhone(contact?.phone ?? "");
     setJobTitle(contact?.job_title ?? ""); setOrgId(contact?.organisation_id ?? "__none__");
     setIsLead(contact?.is_lead ?? true); setNotes(contact?.notes ?? "");
+    setCustom((contact?.custom as Record<string, unknown>) ?? {});
   }, [contact, open]);
 
   const submit = async () => {
@@ -244,7 +249,7 @@ function ContactDialog({ open, onOpenChange, contact, orgs, onSaved }: {
     const payload = {
       first_name: first, last_name: last, email: email || null, phone: phone || null,
       job_title: jobTitle || null, organisation_id: orgId === "__none__" ? null : orgId,
-      is_lead: isLead, notes: notes || null,
+      is_lead: isLead, notes: notes || null, custom: custom as never,
     };
     if (contact) {
       const { error } = await supabase.from("contacts").update(payload).eq("id", contact.id);
@@ -260,7 +265,7 @@ function ContactDialog({ open, onOpenChange, contact, orgs, onSaved }: {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl">
+      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>{contact ? "Edit contact" : "New contact"}</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
@@ -291,6 +296,7 @@ function ContactDialog({ open, onOpenChange, contact, orgs, onSaved }: {
             </Select>
           </div>
           <div className="space-y-1"><Label>Notes</Label><Textarea value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
+          <CustomFieldValues module="crm" value={custom} onChange={setCustom} />
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
