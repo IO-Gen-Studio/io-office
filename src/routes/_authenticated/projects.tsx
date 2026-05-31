@@ -290,7 +290,7 @@ function ProjectDetail({ project, editable, onBack, onSaved }: { project: Projec
                           disabled={!editable}
                         />
                       </td>
-                      <td className={`p-2 ${m.completed_at ? "line-through text-muted-foreground" : ""}`}>{m.label}</td>
+                      <td className={`p-2 ${m.completed_at ? "line-through text-muted-foreground" : ""}`}>{relabelForType(m.label, project.type)}</td>
                       <td className="p-2">
                         <Input
                           type="date"
