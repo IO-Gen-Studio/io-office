@@ -81,6 +81,7 @@ function SocialPage() {
                     <TableCell>{p.approval_status === "approved" ? <Badge>Approved</Badge> : <Badge variant="outline">Not approved</Badge>}</TableCell>
                     <TableCell><Badge variant={p.post_status === "posted" ? "default" : p.post_status === "cancelled" ? "destructive" : "secondary"} className="capitalize">{p.post_status.replace("_", " ")}</Badge></TableCell>
                     <TableCell className="text-right">
+                      <Button variant="ghost" size="icon" title="Preview" onClick={() => setViewing(p)}><Eye className="size-4" /></Button>
                       {editable && <>
                         <Button variant="ghost" size="icon" onClick={() => { setEditing(p); setOpen(true); }}><Pencil className="size-4" /></Button>
                         <Button variant="ghost" size="icon" onClick={() => remove(p)}><Trash2 className="size-4" /></Button>
