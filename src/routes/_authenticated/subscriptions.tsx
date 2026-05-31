@@ -136,12 +136,14 @@ function SubDialog({ open, onOpenChange, sub, orgs, contacts, onSaved }: {
   const [cycle, setCycle] = useState("monthly");
   const [renewal, setRenewal] = useState(""); const [status, setStatus] = useState<SStatus>("active");
   const [org, setOrg] = useState<string>("__none__"); const [contact, setContact] = useState<string>("__none__");
+  const [customVals, setCustomVals] = useState<Record<string, unknown>>({});
 
   useEffect(() => {
     setPlan(sub?.plan_name ?? ""); setCost(String(sub?.cost ?? 0));
     setCycle(sub?.billing_cycle ?? "monthly"); setRenewal(sub?.renewal_date ?? "");
     setStatus(sub?.status ?? "active");
     setOrg(sub?.client_org_id ?? "__none__"); setContact(sub?.client_contact_id ?? "__none__");
+    setCustomVals((sub?.custom ?? {}) as Record<string, unknown>);
   }, [sub, open]);
 
   const submit = async () => {
