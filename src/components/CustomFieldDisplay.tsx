@@ -13,7 +13,7 @@ function formatValue(def: CustomFieldDef, v: unknown): string {
 }
 
 /** Returns DataTable columns derived from custom field defs for the given module. */
-export function useCustomFieldColumns<T extends { custom: Record<string, unknown> | null }>(
+export function useCustomFieldColumns<T extends { custom?: Record<string, unknown> | null }>(
   module: CustomFieldModule,
 ): DataTableColumn<T>[] {
   const defs = useCustomFieldDefs(module);
