@@ -319,8 +319,8 @@ export function CostBreakdown({
             <Download className="size-4 mr-1" />Template
           </Button>
           <input
-            ref={fileInputRef} type="file" accept=".csv,text/csv" className="hidden"
-            onChange={(e) => { const f = e.target.files?.[0]; if (f) void importCSV(f); e.target.value = ""; }}
+            ref={fileInputRef} type="file" accept=".csv,text/csv,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" className="hidden"
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) void importFile(f); e.target.value = ""; }}
           />
         </div>
       )}
