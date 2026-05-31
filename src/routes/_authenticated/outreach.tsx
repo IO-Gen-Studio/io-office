@@ -17,6 +17,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Pencil, Trash2, ArrowLeft, Search, Download, Upload, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { formatDateUK } from "@/lib/format";
+import { CustomFieldValues } from "@/components/CustomFieldValues";
 
 export const Route = createFileRoute("/_authenticated/outreach")({ component: OutreachPage });
 
