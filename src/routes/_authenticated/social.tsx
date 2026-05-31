@@ -94,6 +94,13 @@ function SocialPage() {
         </CardContent>
       </Card>
       <PlanDialog open={open} onOpenChange={setOpen} plan={editing} onSaved={load} />
+      <SocialPostMockupDialog
+        open={!!viewing}
+        onOpenChange={(o) => { if (!o) setViewing(null); }}
+        plan={viewing}
+        editable={editable}
+        onApprovalChange={() => { void load(); if (viewing) { /* refresh viewing reference after load via effect-less re-find */ } }}
+      />
     </div>
   );
 }
