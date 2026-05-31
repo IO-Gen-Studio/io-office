@@ -107,14 +107,16 @@ function OrgsTab({ editable }: { editable: boolean }) {
 function OrgDialog({ open, onOpenChange, org, onSaved }: { open: boolean; onOpenChange: (o: boolean) => void; org: Org | null; onSaved: () => void }) {
   const [name, setName] = useState(""); const [industry, setIndustry] = useState("");
   const [website, setWebsite] = useState(""); const [notes, setNotes] = useState("");
+  const [custom, setCustom] = useState<Record<string, unknown>>({});
   useEffect(() => {
     setName(org?.name ?? ""); setIndustry(org?.industry ?? "");
     setWebsite(org?.website ?? ""); setNotes(org?.notes ?? "");
+    setCustom((org?.custom as Record<string, unknown>) ?? {});
   }, [org, open]);
 
   const submit = async () => {
     if (!name.trim()) return;
-    const payload = { name, industry: industry || null, website: website || null, notes: notes || null };
+    const payload = { name, industry: industry || null, website: website || null, notes: notes || null, custom };
     if (org) {
       const { error } = await supabase.from("organisations").update(payload).eq("id", org.id);
       if (error) { toast.error(error.message); return; }
@@ -129,7 +131,7 @@ function OrgDialog({ open, onOpenChange, org, onSaved }: { open: boolean; onOpen
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>{org ? "Edit organisation" : "New organisation"}</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1"><Label>Name *</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
@@ -138,6 +140,7 @@ function OrgDialog({ open, onOpenChange, org, onSaved }: { open: boolean; onOpen
             <div className="space-y-1"><Label>Website</Label><Input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://" /></div>
           </div>
           <div className="space-y-1"><Label>Notes</Label><Textarea value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
+          <CustomFieldValues module="crm" value={custom} onChange={setCustom} />
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
