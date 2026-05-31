@@ -103,6 +103,7 @@ function PlanDialog({ open, onOpenChange, plan, onSaved }: { open: boolean; onOp
   const [status, setStatus] = useState<PostStatus>("not_posted");
   const [mediaPath, setMediaPath] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [custom, setCustom] = useState<Record<string, unknown>>({});
 
   useEffect(() => {
     setPlatform(plan?.platform ?? "linkedin");
@@ -112,6 +113,7 @@ function PlanDialog({ open, onOpenChange, plan, onSaved }: { open: boolean; onOp
     setApproval(plan?.approval_status ?? "not_approved");
     setStatus(plan?.post_status ?? "not_posted");
     setMediaPath(plan?.media_path ?? null);
+    setCustom((plan?.custom as Record<string, unknown>) ?? {});
   }, [plan, open]);
 
   const onUpload = async (file: File) => {
@@ -129,6 +131,7 @@ function PlanDialog({ open, onOpenChange, plan, onSaved }: { open: boolean; onOp
       platform, title, copy, media_path: mediaPath,
       scheduled_at: scheduledAt ? new Date(scheduledAt).toISOString() : null,
       approval_status: approval, post_status: status,
+      custom: custom as never,
     };
     if (plan) {
       const { error } = await supabase.from("social_plans").update(payload).eq("id", plan.id);
@@ -144,7 +147,7 @@ function PlanDialog({ open, onOpenChange, plan, onSaved }: { open: boolean; onOp
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl">
+      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>{plan ? "Edit post" : "New post"}</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
@@ -186,6 +189,7 @@ function PlanDialog({ open, onOpenChange, plan, onSaved }: { open: boolean; onOp
             {uploading && <p className="text-xs text-muted-foreground">Uploading…</p>}
             {mediaPath && <p className="text-xs text-muted-foreground">Attached: {mediaPath}</p>}
           </div>
+          <CustomFieldValues module="social" value={custom} onChange={setCustom} />
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
