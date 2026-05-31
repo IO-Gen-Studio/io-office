@@ -383,7 +383,7 @@ function ProjectDialog({ open, onOpenChange, project, defaultType, orgs, contact
       const { data: tpls } = await supabase.from("milestone_templates").select("*").order("position");
       if (tpls && tpls.length > 0) {
         await supabase.from("milestones").insert(
-          (tpls as MTemplate[]).map((t) => ({ project_id: data.id, label: t.label, position: t.position, is_custom: false }))
+          (tpls as MTemplate[]).map((t) => ({ project_id: data.id, label: relabelForType(t.label, type), position: t.position, is_custom: false }))
         );
       }
       await logActivity({ module: "projects", entity_type: type, entity_id: data.id, verb: "created", summary: `Created ${type} ${title}` });
