@@ -41,12 +41,6 @@ type CC = {
 };
 type LeadOpt = { key: string; label: string };
 
-function toDateInput(iso?: string | null): string {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return "";
-  return d.toISOString().slice(0, 10);
-}
 
 function OutreachPage() {
   const { canEdit } = useAuth();
@@ -333,12 +327,6 @@ function CampaignDetail({ campaign, editable, onBack }: { campaign: Campaign; ed
     else void updateStage(r, stage, null);
   };
 
-  const setStageDate = (r: CC, stage: StageKey, dateStr: string) => {
-    if (!editable) return;
-    if (!dateStr) { void updateStage(r, stage, null); return; }
-    const iso = new Date(dateStr + "T12:00:00").toISOString();
-    void updateStage(r, stage, { sent_at: iso });
-  };
 
   return (
     <div className="space-y-4">
@@ -436,7 +424,23 @@ function CampaignDetail({ campaign, editable, onBack }: { campaign: Campaign; ed
                     <TableCell className="font-medium">{r.first_name} {r.last_name}</TableCell>
                     <TableCell>{r.email || "—"}</TableCell>
                     <TableCell className="text-muted-foreground">{r.organisation || "—"}</TableCell>
-                    <TableCell><Badge variant="secondary">{leadOpts.find((o) => o.key === r.lead_status)?.label ?? r.lead_status}</Badge></TableCell>
+                    <TableCell>
+                      {editable ? (
+                        <Select
+                          value={r.lead_status}
+                          onValueChange={async (v) => {
+                            setRows((prev) => prev.map((x) => x.id === r.id ? { ...x, lead_status: v } : x));
+                            const { error } = await supabase.from("campaign_contacts").update({ lead_status: v }).eq("id", r.id);
+                            if (error) { toast.error(error.message); void load(); }
+                          }}
+                        >
+                          <SelectTrigger className="h-8 w-[150px]"><SelectValue /></SelectTrigger>
+                          <SelectContent>{leadOpts.map((o) => <SelectItem key={o.key} value={o.key}>{o.label}</SelectItem>)}</SelectContent>
+                        </Select>
+                      ) : (
+                        <Badge variant="secondary">{leadOpts.find((o) => o.key === r.lead_status)?.label ?? r.lead_status}</Badge>
+                      )}
+                    </TableCell>
                     {STAGES.map((s) => {
                       const stageData = r.outreach?.[s.key];
                       const checked = !!stageData?.sent_at;
@@ -444,13 +448,9 @@ function CampaignDetail({ campaign, editable, onBack }: { campaign: Campaign; ed
                         <TableCell key={s.key} className="whitespace-nowrap">
                           <div className="flex items-center gap-2">
                             <Checkbox checked={checked} disabled={!editable} onCheckedChange={(v) => toggleStage(r, s.key, !!v)} />
-                            <Input
-                              type="date"
-                              className="h-8 w-[140px]"
-                              value={toDateInput(stageData?.sent_at)}
-                              disabled={!editable}
-                              onChange={(e) => setStageDate(r, s.key, e.target.value)}
-                            />
+                            <span className="text-sm text-muted-foreground tabular-nums w-[100px]">
+                              {checked ? formatDateUK(stageData?.sent_at) : "—"}
+                            </span>
                           </div>
                         </TableCell>
                       );

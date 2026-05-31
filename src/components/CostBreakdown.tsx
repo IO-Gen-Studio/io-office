@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -168,10 +169,20 @@ export function CostBreakdown({
     return rows.filter((r) => r.some((c) => c.trim() !== ""));
   };
 
-  const importCSV = async (file: File) => {
+  const importFile = async (file: File) => {
     if (!activeId) { toast.error("Create a version first"); return; }
-    const text = await file.text();
-    const rows = parseCSV(text);
+    const ext = file.name.toLowerCase().split(".").pop() ?? "";
+    let rows: string[][] = [];
+    if (ext === "xlsx" || ext === "xls") {
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { type: "array" });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const aoa = XLSX.utils.sheet_to_json<unknown[]>(ws, { header: 1, blankrows: false, defval: "" });
+      rows = aoa.map((r) => (r as unknown[]).map((c) => (c == null ? "" : String(c))));
+    } else {
+      const text = await file.text();
+      rows = parseCSV(text);
+    }
     if (rows.length === 0) { toast.error("Empty CSV"); return; }
     // Detect header
     const first = rows[0].map((c) => c.toLowerCase().trim());
@@ -302,14 +313,14 @@ export function CostBreakdown({
         <div className="flex flex-wrap gap-2">
           <Button size="sm" variant="outline" onClick={addItem}><Plus className="size-4 mr-1" />Add item</Button>
           <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()}>
-            <Upload className="size-4 mr-1" />Import CSV
+            <Upload className="size-4 mr-1" />Import CSV / Excel
           </Button>
           <Button size="sm" variant="ghost" onClick={downloadTemplate}>
             <Download className="size-4 mr-1" />Template
           </Button>
           <input
-            ref={fileInputRef} type="file" accept=".csv,text/csv" className="hidden"
-            onChange={(e) => { const f = e.target.files?.[0]; if (f) void importCSV(f); e.target.value = ""; }}
+            ref={fileInputRef} type="file" accept=".csv,text/csv,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" className="hidden"
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) void importFile(f); e.target.value = ""; }}
           />
         </div>
       )}

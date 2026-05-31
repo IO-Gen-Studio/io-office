@@ -41,6 +41,13 @@ type MTemplate = { id: string; label: string; position: number };
 
 export const Route = createFileRoute("/_authenticated/projects")({ component: ProjectsPage });
 
+function relabelForType(label: string, type: PType): string {
+  if (type !== "work") return label;
+  if (label === "Project completed") return "Works completed";
+  if (label === "Project invoiced") return "Works invoiced";
+  return label;
+}
+
 function ProjectsPage() {
   const { canEdit } = useAuth();
   const editable = canEdit("projects");
@@ -283,7 +290,7 @@ function ProjectDetail({ project, editable, onBack, onSaved }: { project: Projec
                           disabled={!editable}
                         />
                       </td>
-                      <td className={`p-2 ${m.completed_at ? "line-through text-muted-foreground" : ""}`}>{m.label}</td>
+                      <td className={`p-2 ${m.completed_at ? "line-through text-muted-foreground" : ""}`}>{relabelForType(m.label, project.type)}</td>
                       <td className="p-2">
                         <Input
                           type="date"
@@ -383,7 +390,7 @@ function ProjectDialog({ open, onOpenChange, project, defaultType, orgs, contact
       const { data: tpls } = await supabase.from("milestone_templates").select("*").order("position");
       if (tpls && tpls.length > 0) {
         await supabase.from("milestones").insert(
-          (tpls as MTemplate[]).map((t) => ({ project_id: data.id, label: t.label, position: t.position, is_custom: false }))
+          (tpls as MTemplate[]).map((t) => ({ project_id: data.id, label: relabelForType(t.label, type), position: t.position, is_custom: false }))
         );
       }
       await logActivity({ module: "projects", entity_type: type, entity_id: data.id, verb: "created", summary: `Created ${type} ${title}` });

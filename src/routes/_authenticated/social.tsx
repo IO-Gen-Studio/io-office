@@ -12,10 +12,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye } from "lucide-react";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
 import { CustomFieldValues } from "@/components/CustomFieldValues";
+import { SocialPostMockupDialog } from "@/components/SocialPostMockup";
 
 type Platform = Database["public"]["Enums"]["social_platform"];
 type PostStatus = Database["public"]["Enums"]["post_status"];
@@ -37,6 +38,7 @@ function SocialPage() {
   const [rows, setRows] = useState<Plan[]>([]);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Plan | null>(null);
+  const [viewing, setViewing] = useState<Plan | null>(null);
 
   const load = async () => {
     const { data } = await supabase.from("social_plans").select("*").order("scheduled_at", { ascending: true, nullsFirst: false });
@@ -79,6 +81,7 @@ function SocialPage() {
                     <TableCell>{p.approval_status === "approved" ? <Badge>Approved</Badge> : <Badge variant="outline">Not approved</Badge>}</TableCell>
                     <TableCell><Badge variant={p.post_status === "posted" ? "default" : p.post_status === "cancelled" ? "destructive" : "secondary"} className="capitalize">{p.post_status.replace("_", " ")}</Badge></TableCell>
                     <TableCell className="text-right">
+                      <Button variant="ghost" size="icon" title="Preview" onClick={() => setViewing(p)}><Eye className="size-4" /></Button>
                       {editable && <>
                         <Button variant="ghost" size="icon" onClick={() => { setEditing(p); setOpen(true); }}><Pencil className="size-4" /></Button>
                         <Button variant="ghost" size="icon" onClick={() => remove(p)}><Trash2 className="size-4" /></Button>
@@ -91,6 +94,13 @@ function SocialPage() {
         </CardContent>
       </Card>
       <PlanDialog open={open} onOpenChange={setOpen} plan={editing} onSaved={load} />
+      <SocialPostMockupDialog
+        open={!!viewing}
+        onOpenChange={(o) => { if (!o) setViewing(null); }}
+        plan={viewing ? (rows.find((r) => r.id === viewing.id) ?? viewing) : null}
+        editable={editable}
+        onApprovalChange={load}
+      />
     </div>
   );
 }
