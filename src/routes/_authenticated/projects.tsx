@@ -463,9 +463,10 @@ function ProjectDialog({ open, onOpenChange, project, defaultType, orgs, contact
             <div className="space-y-1"><Label>End date</Label><Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} /></div>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1"><Label>Total cost (£)</Label><Input type="number" value={totalCost} onChange={(e) => setTotalCost(e.target.value)} /></div>
+            <div className="space-y-1"><Label>Final Costs (£)</Label><Input type="number" value={totalCost} onChange={(e) => setTotalCost(e.target.value)} /><p className="text-xs text-muted-foreground">Use the itemised breakdown below to auto-calculate this.</p></div>
             <div className="space-y-1"><Label>Supplier cost (£)</Label><Input type="number" value={supplierCost} onChange={(e) => setSupplierCost(e.target.value)} /></div>
           </div>
+          <CustomFieldValues module="projects" value={customVals} onChange={setCustomVals} />
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
