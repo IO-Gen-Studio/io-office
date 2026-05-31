@@ -341,6 +341,7 @@ function ProjectDialog({ open, onOpenChange, project, defaultType, orgs, contact
   const [clientContact, setClientContact] = useState<string>("__none__");
   const [startDate, setStartDate] = useState(""); const [endDate, setEndDate] = useState("");
   const [totalCost, setTotalCost] = useState("0"); const [supplierCost, setSupplierCost] = useState("0");
+  const [customVals, setCustomVals] = useState<Record<string, unknown>>({});
 
   useEffect(() => {
     setTitle(project?.title ?? ""); setDescription(project?.description ?? "");
