@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { DataTable, type DataTableColumn } from "@/components/DataTable";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { CustomFieldValues } from "@/components/CustomFieldValues";
 
 export const Route = createFileRoute("/_authenticated/crm")({ component: CrmPage });
 
