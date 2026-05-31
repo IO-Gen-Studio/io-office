@@ -220,8 +220,22 @@ function SubDialog({ open, onOpenChange, sub, orgs, contacts, onSaved }: {
                   {filteredContacts.map((c) => <SelectItem key={c.id} value={c.id}>{c.first_name} {c.last_name}</SelectItem>)}
                 </SelectContent>
               </Select>
-            </div>
           </div>
+          <CustomFieldValues module="subscriptions" value={customVals} onChange={setCustomVals} />
+          {sub && (
+            <div className="space-y-2 pt-3 border-t">
+              <h4 className="text-sm font-semibold">Final Costs breakdown</h4>
+              <CostBreakdown
+                parentType="subscription"
+                parentId={sub.id}
+                editable
+                onTotalsChange={({ final }) => {
+                  if (final > 0 && String(final) !== cost) setCost(String(final));
+                }}
+              />
+            </div>
+          )}
+          {!sub && <p className="text-xs text-muted-foreground">Save the subscription to add an itemised breakdown.</p>}
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
