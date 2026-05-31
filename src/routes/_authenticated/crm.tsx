@@ -19,8 +19,8 @@ import { CustomFieldValues } from "@/components/CustomFieldValues";
 
 export const Route = createFileRoute("/_authenticated/crm")({ component: CrmPage });
 
-type Org = { id: string; name: string; industry: string | null; website: string | null; notes: string | null };
-type Contact = { id: string; first_name: string; last_name: string; email: string | null; phone: string | null; job_title: string | null; organisation_id: string | null; is_lead: boolean; notes: string | null };
+type Org = { id: string; name: string; industry: string | null; website: string | null; notes: string | null; custom?: Record<string, unknown> | null };
+type Contact = { id: string; first_name: string; last_name: string; email: string | null; phone: string | null; job_title: string | null; organisation_id: string | null; is_lead: boolean; notes: string | null; custom?: Record<string, unknown> | null };
 
 function CrmPage() {
   const { canEdit } = useAuth();
