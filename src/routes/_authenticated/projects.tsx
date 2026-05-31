@@ -18,6 +18,7 @@ import { DataTable, type DataTableColumn } from "@/components/DataTable";
 import { Plus, Pencil, Trash2, ArrowLeft, FolderOpen } from "lucide-react";
 import { toast } from "sonner";
 import { CustomFieldValues } from "@/components/CustomFieldValues";
+import { CustomFieldDisplay, useCustomFieldColumns } from "@/components/CustomFieldDisplay";
 import { CostBreakdown } from "@/components/CostBreakdown";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -117,6 +118,8 @@ function ProjectList({ editable, onOpen }: { editable: boolean; onOpen: (p: Proj
     { key: "end_date", header: "End date", accessor: (r) => r.end_date, render: (r) => formatDateUK(r.end_date), editable, type: "date", align: "right" },
     { key: "total_cost", header: "Final Costs", accessor: (r) => Number(r.total_cost), render: (r) => formatGBP(r.total_cost), editable, type: "number", align: "right" },
   ];
+  const customCols = useCustomFieldColumns<Project>("projects");
+  const allColumns = [...columns, ...customCols];
 
   return (
     <Tabs value={tab} onValueChange={(v) => setTab(v as PType)}>
@@ -132,7 +135,7 @@ function ProjectList({ editable, onOpen }: { editable: boolean; onOpen: (p: Proj
           <CardContent className="pt-6">
             <DataTable
               tableKey={`projects.${tab}`}
-              columns={columns}
+              columns={allColumns}
               rows={filtered}
               rowId={(r) => r.id}
               onSaveCell={saveCell}
@@ -249,6 +252,7 @@ function ProjectDetail({ project, editable, onBack, onSaved }: { project: Projec
             <Info label="Dates" value={`${formatDateUK(project.start_date)} → ${formatDateUK(project.end_date)}`} />
           </div>
           {project.description && <p className="text-sm text-muted-foreground whitespace-pre-wrap">{project.description}</p>}
+          <CustomFieldDisplay module="projects" value={project.custom} />
         </CardContent>
       </Card>
 

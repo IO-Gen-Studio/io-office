@@ -16,6 +16,7 @@ import { DataTable, type DataTableColumn } from "@/components/DataTable";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { CustomFieldValues } from "@/components/CustomFieldValues";
+import { useCustomFieldColumns } from "@/components/CustomFieldDisplay";
 
 export const Route = createFileRoute("/_authenticated/crm")({ component: CrmPage });
 
@@ -79,13 +80,15 @@ function OrgsTab({ editable }: { editable: boolean }) {
       editable, type: "text",
     },
   ];
+  const customCols = useCustomFieldColumns<Org>("crm");
+  const allColumns = [...columns, ...customCols];
 
   return (
     <Card className="shadow-soft">
       <CardContent className="pt-6">
         <DataTable
           tableKey="crm.orgs"
-          columns={columns}
+          columns={allColumns}
           rows={orgs}
           rowId={(r) => r.id}
           onSaveCell={saveCell}
@@ -193,6 +196,8 @@ function ContactsTab({ editable }: { editable: boolean }) {
       options: [{ value: "lead", label: "Lead" }, { value: "client", label: "Client" }],
     },
   ];
+  const customCols = useCustomFieldColumns<Contact>("crm");
+  const allColumns = [...columns, ...customCols];
 
   // Custom saveCell to map "lead"/"client" string back to boolean for the is_lead column
   const customSave = async (row: Contact, key: string, value: unknown) => {
@@ -208,7 +213,7 @@ function ContactsTab({ editable }: { editable: boolean }) {
       <CardContent className="pt-6">
         <DataTable
           tableKey="crm.contacts"
-          columns={columns}
+          columns={allColumns}
           rows={contacts}
           rowId={(r) => r.id}
           onSaveCell={customSave}

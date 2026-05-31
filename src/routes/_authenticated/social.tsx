@@ -184,10 +184,10 @@ function PlanDialog({ open, onOpenChange, plan, onSaved }: { open: boolean; onOp
           <div className="space-y-1"><Label>Title</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} /></div>
           <div className="space-y-1"><Label>Copy</Label><Textarea rows={6} value={copy} onChange={(e) => setCopy(e.target.value)} /></div>
           <div className="space-y-1">
-            <Label>Media</Label>
-            <Input type="file" accept="image/*,video/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) void onUpload(f); }} />
+            <Label>Media (image, video or PDF)</Label>
+            <Input type="file" accept="image/*,video/*,application/pdf,.pdf" onChange={(e) => { const f = e.target.files?.[0]; if (f) void onUpload(f); }} />
             {uploading && <p className="text-xs text-muted-foreground">Uploading…</p>}
-            {mediaPath && <p className="text-xs text-muted-foreground">Attached: {mediaPath}</p>}
+            {mediaPath && <MediaPreview path={mediaPath} onRemove={() => setMediaPath(null)} />}
           </div>
           <CustomFieldValues module="social" value={custom} onChange={setCustom} />
         </div>
@@ -197,5 +197,33 @@ function PlanDialog({ open, onOpenChange, plan, onSaved }: { open: boolean; onOp
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function MediaPreview({ path, onRemove }: { path: string; onRemove: () => void }) {
+  const ext = path.toLowerCase().split(".").pop() ?? "";
+  const { data } = supabase.storage.from("social-media").getPublicUrl(path);
+  const url = data.publicUrl;
+  const isPdf = ext === "pdf";
+  const isVideo = ["mp4", "webm", "mov", "m4v", "ogg"].includes(ext);
+  const isImage = ["jpg", "jpeg", "png", "gif", "webp", "avif", "svg"].includes(ext);
+  return (
+    <div className="space-y-2 rounded-md border p-2 bg-muted/20">
+      <div className="flex items-center justify-between gap-2">
+        <a href={url} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline truncate flex-1">{path}</a>
+        <Button variant="ghost" size="sm" type="button" onClick={onRemove}>Remove</Button>
+      </div>
+      <div className="rounded overflow-hidden bg-background">
+        {isPdf ? (
+          <iframe src={url} title="PDF preview" className="w-full h-80 border-0" />
+        ) : isVideo ? (
+          <video src={url} controls className="w-full max-h-80" />
+        ) : isImage ? (
+          <img src={url} alt="Media preview" className="w-full max-h-80 object-contain" />
+        ) : (
+          <p className="text-xs text-muted-foreground p-3">Preview not available for this file type.</p>
+        )}
+      </div>
+    </div>
   );
 }

@@ -15,6 +15,7 @@ import { DataTable, type DataTableColumn } from "@/components/DataTable";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { CustomFieldValues } from "@/components/CustomFieldValues";
+import { useCustomFieldColumns } from "@/components/CustomFieldDisplay";
 import { CostBreakdown } from "@/components/CostBreakdown";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -88,6 +89,8 @@ function SubscriptionsPage() {
       ],
     },
   ];
+  const customCols = useCustomFieldColumns<Sub>("subscriptions");
+  const allColumns = [...columns, ...customCols];
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
@@ -109,7 +112,7 @@ function SubscriptionsPage() {
         <CardContent className="pt-6">
           <DataTable
             tableKey="subscriptions"
-            columns={columns}
+            columns={allColumns}
             rows={rows}
             rowId={(r) => r.id}
             onSaveCell={saveCell}

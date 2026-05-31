@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { formatGBP } from "@/lib/format";
-import { Plus, Trash2, GitBranch } from "lucide-react";
+import { Plus, Trash2, GitBranch, Upload, Download } from "lucide-react";
+import { useRef } from "react";
 import { toast } from "sonner";
 
 export type CostParentType = "project" | "subscription";
@@ -141,6 +142,79 @@ export function CostBreakdown({
     if (activeId) void loadItems(activeId);
   };
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const parseCSV = (text: string): string[][] => {
+    const rows: string[][] = [];
+    let cur: string[] = [];
+    let field = "";
+    let inQuotes = false;
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      if (inQuotes) {
+        if (ch === '"' && text[i + 1] === '"') { field += '"'; i++; }
+        else if (ch === '"') { inQuotes = false; }
+        else field += ch;
+      } else {
+        if (ch === '"') inQuotes = true;
+        else if (ch === ',') { cur.push(field); field = ""; }
+        else if (ch === '\n' || ch === '\r') {
+          if (field !== "" || cur.length > 0) { cur.push(field); rows.push(cur); cur = []; field = ""; }
+          if (ch === '\r' && text[i + 1] === '\n') i++;
+        } else field += ch;
+      }
+    }
+    if (field !== "" || cur.length > 0) { cur.push(field); rows.push(cur); }
+    return rows.filter((r) => r.some((c) => c.trim() !== ""));
+  };
+
+  const importCSV = async (file: File) => {
+    if (!activeId) { toast.error("Create a version first"); return; }
+    const text = await file.text();
+    const rows = parseCSV(text);
+    if (rows.length === 0) { toast.error("Empty CSV"); return; }
+    // Detect header
+    const first = rows[0].map((c) => c.toLowerCase().trim());
+    const looksLikeHeader = first.some((c) => ["item", "item #", "item no", "description", "qty", "quantity", "final", "final cost", "supplier", "supplier cost"].includes(c));
+    let headerMap: { item?: number; desc?: number; qty?: number; final?: number; supplier?: number } = {};
+    let dataStart = 0;
+    if (looksLikeHeader) {
+      dataStart = 1;
+      first.forEach((c, idx) => {
+        if (c.includes("item")) headerMap.item = idx;
+        else if (c.includes("desc")) headerMap.desc = idx;
+        else if (c.includes("qty") || c.includes("quantity")) headerMap.qty = idx;
+        else if (c.includes("supplier")) headerMap.supplier = idx;
+        else if (c.includes("final") || c.includes("cost") || c.includes("price")) headerMap.final = idx;
+      });
+    } else {
+      headerMap = { item: 0, desc: 1, qty: 2, final: 3, supplier: 4 };
+    }
+    const inserts = rows.slice(dataStart).map((r, i) => ({
+      version_id: activeId,
+      position: items.length + i,
+      item_no: headerMap.item !== undefined ? (r[headerMap.item] ?? String(items.length + i + 1)) : String(items.length + i + 1),
+      description: headerMap.desc !== undefined ? (r[headerMap.desc] ?? "") : "",
+      quantity: headerMap.qty !== undefined ? Number(r[headerMap.qty]) || 1 : 1,
+      final_cost: headerMap.final !== undefined ? Number(r[headerMap.final]) || 0 : 0,
+      supplier_cost: headerMap.supplier !== undefined ? Number(r[headerMap.supplier]) || 0 : 0,
+    }));
+    if (inserts.length === 0) { toast.error("No rows found"); return; }
+    const { error } = await supabase.from("cost_items").insert(inserts);
+    if (error) return toast.error(error.message);
+    toast.success(`Imported ${inserts.length} item${inserts.length === 1 ? "" : "s"}`);
+    void loadItems(activeId);
+  };
+
+  const downloadTemplate = () => {
+    const csv = "Item #,Description,Quantity,Final Cost,Supplier Cost\n1,Example line item,1,100,60\n";
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "cost-items-template.csv"; a.click();
+    URL.revokeObjectURL(url);
+  };
+
   if (loading) return <p className="text-sm text-muted-foreground">Loading cost breakdown…</p>;
 
   return (
@@ -225,7 +299,19 @@ export function CostBreakdown({
       )}
 
       {editable && active && (
-        <Button size="sm" variant="outline" onClick={addItem}><Plus className="size-4 mr-1" />Add item</Button>
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" variant="outline" onClick={addItem}><Plus className="size-4 mr-1" />Add item</Button>
+          <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()}>
+            <Upload className="size-4 mr-1" />Import CSV
+          </Button>
+          <Button size="sm" variant="ghost" onClick={downloadTemplate}>
+            <Download className="size-4 mr-1" />Template
+          </Button>
+          <input
+            ref={fileInputRef} type="file" accept=".csv,text/csv" className="hidden"
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) void importCSV(f); e.target.value = ""; }}
+          />
+        </div>
       )}
     </div>
   );
