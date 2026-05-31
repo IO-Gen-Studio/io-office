@@ -16,6 +16,7 @@ import { Plus, Pencil, Trash2, Eye } from "lucide-react";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
 import { CustomFieldValues } from "@/components/CustomFieldValues";
+import { SocialPostMockupDialog } from "@/components/SocialPostMockup";
 
 type Platform = Database["public"]["Enums"]["social_platform"];
 type PostStatus = Database["public"]["Enums"]["post_status"];
