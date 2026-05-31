@@ -481,6 +481,7 @@ function CCDialog({ open, onOpenChange, contact, campaignId, leadOpts, onSaved }
   const [industry, setIndustry] = useState(""); const [website, setWebsite] = useState("");
   const [jobTitle, setJobTitle] = useState(""); const [status, setStatus] = useState("no_reply");
   const [notes, setNotes] = useState("");
+  const [custom, setCustom] = useState<Record<string, unknown>>({});
 
   useEffect(() => {
     setFirst(contact?.first_name ?? ""); setLast(contact?.last_name ?? "");
@@ -488,6 +489,7 @@ function CCDialog({ open, onOpenChange, contact, campaignId, leadOpts, onSaved }
     setIndustry(contact?.industry ?? ""); setWebsite(contact?.website ?? "");
     setJobTitle(contact?.job_title ?? ""); setStatus(contact?.lead_status ?? "no_reply");
     setNotes(contact?.notes ?? "");
+    setCustom(((contact as unknown as { custom?: Record<string, unknown> })?.custom) ?? {});
   }, [contact, open]);
 
   const submit = async () => {
@@ -495,6 +497,7 @@ function CCDialog({ open, onOpenChange, contact, campaignId, leadOpts, onSaved }
       campaign_id: campaignId, first_name: first, last_name: last,
       email: email || null, organisation: org || null, industry: industry || null,
       website: website || null, job_title: jobTitle || null, lead_status: status, notes: notes || null,
+      custom: custom as never,
     };
     if (contact) {
       const { error } = await supabase.from("campaign_contacts").update(payload).eq("id", contact.id);
@@ -508,7 +511,7 @@ function CCDialog({ open, onOpenChange, contact, campaignId, leadOpts, onSaved }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl">
+      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>{contact ? "Edit contact" : "Add contact"}</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
@@ -528,6 +531,7 @@ function CCDialog({ open, onOpenChange, contact, campaignId, leadOpts, onSaved }
             </div>
           </div>
           <div className="space-y-1"><Label>Notes</Label><Textarea value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
+          <CustomFieldValues module="outreach" value={custom} onChange={setCustom} />
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
