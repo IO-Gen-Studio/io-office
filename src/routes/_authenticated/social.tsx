@@ -97,9 +97,9 @@ function SocialPage() {
       <SocialPostMockupDialog
         open={!!viewing}
         onOpenChange={(o) => { if (!o) setViewing(null); }}
-        plan={viewing}
+        plan={viewing ? (rows.find((r) => r.id === viewing.id) ?? viewing) : null}
         editable={editable}
-        onApprovalChange={() => { void load(); if (viewing) { /* refresh viewing reference after load via effect-less re-find */ } }}
+        onApprovalChange={load}
       />
     </div>
   );
