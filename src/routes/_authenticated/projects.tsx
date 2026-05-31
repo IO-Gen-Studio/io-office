@@ -218,10 +218,26 @@ function ProjectDetail({ project, editable, onBack, onSaved }: { project: Projec
       </div>
 
       <div className="grid md:grid-cols-3 gap-4">
-        <StatCard label="Total cost" value={formatGBP(project.total_cost)} />
+        <StatCard label="Final Costs" value={formatGBP(project.total_cost)} />
         <StatCard label="Supplier cost" value={formatGBP(project.supplier_cost)} />
         <StatCard label="Profit" value={formatGBP(profit)} accent={profit >= 0 ? "text-primary" : "text-destructive"} />
       </div>
+
+      <Card className="shadow-soft">
+        <CardContent className="pt-6 space-y-4">
+          <h3 className="font-semibold">Final Costs breakdown</h3>
+          <CostBreakdown
+            parentType="project"
+            parentId={project.id}
+            editable={editable}
+            onTotalsChange={async ({ final, supplier }) => {
+              if (Number(project.total_cost) === final && Number(project.supplier_cost) === supplier) return;
+              await supabase.from("projects").update({ total_cost: final, supplier_cost: supplier }).eq("id", project.id);
+              void load();
+            }}
+          />
+        </CardContent>
+      </Card>
 
       <Card className="shadow-soft">
         <CardContent className="pt-6 space-y-3">
