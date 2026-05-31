@@ -367,6 +367,7 @@ function ProjectDialog({ open, onOpenChange, project, defaultType, orgs, contact
       start_date: startDate || null, end_date: endDate || null,
       total_cost: Number(totalCost) || 0,
       supplier_cost: Number(supplierCost) || 0,
+      custom: customVals as never,
     };
     if (project) {
       const { error } = await supabase.from("projects").update(payload).eq("id", project.id);
