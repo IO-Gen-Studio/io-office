@@ -354,6 +354,7 @@ function ProjectDialog({ open, onOpenChange, project, defaultType, orgs, contact
     setStartDate(project?.start_date ?? ""); setEndDate(project?.end_date ?? "");
     setTotalCost(String(project?.total_cost ?? 0));
     setSupplierCost(String(project?.supplier_cost ?? 0));
+    setCustomVals((project?.custom ?? {}) as Record<string, unknown>);
   }, [project, open, defaultType]);
 
   const submit = async () => {
