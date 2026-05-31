@@ -444,13 +444,9 @@ function CampaignDetail({ campaign, editable, onBack }: { campaign: Campaign; ed
                         <TableCell key={s.key} className="whitespace-nowrap">
                           <div className="flex items-center gap-2">
                             <Checkbox checked={checked} disabled={!editable} onCheckedChange={(v) => toggleStage(r, s.key, !!v)} />
-                            <Input
-                              type="date"
-                              className="h-8 w-[140px]"
-                              value={toDateInput(stageData?.sent_at)}
-                              disabled={!editable}
-                              onChange={(e) => setStageDate(r, s.key, e.target.value)}
-                            />
+                            <span className="text-sm text-muted-foreground tabular-nums w-[100px]">
+                              {checked ? formatDateUK(stageData?.sent_at) : "—"}
+                            </span>
                           </div>
                         </TableCell>
                       );
