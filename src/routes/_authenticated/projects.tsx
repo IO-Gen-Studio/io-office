@@ -41,6 +41,13 @@ type MTemplate = { id: string; label: string; position: number };
 
 export const Route = createFileRoute("/_authenticated/projects")({ component: ProjectsPage });
 
+function relabelForType(label: string, type: PType): string {
+  if (type !== "work") return label;
+  if (label === "Project completed") return "Works completed";
+  if (label === "Project invoiced") return "Works invoiced";
+  return label;
+}
+
 function ProjectsPage() {
   const { canEdit } = useAuth();
   const editable = canEdit("projects");
