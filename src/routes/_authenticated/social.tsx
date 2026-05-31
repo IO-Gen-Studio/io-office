@@ -38,6 +38,7 @@ function SocialPage() {
   const [rows, setRows] = useState<Plan[]>([]);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Plan | null>(null);
+  const [viewing, setViewing] = useState<Plan | null>(null);
 
   const load = async () => {
     const { data } = await supabase.from("social_plans").select("*").order("scheduled_at", { ascending: true, nullsFirst: false });
