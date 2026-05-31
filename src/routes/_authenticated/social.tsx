@@ -184,10 +184,10 @@ function PlanDialog({ open, onOpenChange, plan, onSaved }: { open: boolean; onOp
           <div className="space-y-1"><Label>Title</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} /></div>
           <div className="space-y-1"><Label>Copy</Label><Textarea rows={6} value={copy} onChange={(e) => setCopy(e.target.value)} /></div>
           <div className="space-y-1">
-            <Label>Media</Label>
-            <Input type="file" accept="image/*,video/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) void onUpload(f); }} />
+            <Label>Media (image, video or PDF)</Label>
+            <Input type="file" accept="image/*,video/*,application/pdf,.pdf" onChange={(e) => { const f = e.target.files?.[0]; if (f) void onUpload(f); }} />
             {uploading && <p className="text-xs text-muted-foreground">Uploading…</p>}
-            {mediaPath && <p className="text-xs text-muted-foreground">Attached: {mediaPath}</p>}
+            {mediaPath && <MediaPreview path={mediaPath} onRemove={() => setMediaPath(null)} />}
           </div>
           <CustomFieldValues module="social" value={custom} onChange={setCustom} />
         </div>
