@@ -313,7 +313,7 @@ export function CostBreakdown({
         <div className="flex flex-wrap gap-2">
           <Button size="sm" variant="outline" onClick={addItem}><Plus className="size-4 mr-1" />Add item</Button>
           <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()}>
-            <Upload className="size-4 mr-1" />Import CSV
+            <Upload className="size-4 mr-1" />Import CSV / Excel
           </Button>
           <Button size="sm" variant="ghost" onClick={downloadTemplate}>
             <Download className="size-4 mr-1" />Template
