@@ -199,3 +199,31 @@ function PlanDialog({ open, onOpenChange, plan, onSaved }: { open: boolean; onOp
     </Dialog>
   );
 }
+
+function MediaPreview({ path, onRemove }: { path: string; onRemove: () => void }) {
+  const ext = path.toLowerCase().split(".").pop() ?? "";
+  const { data } = supabase.storage.from("social-media").getPublicUrl(path);
+  const url = data.publicUrl;
+  const isPdf = ext === "pdf";
+  const isVideo = ["mp4", "webm", "mov", "m4v", "ogg"].includes(ext);
+  const isImage = ["jpg", "jpeg", "png", "gif", "webp", "avif", "svg"].includes(ext);
+  return (
+    <div className="space-y-2 rounded-md border p-2 bg-muted/20">
+      <div className="flex items-center justify-between gap-2">
+        <a href={url} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline truncate flex-1">{path}</a>
+        <Button variant="ghost" size="sm" type="button" onClick={onRemove}>Remove</Button>
+      </div>
+      <div className="rounded overflow-hidden bg-background">
+        {isPdf ? (
+          <iframe src={url} title="PDF preview" className="w-full h-80 border-0" />
+        ) : isVideo ? (
+          <video src={url} controls className="w-full max-h-80" />
+        ) : isImage ? (
+          <img src={url} alt="Media preview" className="w-full max-h-80 object-contain" />
+        ) : (
+          <p className="text-xs text-muted-foreground p-3">Preview not available for this file type.</p>
+        )}
+      </div>
+    </div>
+  );
+}
