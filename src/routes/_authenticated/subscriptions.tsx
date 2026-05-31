@@ -171,12 +171,12 @@ function SubDialog({ open, onOpenChange, sub, orgs, contacts, onSaved }: {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>{sub ? "Edit subscription" : "New subscription"}</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1"><Label>Plan name *</Label><Input value={plan} onChange={(e) => setPlan(e.target.value)} /></div>
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1"><Label>Cost (£)</Label><Input type="number" value={cost} onChange={(e) => setCost(e.target.value)} /></div>
+            <div className="space-y-1"><Label>Final Costs (£)</Label><Input type="number" value={cost} onChange={(e) => setCost(e.target.value)} /><p className="text-xs text-muted-foreground">Use the breakdown below to auto-calculate this.</p></div>
             <div className="space-y-1">
               <Label>Billing cycle</Label>
               <Select value={cycle} onValueChange={setCycle}>
