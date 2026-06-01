@@ -167,7 +167,22 @@ function SubDetail({ sub, editable, onBack, onSaved }: { sub: Sub; editable: boo
       supabase.from("contacts").select("id,first_name,last_name,organisation_id").order("last_name"),
       supabase.from("subscriptions").select("*").eq("id", sub.id).single(),
     ]);
-    setMilestones((m ?? []) as Milestone[]);
+    let ms = (m ?? []) as Milestone[];
+    if (ms.length === 0) {
+      const { data: tpls } = await supabase
+        .from("milestone_templates").select("*")
+        .eq("module", "subscriptions").order("position");
+      if (tpls && tpls.length > 0) {
+        const { data: inserted } = await supabase.from("milestones").insert(
+          (tpls as MTemplate[]).map((t) => ({
+            parent_type: "subscription", parent_id: sub.id,
+            label: t.label, position: t.position, is_custom: false,
+          })) as never
+        ).select();
+        ms = (inserted ?? []) as Milestone[];
+      }
+    }
+    setMilestones(ms);
     setOrgs((o ?? []) as Org[]); setContacts((c ?? []) as Contact[]);
     if (fresh) onSaved(fresh as Sub);
   };
