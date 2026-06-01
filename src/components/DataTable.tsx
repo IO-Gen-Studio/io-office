@@ -3,15 +3,7 @@ import { useAuth } from "@/lib/auth/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-  DropdownMenuCheckboxItem,
-} from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowDown, ArrowUp, ArrowUpDown, Filter, Settings2, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -165,24 +157,31 @@ export function DataTable<T>(props: DataTableProps<T>) {
           <Button variant="outline" size="sm" onClick={() => setPrefs((p) => ({ ...p, showFilters: !p.showFilters }))}>
             <Filter className="size-4 mr-1" />Filters
           </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+          <Sheet>
+            <SheetTrigger asChild>
               <Button variant="outline" size="sm"><Settings2 className="size-4 mr-1" />Columns</Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>Show columns</DropdownMenuLabel>
-              {columns.filter((c) => c.hideable !== false).map((c) => (
-                <DropdownMenuCheckboxItem
-                  key={c.key}
-                  checked={!prefs.hidden.includes(c.key)}
-                  onCheckedChange={() => toggleHidden(c.key)}
-                  onSelect={(e) => e.preventDefault()}
-                >{c.header}</DropdownMenuCheckboxItem>
-              ))}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={reset}><RotateCcw className="size-4 mr-2" />Reset to default</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-full sm:max-w-sm">
+              <SheetHeader>
+                <SheetTitle>Show columns</SheetTitle>
+              </SheetHeader>
+              <div className="mt-6 space-y-1">
+                {columns.filter((c) => c.hideable !== false).map((c) => (
+                  <label key={c.key} className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-accent cursor-pointer">
+                    <Checkbox
+                      checked={!prefs.hidden.includes(c.key)}
+                      onCheckedChange={() => toggleHidden(c.key)}
+                    />
+                    <span>{c.header}</span>
+                  </label>
+                ))}
+                <div className="my-2 border-t border-border" />
+                <button onClick={reset} className="w-full text-left flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-accent">
+                  <RotateCcw className="size-4" />Reset to default
+                </button>
+              </div>
+            </SheetContent>
+          </Sheet>
           {toolbarRight}
         </div>
       </div>
