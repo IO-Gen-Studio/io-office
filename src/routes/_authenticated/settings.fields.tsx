@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Pencil, Plus, Trash2 } from "lucide-react";
+import { BUILTIN_DROPDOWNS, useBuiltinLabels, type BuiltinModule } from "@/lib/builtin-labels";
 
 export const Route = createFileRoute("/_authenticated/settings/fields")({
   beforeLoad: async () => {
