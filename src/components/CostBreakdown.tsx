@@ -72,8 +72,8 @@ export function CostBreakdown({
   const totals = useMemo(() => {
     return items.reduce(
       (a, i) => ({
-        final: a.final + Number(i.quantity || 0) * Number(i.final_cost || 0),
-        supplier: a.supplier + Number(i.quantity || 0) * Number(i.supplier_cost || 0),
+        final: a.final + Number(i.final_cost || 0),
+        supplier: a.supplier + Number(i.supplier_cost || 0),
       }),
       { final: 0, supplier: 0 },
     );
