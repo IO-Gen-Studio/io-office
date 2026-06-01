@@ -154,7 +154,7 @@ function FieldsPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-semibold tracking-tight">Custom Fields</h2>
+        <h2 className="text-lg font-semibold tracking-tight">Other Information</h2>
         <p className="text-sm text-muted-foreground">
           Add, edit, or remove custom fields per module. Built-in fields are shown for reference.
         </p>
