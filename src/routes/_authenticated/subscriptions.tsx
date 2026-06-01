@@ -188,9 +188,7 @@ function SubDialog({ open, onOpenChange, sub, orgs, contacts, onSaved }: {
               <Select value={cycle} onValueChange={setCycle}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                  <SelectItem value="quarterly">Quarterly</SelectItem>
-                  <SelectItem value="yearly">Yearly</SelectItem>
+                  {useBuiltinFieldOptions("subscriptions", "billing_cycle").map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -200,10 +198,7 @@ function SubDialog({ open, onOpenChange, sub, orgs, contacts, onSaved }: {
               <Select value={status} onValueChange={(v) => setStatus(v as SStatus)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="paused">Paused</SelectItem>
-                  <SelectItem value="past_due">Past due</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                  {useBuiltinFieldOptions("subscriptions", "status").map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
