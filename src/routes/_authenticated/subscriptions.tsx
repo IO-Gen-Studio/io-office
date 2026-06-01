@@ -8,14 +8,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { DataTable, type DataTableColumn } from "@/components/DataTable";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, ArrowLeft, FolderOpen, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { CustomFieldValues } from "@/components/CustomFieldValues";
-import { useCustomFieldColumns } from "@/components/CustomFieldDisplay";
+import { CustomFieldDisplay, useCustomFieldColumns } from "@/components/CustomFieldDisplay";
 import { CostBreakdown } from "@/components/CostBreakdown";
 import { useBuiltinFieldLabel, useBuiltinFieldOptions } from "@/lib/builtin-labels";
 import type { Database } from "@/integrations/supabase/types";
@@ -28,17 +30,35 @@ type Sub = {
 };
 type Org = { id: string; name: string };
 type Contact = { id: string; first_name: string; last_name: string; organisation_id: string | null };
+type Milestone = { id: string; parent_id: string; parent_type: string; label: string; due_date: string | null; completed_at: string | null; is_custom: boolean; position: number };
+type MTemplate = { id: string; label: string; position: number; module: string; project_type: string | null };
 
 export const Route = createFileRoute("/_authenticated/subscriptions")({ component: SubscriptionsPage });
 
 function SubscriptionsPage() {
   const { canEdit } = useAuth();
   const editable = canEdit("subscriptions");
+  const [active, setActive] = useState<Sub | null>(null);
+  return (
+    <div className="p-6 max-w-7xl mx-auto space-y-6">
+      <div className="flex items-baseline justify-between">
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight">Subscriptions</h1>
+          <p className="text-muted-foreground mt-1">Recurring client plans and renewals.</p>
+        </div>
+      </div>
+      {active
+        ? <SubDetail sub={active} editable={editable} onBack={() => setActive(null)} onSaved={(s) => setActive(s)} />
+        : <SubList editable={editable} onOpen={setActive} />}
+    </div>
+  );
+}
+
+function SubList({ editable, onOpen }: { editable: boolean; onOpen: (s: Sub) => void }) {
   const [rows, setRows] = useState<Sub[]>([]);
   const [orgs, setOrgs] = useState<Org[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [open, setOpen] = useState(false);
-  const [editing, setEditing] = useState<Sub | null>(null);
 
   const load = async () => {
     const [{ data: s }, { data: o }, { data: c }] = await Promise.all([
@@ -80,29 +100,23 @@ function SubscriptionsPage() {
     {
       key: "billing_cycle", header: "Cycle", accessor: (r) => r.billing_cycle,
       render: (r) => <span>{cycleLabel(r.billing_cycle)}</span>,
-      editable, type: "select",
-      options: cycleOptions,
+      editable, type: "select", options: cycleOptions,
     },
     { key: "cost", header: "Final Costs", accessor: (r) => Number(r.cost), render: (r) => formatGBP(r.cost), editable, type: "number", align: "right" },
     { key: "renewal_date", header: "Renewal", accessor: (r) => r.renewal_date, render: (r) => formatDateUK(r.renewal_date), editable, type: "date" },
     {
       key: "status", header: "Status", accessor: (r) => r.status,
       render: (r) => <Badge variant={r.status === "active" ? "default" : r.status === "past_due" ? "destructive" : "secondary"}>{subStatusLabel(r.status)}</Badge>,
-      editable, type: "select",
-      options: subStatusOptions,
+      editable, type: "select", options: subStatusOptions,
     },
   ];
   const customCols = useCustomFieldColumns<Sub>("subscriptions");
   const allColumns = [...columns, ...customCols];
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
-      <div className="flex items-baseline justify-between">
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight">Subscriptions</h1>
-          <p className="text-muted-foreground mt-1">Recurring client plans and renewals.</p>
-        </div>
-        {editable && <Button className="bg-gradient-primary text-primary-foreground" onClick={() => { setEditing(null); setOpen(true); }}><Plus className="size-4 mr-2" />New subscription</Button>}
+    <>
+      <div className="flex justify-end">
+        {editable && <Button className="bg-gradient-primary text-primary-foreground" onClick={() => setOpen(true)}><Plus className="size-4 mr-2" />New subscription</Button>}
       </div>
 
       <div className="grid md:grid-cols-3 gap-4">
@@ -119,20 +133,210 @@ function SubscriptionsPage() {
             rows={rows}
             rowId={(r) => r.id}
             onSaveCell={saveCell}
+            onRowClick={onOpen}
             emptyMessage="No subscriptions yet."
-            actions={editable ? (r) => (
-              <>
-                <Button variant="ghost" size="icon" onClick={() => { setEditing(r); setOpen(true); }}><Pencil className="size-4" /></Button>
-                <Button variant="ghost" size="icon" onClick={() => remove(r)}><Trash2 className="size-4" /></Button>
-              </>
-            ) : undefined}
+            actions={(r) => (
+              <div className="flex justify-end gap-1">
+                <Button variant="ghost" size="icon" title="Open" onClick={() => onOpen(r)}><FolderOpen className="size-4" /></Button>
+                {editable && <Button variant="ghost" size="icon" title="Delete" onClick={() => remove(r)}><Trash2 className="size-4" /></Button>}
+              </div>
+            )}
           />
         </CardContent>
       </Card>
 
-      <SubDialog open={open} onOpenChange={setOpen} sub={editing} orgs={orgs} contacts={contacts} onSaved={load} />
+      <SubDialog open={open} onOpenChange={setOpen} sub={null} orgs={orgs} contacts={contacts} onSaved={load} />
+    </>
+  );
+}
+
+function SubDetail({ sub, editable, onBack, onSaved }: { sub: Sub; editable: boolean; onBack: () => void; onSaved: (s: Sub) => void }) {
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [orgs, setOrgs] = useState<Org[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [openEdit, setOpenEdit] = useState(false);
+  const [customLabel, setCustomLabel] = useState("");
+
+  const cycleLabel = useBuiltinFieldLabel("subscriptions", "billing_cycle");
+  const statusLabel = useBuiltinFieldLabel("subscriptions", "status");
+
+  const load = async () => {
+    const [{ data: m }, { data: o }, { data: c }, { data: fresh }] = await Promise.all([
+      supabase.from("milestones").select("*").eq("parent_id", sub.id).eq("parent_type", "subscription").order("position"),
+      supabase.from("organisations").select("id,name").order("name"),
+      supabase.from("contacts").select("id,first_name,last_name,organisation_id").order("last_name"),
+      supabase.from("subscriptions").select("*").eq("id", sub.id).single(),
+    ]);
+    setMilestones((m ?? []) as Milestone[]);
+    setOrgs((o ?? []) as Org[]); setContacts((c ?? []) as Contact[]);
+    if (fresh) onSaved(fresh as Sub);
+  };
+  useEffect(() => { void load(); }, [sub.id]);
+
+  const toggleCompleted = async (m: Milestone, completed: boolean) => {
+    const completed_at = completed ? new Date().toISOString() : null;
+    const { error } = await supabase.from("milestones").update({ completed_at }).eq("id", m.id);
+    if (error) { toast.error(error.message); return; }
+    void load();
+  };
+  const updateDueDate = async (m: Milestone, due_date: string | null) => {
+    const { error } = await supabase.from("milestones").update({ due_date }).eq("id", m.id);
+    if (error) { toast.error(error.message); return; }
+    void load();
+  };
+  const addCustom = async () => {
+    if (!customLabel.trim()) return;
+    const { error } = await supabase.from("milestones").insert({
+      parent_type: "subscription", parent_id: sub.id,
+      label: customLabel, is_custom: true, position: milestones.length,
+    } as never);
+    if (error) { toast.error(error.message); return; }
+    setCustomLabel(""); void load();
+  };
+  const removeMilestone = async (m: Milestone) => {
+    const { error } = await supabase.from("milestones").delete().eq("id", m.id);
+    if (error) { toast.error(error.message); return; }
+    void load();
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft className="size-4 mr-1" />Back</Button>
+        <div className="flex-1">
+          <h2 className="text-xl font-semibold">{sub.plan_name}</h2>
+          <p className="text-sm text-muted-foreground">{cycleLabel(sub.billing_cycle)} · {statusLabel(sub.status)}</p>
+        </div>
+        {editable && <Button variant="outline" onClick={() => setOpenEdit(true)}><Pencil className="size-4 mr-2" />Edit</Button>}
+      </div>
+
+      <div className="grid md:grid-cols-3 gap-4">
+        <StatCard label="Final Costs" value={formatGBP(sub.cost)} />
+        <StatCard label="Billing cycle" value={cycleLabel(sub.billing_cycle)} />
+        <StatCard label="Renewal" value={formatDateUK(sub.renewal_date) || "—"} />
+      </div>
+
+      <Card className="shadow-soft">
+        <CardContent className="pt-6 space-y-3">
+          <h3 className="font-semibold">Details</h3>
+          <div className="grid md:grid-cols-2 gap-3 text-sm">
+            <Info label="Client" value={orgs.find((o) => o.id === sub.client_org_id)?.name ?? "—"} />
+            <Info label="Contact" value={(() => { const c = contacts.find((x) => x.id === sub.client_contact_id); return c ? `${c.first_name} ${c.last_name}` : "—"; })()} />
+            <Info label="Status" value={statusLabel(sub.status)} />
+            <Info label="Renewal date" value={formatDateUK(sub.renewal_date) || "—"} />
+          </div>
+          <CustomFieldDisplay module="subscriptions" value={sub.custom} />
+        </CardContent>
+      </Card>
+
+      <Collapsible defaultOpen>
+        <Card className="shadow-soft">
+          <CardContent className="pt-6 space-y-4">
+            <CollapsibleTrigger asChild>
+              <button type="button" className="flex w-full items-center justify-between text-left group">
+                <h3 className="font-semibold">Cost Breakdown</h3>
+                <ChevronDown className="size-4 transition-transform group-data-[state=closed]:-rotate-90" />
+              </button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-4">
+              <CostBreakdown
+                parentType="subscription"
+                parentId={sub.id}
+                editable={editable}
+                onTotalsChange={async ({ final }) => {
+                  if (Number(sub.cost) === final) return;
+                  await supabase.from("subscriptions").update({ cost: final }).eq("id", sub.id);
+                  void load();
+                }}
+              />
+            </CollapsibleContent>
+          </CardContent>
+        </Card>
+      </Collapsible>
+
+      <Collapsible defaultOpen>
+        <Card className="shadow-soft">
+          <CardContent className="pt-6 space-y-4">
+            <CollapsibleTrigger asChild>
+              <button type="button" className="flex w-full items-center justify-between text-left group">
+                <h3 className="font-semibold">Milestones</h3>
+                <ChevronDown className="size-4 transition-transform group-data-[state=closed]:-rotate-90" />
+              </button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-4 pt-2">
+              {milestones.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No milestones yet.</p>
+              ) : (
+                <div className="overflow-auto rounded-md border">
+                  <table className="w-full text-sm">
+                    <thead className="border-b bg-muted/30">
+                      <tr>
+                        <th className="text-left p-2 w-10">Done</th>
+                        <th className="text-left p-2">Milestone</th>
+                        <th className="text-left p-2 w-44">Due date</th>
+                        <th className="text-left p-2 w-32">Completed</th>
+                        {editable && <th className="text-right p-2 w-10" />}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {milestones.map((m) => (
+                        <tr key={m.id} className="border-b">
+                          <td className="p-2">
+                            <Checkbox
+                              checked={!!m.completed_at}
+                              onCheckedChange={(c) => editable && toggleCompleted(m, c === true)}
+                              disabled={!editable}
+                            />
+                          </td>
+                          <td className={`p-2 ${m.completed_at ? "line-through text-muted-foreground" : ""}`}>{m.label}</td>
+                          <td className="p-2">
+                            <Input
+                              type="date"
+                              value={m.due_date ?? ""}
+                              disabled={!editable}
+                              onChange={(e) => updateDueDate(m, e.target.value || null)}
+                              className="h-8 text-sm"
+                            />
+                          </td>
+                          <td className="p-2 text-muted-foreground">{formatDateUK(m.completed_at)}</td>
+                          {editable && <td className="p-2 text-right">
+                            {m.is_custom && <Button variant="ghost" size="icon" onClick={() => removeMilestone(m)}><Trash2 className="size-4" /></Button>}
+                          </td>}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              {editable && (
+                <div className="flex gap-2 pt-2 border-t">
+                  <Input placeholder="Add custom milestone" value={customLabel} onChange={(e) => setCustomLabel(e.target.value)} />
+                  <Button onClick={addCustom} disabled={!customLabel.trim()}>Add</Button>
+                </div>
+              )}
+            </CollapsibleContent>
+          </CardContent>
+        </Card>
+      </Collapsible>
+
+      <SubDialog open={openEdit} onOpenChange={setOpenEdit} sub={sub} orgs={orgs} contacts={contacts} onSaved={load} />
     </div>
   );
+}
+
+function StatCard({ label, value }: { label: string; value: string }) {
+  return (
+    <Card className="shadow-soft">
+      <CardContent className="pt-6">
+        <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
+        <p className="text-2xl font-semibold mt-1">{value}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function Info({ label, value }: { label: string; value: string }) {
+  return <div><span className="text-muted-foreground">{label}:</span> <span className="font-medium">{value}</span></div>;
 }
 
 function SubDialog({ open, onOpenChange, sub, orgs, contacts, onSaved }: {
@@ -143,6 +347,9 @@ function SubDialog({ open, onOpenChange, sub, orgs, contacts, onSaved }: {
   const [renewal, setRenewal] = useState(""); const [status, setStatus] = useState<SStatus>("active");
   const [org, setOrg] = useState<string>("__none__"); const [contact, setContact] = useState<string>("__none__");
   const [customVals, setCustomVals] = useState<Record<string, unknown>>({});
+
+  const cycleOptions = useBuiltinFieldOptions("subscriptions", "billing_cycle");
+  const statusOptions = useBuiltinFieldOptions("subscriptions", "status");
 
   useEffect(() => {
     setPlan(sub?.plan_name ?? ""); setCost(String(sub?.cost ?? 0));
@@ -168,6 +375,18 @@ function SubDialog({ open, onOpenChange, sub, orgs, contacts, onSaved }: {
     } else {
       const { data, error } = await supabase.from("subscriptions").insert(payload).select().single();
       if (error) { toast.error(error.message); return; }
+      // Seed milestones from subscription templates
+      const { data: tpls } = await supabase
+        .from("milestone_templates").select("*")
+        .eq("module", "subscriptions").order("position");
+      if (tpls && tpls.length > 0) {
+        await supabase.from("milestones").insert(
+          (tpls as MTemplate[]).map((t) => ({
+            parent_type: "subscription", parent_id: data.id,
+            label: t.label, position: t.position, is_custom: false,
+          })) as never
+        );
+      }
       await logActivity({ module: "subscriptions", entity_type: "subscription", entity_id: data.id, verb: "created", summary: `Created subscription ${plan}` });
     }
     toast.success("Saved"); onOpenChange(false); onSaved();
@@ -182,13 +401,13 @@ function SubDialog({ open, onOpenChange, sub, orgs, contacts, onSaved }: {
         <div className="space-y-3">
           <div className="space-y-1"><Label>Plan name *</Label><Input value={plan} onChange={(e) => setPlan(e.target.value)} /></div>
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1"><Label>Final Costs (£)</Label><Input type="number" value={cost} onChange={(e) => setCost(e.target.value)} /><p className="text-xs text-muted-foreground">Use the breakdown below to auto-calculate this.</p></div>
+            <div className="space-y-1"><Label>Final Costs (£)</Label><Input type="number" value={cost} onChange={(e) => setCost(e.target.value)} /><p className="text-xs text-muted-foreground">Use the breakdown in the detail view to auto-calculate this.</p></div>
             <div className="space-y-1">
               <Label>Billing cycle</Label>
               <Select value={cycle} onValueChange={setCycle}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {useBuiltinFieldOptions("subscriptions", "billing_cycle").map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                  {cycleOptions.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -198,7 +417,7 @@ function SubDialog({ open, onOpenChange, sub, orgs, contacts, onSaved }: {
               <Select value={status} onValueChange={(v) => setStatus(v as SStatus)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {useBuiltinFieldOptions("subscriptions", "status").map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                  {statusOptions.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -224,20 +443,6 @@ function SubDialog({ open, onOpenChange, sub, orgs, contacts, onSaved }: {
             </div>
           </div>
           <CustomFieldValues module="subscriptions" value={customVals} onChange={setCustomVals} />
-          {sub && (
-            <div className="space-y-2 pt-3 border-t">
-              <h4 className="text-sm font-semibold">Final Costs breakdown</h4>
-              <CostBreakdown
-                parentType="subscription"
-                parentId={sub.id}
-                editable
-                onTotalsChange={({ final }) => {
-                  if (final > 0 && String(final) !== cost) setCost(String(final));
-                }}
-              />
-            </div>
-          )}
-          {!sub && <p className="text-xs text-muted-foreground">Save the subscription to add an itemised breakdown.</p>}
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
