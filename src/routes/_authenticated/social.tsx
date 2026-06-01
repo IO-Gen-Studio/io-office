@@ -211,3 +211,42 @@ function MediaPreview({ path, onRemove }: { path: string; onRemove: () => void }
     </div>
   );
 }
+
+function PlanDialogSelects({
+  platform, setPlatform, approval, setApproval, status, setStatus, scheduledAt, setScheduledAt,
+}: {
+  platform: Platform; setPlatform: (v: Platform) => void;
+  approval: ApprovalStatus; setApproval: (v: ApprovalStatus) => void;
+  status: PostStatus; setStatus: (v: PostStatus) => void;
+  scheduledAt: string; setScheduledAt: (v: string) => void;
+}) {
+  const platformOptions = useBuiltinFieldOptions("social", "platform");
+  const approvalOptions = useBuiltinFieldOptions("social", "approval_status");
+  const postStatusOptions = useBuiltinFieldOptions("social", "post_status");
+  return (
+    <div className="grid grid-cols-2 gap-3">
+      <div className="space-y-1">
+        <Label>Platform</Label>
+        <Select value={platform} onValueChange={(v) => setPlatform(v as Platform)}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>{platformOptions.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-1"><Label>Scheduled date</Label><Input type="date" value={scheduledAt} onChange={(e) => setScheduledAt(e.target.value)} /></div>
+      <div className="space-y-1">
+        <Label>Approval</Label>
+        <Select value={approval} onValueChange={(v) => setApproval(v as ApprovalStatus)}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>{approvalOptions.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-1">
+        <Label>Post status</Label>
+        <Select value={status} onValueChange={(v) => setStatus(v as PostStatus)}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>{postStatusOptions.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
+        </Select>
+      </div>
+    </div>
+  );
+}
