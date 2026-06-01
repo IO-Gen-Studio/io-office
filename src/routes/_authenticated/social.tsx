@@ -78,12 +78,12 @@ function SocialPage() {
               {rows.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No posts planned.</TableCell></TableRow> :
                 rows.map((p) => (
                   <TableRow key={p.id}>
-                    <TableCell><Badge variant="secondary" className="capitalize">{p.platform}</Badge></TableCell>
+                    <TableCell><Badge variant="secondary">{platformLabel(p.platform)}</Badge></TableCell>
                     <TableCell className="font-medium">{p.title || "—"}</TableCell>
                     <TableCell className="max-w-md truncate text-muted-foreground">{p.copy || "—"}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">{p.scheduled_at ? new Date(p.scheduled_at).toLocaleDateString() : "—"}</TableCell>
-                    <TableCell>{p.approval_status === "approved" ? <Badge>Approved</Badge> : <Badge variant="outline">Not approved</Badge>}</TableCell>
-                    <TableCell><Badge variant={p.post_status === "posted" ? "default" : p.post_status === "cancelled" ? "destructive" : "secondary"} className="capitalize">{p.post_status.replace("_", " ")}</Badge></TableCell>
+                    <TableCell>{p.approval_status === "approved" ? <Badge>{approvalLabel("approved")}</Badge> : <Badge variant="outline">{approvalLabel("not_approved")}</Badge>}</TableCell>
+                    <TableCell><Badge variant={p.post_status === "posted" ? "default" : p.post_status === "cancelled" ? "destructive" : "secondary"}>{postStatusLabel(p.post_status)}</Badge></TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="icon" title="Preview" onClick={() => setViewing(p)}><Eye className="size-4" /></Button>
                       {editable && <>
