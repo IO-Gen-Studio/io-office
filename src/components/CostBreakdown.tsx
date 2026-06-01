@@ -84,7 +84,14 @@ export function CostBreakdown({
     );
   }, [items]);
 
-  useEffect(() => { onTotalsChange?.(totals); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [totals.final, totals.supplier]);
+  useEffect(() => {
+    // Only report totals once items have actually been loaded for the active version.
+    // Without this guard, an initial render with empty items overwrites the parent's
+    // stored cost with 0 before the real items arrive.
+    if (!activeId || itemsLoadedFor !== activeId) return;
+    onTotalsChange?.(totals);
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  }, [totals.final, totals.supplier, itemsLoadedFor, activeId]);
 
   const active = versions.find((v) => v.id === activeId) ?? null;
 
