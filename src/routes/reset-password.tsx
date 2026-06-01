@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +15,7 @@ function ResetPage() {
   const [ready, setReady] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
+  const { refresh } = useAuth();
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((evt) => {
@@ -29,7 +31,11 @@ function ResetPage() {
     try {
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
-      await supabase.from("profiles").update({ must_change_password: false }).eq("id", (await supabase.auth.getUser()).data.user!.id);
+      const { data: u } = await supabase.auth.getUser();
+      if (u.user) {
+        await supabase.from("profiles").update({ must_change_password: false }).eq("id", u.user.id);
+      }
+      await refresh();
       toast.success("Password updated");
       navigate({ to: "/dashboard" });
     } catch (err) {

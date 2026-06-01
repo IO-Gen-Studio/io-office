@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { formatGBP } from "@/lib/format";
-import { Plus, Trash2, GitBranch, Upload, Download } from "lucide-react";
+import { Plus, Trash2, GitBranch, Upload, Download, Pencil, FileSpreadsheet, Check } from "lucide-react";
 import { useRef } from "react";
 import { toast } from "sonner";
 
@@ -45,6 +45,7 @@ export function CostBreakdown({
   const [items, setItems] = useState<Item[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [editMode, setEditMode] = useState(false);
 
   const loadVersions = async () => {
     setLoading(true);
@@ -186,7 +187,7 @@ export function CostBreakdown({
     if (rows.length === 0) { toast.error("Empty CSV"); return; }
     // Detect header
     const first = rows[0].map((c) => c.toLowerCase().trim());
-    const looksLikeHeader = first.some((c) => ["item", "item #", "item no", "description", "qty", "quantity", "final", "final cost", "supplier", "supplier cost"].includes(c));
+    const looksLikeHeader = first.some((c) => ["item", "item #", "item no", "description", "qty", "quantity", "final", "final cost", "supplier", "supplier cost", "investment"].includes(c));
     let headerMap: { item?: number; desc?: number; qty?: number; final?: number; supplier?: number } = {};
     let dataStart = 0;
     if (looksLikeHeader) {
@@ -195,7 +196,7 @@ export function CostBreakdown({
         if (c.includes("item")) headerMap.item = idx;
         else if (c.includes("desc")) headerMap.desc = idx;
         else if (c.includes("qty") || c.includes("quantity")) headerMap.qty = idx;
-        else if (c.includes("supplier")) headerMap.supplier = idx;
+        else if (c.includes("supplier") || c.includes("investment")) headerMap.supplier = idx;
         else if (c.includes("final") || c.includes("cost") || c.includes("price")) headerMap.final = idx;
       });
     } else {
@@ -218,13 +219,43 @@ export function CostBreakdown({
   };
 
   const downloadTemplate = () => {
-    const csv = "Item #,Description,Quantity,Final Cost,Supplier Cost\n1,Example line item,1,100,60\n";
+    const csv = "Item #,Description,Quantity,Final Cost,Investment\n1,Example line item,1,100,60\n";
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url; a.download = "cost-items-template.csv"; a.click();
     URL.revokeObjectURL(url);
   };
+
+  const exportXLSX = () => {
+    const rows = items.map((i) => {
+      const qty = Number(i.quantity || 0);
+      const finalCost = Number(i.final_cost || 0);
+      const inv = Number(i.supplier_cost || 0);
+      return {
+        "Item #": i.item_no ?? "",
+        "Description": i.description,
+        "Quantity": qty,
+        "Final Cost": finalCost,
+        "Investment": inv,
+        "Profit": (qty * finalCost) - (qty * inv),
+      };
+    });
+    rows.push({
+      "Item #": "",
+      "Description": "Totals",
+      "Quantity": 0,
+      "Final Cost": totals.final,
+      "Investment": totals.supplier,
+      "Profit": totals.final - totals.supplier,
+    });
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Cost breakdown");
+    const label = active?.label ?? `v${active?.version ?? 1}`;
+    XLSX.writeFile(wb, `cost-breakdown-${label}.xlsx`);
+  };
+
 
   if (loading) return <p className="text-sm text-muted-foreground">Loading cost breakdown…</p>;
 
@@ -249,6 +280,21 @@ export function CostBreakdown({
           <Button size="sm" variant="outline" onClick={() => setCurrent(active.id)}>Set as current</Button>
         )}
         {active?.is_current && <Badge variant="secondary">Current</Badge>}
+        {editable && active && (
+          <Button
+            size="sm"
+            variant={editMode ? "default" : "outline"}
+            onClick={() => setEditMode((v) => !v)}
+            title={editMode ? "Finish editing" : "Edit items"}
+          >
+            {editMode ? <><Check className="size-4 mr-1" />Done</> : <><Pencil className="size-4 mr-1" />Edit</>}
+          </Button>
+        )}
+        {editable && active && (
+          <Button size="sm" variant="outline" onClick={exportXLSX} disabled={items.length === 0}>
+            <FileSpreadsheet className="size-4 mr-1" />Export XLSX
+          </Button>
+        )}
         {editable && (
           <div className="ml-auto flex gap-2">
             <Button size="sm" variant="outline" onClick={() => createVersion(true)} disabled={versions.length === 0}>Duplicate version</Button>
@@ -271,45 +317,45 @@ export function CostBreakdown({
                 <th className="text-left p-2">Description</th>
                 <th className="text-right p-2 w-20">Qty</th>
                 <th className="text-right p-2 w-32">Final cost</th>
-                <th className="text-right p-2 w-32">Supplier cost</th>
-                <th className="text-right p-2 w-32">Line total</th>
-                {editable && <th className="w-10" />}
+                <th className="text-right p-2 w-32">Investment</th>
+                <th className="text-right p-2 w-32">Profit</th>
+                {editable && editMode && <th className="w-10" />}
               </tr>
             </thead>
             <tbody>
               {items.length === 0 ? (
-                <tr><td colSpan={editable ? 7 : 6} className="text-center text-muted-foreground py-6">No items yet.</td></tr>
-              ) : items.map((i) => (
-                <tr key={i.id} className="border-b">
-                  <td className="p-1.5"><Input className="h-8" disabled={!editable} value={i.item_no ?? ""} onChange={(e) => updateItem(i.id, { item_no: e.target.value })} /></td>
-                  <td className="p-1.5"><Input className="h-8" disabled={!editable} value={i.description} onChange={(e) => updateItem(i.id, { description: e.target.value })} /></td>
-                  <td className="p-1.5"><Input className="h-8 text-right" type="number" disabled={!editable} value={i.quantity} onChange={(e) => updateItem(i.id, { quantity: Number(e.target.value) || 0 })} /></td>
-                  <td className="p-1.5"><Input className="h-8 text-right" type="number" disabled={!editable} value={i.final_cost} onChange={(e) => updateItem(i.id, { final_cost: Number(e.target.value) || 0 })} /></td>
-                  <td className="p-1.5"><Input className="h-8 text-right" type="number" disabled={!editable} value={i.supplier_cost} onChange={(e) => updateItem(i.id, { supplier_cost: Number(e.target.value) || 0 })} /></td>
-                  <td className="p-2 text-right tabular-nums">{formatGBP(Number(i.quantity || 0) * Number(i.final_cost || 0))}</td>
-                  {editable && <td className="p-1.5 text-right"><Button variant="ghost" size="icon" onClick={() => removeItem(i.id)}><Trash2 className="size-4" /></Button></td>}
-                </tr>
-              ))}
+                <tr><td colSpan={editable && editMode ? 7 : 6} className="text-center text-muted-foreground py-6">No items yet.</td></tr>
+              ) : items.map((i) => {
+                const lineFinal = Number(i.quantity || 0) * Number(i.final_cost || 0);
+                const lineInv = Number(i.quantity || 0) * Number(i.supplier_cost || 0);
+                const canEdit = editable && editMode;
+                return (
+                  <tr key={i.id} className="border-b">
+                    <td className="p-1.5"><Input className="h-8" disabled={!canEdit} value={i.item_no ?? ""} onChange={(e) => updateItem(i.id, { item_no: e.target.value })} /></td>
+                    <td className="p-1.5"><Input className="h-8" disabled={!canEdit} value={i.description} onChange={(e) => updateItem(i.id, { description: e.target.value })} /></td>
+                    <td className="p-1.5"><Input className="h-8 text-right" type="number" disabled={!canEdit} value={i.quantity} onChange={(e) => updateItem(i.id, { quantity: Number(e.target.value) || 0 })} /></td>
+                    <td className="p-1.5"><Input className="h-8 text-right" type="number" disabled={!canEdit} value={i.final_cost} onChange={(e) => updateItem(i.id, { final_cost: Number(e.target.value) || 0 })} /></td>
+                    <td className="p-1.5"><Input className="h-8 text-right" type="number" disabled={!canEdit} value={i.supplier_cost} onChange={(e) => updateItem(i.id, { supplier_cost: Number(e.target.value) || 0 })} /></td>
+                    <td className="p-2 text-right tabular-nums">{formatGBP(lineFinal - lineInv)}</td>
+                    {editable && editMode && <td className="p-1.5 text-right"><Button variant="ghost" size="icon" onClick={() => removeItem(i.id)}><Trash2 className="size-4" /></Button></td>}
+                  </tr>
+                );
+              })}
             </tbody>
             <tfoot className="bg-muted/20">
               <tr className="font-medium">
                 <td colSpan={3} className="p-2 text-right">Totals</td>
                 <td className="p-2 text-right tabular-nums">{formatGBP(totals.final)}</td>
                 <td className="p-2 text-right tabular-nums">{formatGBP(totals.supplier)}</td>
-                <td className="p-2 text-right tabular-nums">{formatGBP(totals.final)}</td>
-                {editable && <td />}
-              </tr>
-              <tr className="text-muted-foreground">
-                <td colSpan={3} className="p-2 text-right text-xs uppercase tracking-wide">Profit</td>
-                <td colSpan={3} className="p-2 text-right tabular-nums">{formatGBP(totals.final - totals.supplier)}</td>
-                {editable && <td />}
+                <td className="p-2 text-right tabular-nums">{formatGBP(totals.final - totals.supplier)}</td>
+                {editable && editMode && <td />}
               </tr>
             </tfoot>
           </table>
         </div>
       )}
 
-      {editable && active && (
+      {editable && active && editMode && (
         <div className="flex flex-wrap gap-2">
           <Button size="sm" variant="outline" onClick={addItem}><Plus className="size-4 mr-1" />Add item</Button>
           <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()}>

@@ -15,7 +15,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { DataTable, type DataTableColumn } from "@/components/DataTable";
-import { Plus, Pencil, Trash2, ArrowLeft, FolderOpen } from "lucide-react";
+import { Plus, Pencil, Trash2, ArrowLeft, FolderOpen, ChevronDown } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import { CustomFieldValues } from "@/components/CustomFieldValues";
 import { CustomFieldDisplay, useCustomFieldColumns } from "@/components/CustomFieldDisplay";
@@ -229,25 +230,9 @@ function ProjectDetail({ project, editable, onBack, onSaved }: { project: Projec
 
       <div className="grid md:grid-cols-3 gap-4">
         <StatCard label="Final Costs" value={formatGBP(project.total_cost)} />
-        <StatCard label="Supplier cost" value={formatGBP(project.supplier_cost)} />
+        <StatCard label="Investment" value={formatGBP(project.supplier_cost)} />
         <StatCard label="Profit" value={formatGBP(profit)} accent={profit >= 0 ? "text-primary" : "text-destructive"} />
       </div>
-
-      <Card className="shadow-soft">
-        <CardContent className="pt-6 space-y-4">
-          <h3 className="font-semibold">Final Costs breakdown</h3>
-          <CostBreakdown
-            parentType="project"
-            parentId={project.id}
-            editable={editable}
-            onTotalsChange={async ({ final, supplier }) => {
-              if (Number(project.total_cost) === final && Number(project.supplier_cost) === supplier) return;
-              await supabase.from("projects").update({ total_cost: final, supplier_cost: supplier }).eq("id", project.id);
-              void load();
-            }}
-          />
-        </CardContent>
-      </Card>
 
       <Card className="shadow-soft">
         <CardContent className="pt-6 space-y-3">
@@ -263,61 +248,95 @@ function ProjectDetail({ project, editable, onBack, onSaved }: { project: Projec
         </CardContent>
       </Card>
 
-      <Card className="shadow-soft">
-        <CardContent className="pt-6 space-y-4">
-          <h3 className="font-semibold">Milestones</h3>
-          {milestones.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No milestones yet.</p>
-          ) : (
-            <div className="overflow-auto rounded-md border">
-              <table className="w-full text-sm">
-                <thead className="border-b bg-muted/30">
-                  <tr>
-                    <th className="text-left p-2 w-10">Done</th>
-                    <th className="text-left p-2">Milestone</th>
-                    <th className="text-left p-2 w-44">Due date</th>
-                    <th className="text-left p-2 w-32">Completed</th>
-                    {editable && <th className="text-right p-2 w-10" />}
-                  </tr>
-                </thead>
-                <tbody>
-                  {milestones.map((m) => (
-                    <tr key={m.id} className="border-b">
-                      <td className="p-2">
-                        <Checkbox
-                          checked={!!m.completed_at}
-                          onCheckedChange={(c) => editable && toggleCompleted(m, c === true)}
-                          disabled={!editable}
-                        />
-                      </td>
-                      <td className={`p-2 ${m.completed_at ? "line-through text-muted-foreground" : ""}`}>{relabelForType(m.label, project.type)}</td>
-                      <td className="p-2">
-                        <Input
-                          type="date"
-                          value={m.due_date ?? ""}
-                          disabled={!editable}
-                          onChange={(e) => updateDueDate(m, e.target.value || null)}
-                          className="h-8 text-sm"
-                        />
-                      </td>
-                      <td className="p-2 text-muted-foreground">{formatDateUK(m.completed_at)}</td>
-                      {editable && <td className="p-2 text-right">
-                        {m.is_custom && <Button variant="ghost" size="icon" onClick={() => removeMilestone(m)}><Trash2 className="size-4" /></Button>}
-                      </td>}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-          {editable && (
-            <div className="flex gap-2 pt-2 border-t">
-              <Input placeholder="Add custom milestone" value={customLabel} onChange={(e) => setCustomLabel(e.target.value)} />
-              <Button onClick={addCustom} disabled={!customLabel.trim()}>Add</Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <Collapsible defaultOpen>
+        <Card className="shadow-soft">
+          <CardContent className="pt-6 space-y-4">
+            <CollapsibleTrigger asChild>
+              <button type="button" className="flex w-full items-center justify-between text-left group">
+                <h3 className="font-semibold">Final Cost Breakdown</h3>
+                <ChevronDown className="size-4 transition-transform group-data-[state=closed]:-rotate-90" />
+              </button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-4">
+              <CostBreakdown
+                parentType="project"
+                parentId={project.id}
+                editable={editable}
+                onTotalsChange={async ({ final, supplier }) => {
+                  if (Number(project.total_cost) === final && Number(project.supplier_cost) === supplier) return;
+                  await supabase.from("projects").update({ total_cost: final, supplier_cost: supplier }).eq("id", project.id);
+                  void load();
+                }}
+              />
+            </CollapsibleContent>
+          </CardContent>
+        </Card>
+      </Collapsible>
+
+      <Collapsible defaultOpen>
+        <Card className="shadow-soft">
+          <CardContent className="pt-6 space-y-4">
+            <CollapsibleTrigger asChild>
+              <button type="button" className="flex w-full items-center justify-between text-left group">
+                <h3 className="font-semibold">Milestones</h3>
+                <ChevronDown className="size-4 transition-transform group-data-[state=closed]:-rotate-90" />
+              </button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-4 pt-2">
+              {milestones.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No milestones yet.</p>
+              ) : (
+                <div className="overflow-auto rounded-md border">
+                  <table className="w-full text-sm">
+                    <thead className="border-b bg-muted/30">
+                      <tr>
+                        <th className="text-left p-2 w-10">Done</th>
+                        <th className="text-left p-2">Milestone</th>
+                        <th className="text-left p-2 w-44">Due date</th>
+                        <th className="text-left p-2 w-32">Completed</th>
+                        {editable && <th className="text-right p-2 w-10" />}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {milestones.map((m) => (
+                        <tr key={m.id} className="border-b">
+                          <td className="p-2">
+                            <Checkbox
+                              checked={!!m.completed_at}
+                              onCheckedChange={(c) => editable && toggleCompleted(m, c === true)}
+                              disabled={!editable}
+                            />
+                          </td>
+                          <td className={`p-2 ${m.completed_at ? "line-through text-muted-foreground" : ""}`}>{relabelForType(m.label, project.type)}</td>
+                          <td className="p-2">
+                            <Input
+                              type="date"
+                              value={m.due_date ?? ""}
+                              disabled={!editable}
+                              onChange={(e) => updateDueDate(m, e.target.value || null)}
+                              className="h-8 text-sm"
+                            />
+                          </td>
+                          <td className="p-2 text-muted-foreground">{formatDateUK(m.completed_at)}</td>
+                          {editable && <td className="p-2 text-right">
+                            {m.is_custom && <Button variant="ghost" size="icon" onClick={() => removeMilestone(m)}><Trash2 className="size-4" /></Button>}
+                          </td>}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              {editable && (
+                <div className="flex gap-2 pt-2 border-t">
+                  <Input placeholder="Add custom milestone" value={customLabel} onChange={(e) => setCustomLabel(e.target.value)} />
+                  <Button onClick={addCustom} disabled={!customLabel.trim()}>Add</Button>
+                </div>
+              )}
+            </CollapsibleContent>
+          </CardContent>
+        </Card>
+      </Collapsible>
 
       <ProjectDialog open={openEdit} onOpenChange={setOpenEdit} project={project} defaultType={project.type} orgs={orgs} contacts={contacts} profiles={profiles} onSaved={load} />
     </div>
@@ -475,7 +494,7 @@ function ProjectDialog({ open, onOpenChange, project, defaultType, orgs, contact
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1"><Label>Final Costs (£)</Label><Input type="number" value={totalCost} onChange={(e) => setTotalCost(e.target.value)} /><p className="text-xs text-muted-foreground">Use the itemised breakdown below to auto-calculate this.</p></div>
-            <div className="space-y-1"><Label>Supplier cost (£)</Label><Input type="number" value={supplierCost} onChange={(e) => setSupplierCost(e.target.value)} /></div>
+            <div className="space-y-1"><Label>Investment (£)</Label><Input type="number" value={supplierCost} onChange={(e) => setSupplierCost(e.target.value)} /></div>
           </div>
           <CustomFieldValues module="projects" value={customVals} onChange={setCustomVals} />
         </div>

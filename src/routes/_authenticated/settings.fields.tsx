@@ -99,7 +99,7 @@ const MODULES: { key: ModuleKey; label: string; builtIn: { label: string; type: 
       { label: "Type", type: "Dropdown" }, { label: "Status", type: "Dropdown" },
       { label: "Priority", type: "Dropdown" }, { label: "Start date", type: "Date" },
       { label: "End date", type: "Date" }, { label: "Total cost", type: "Number" },
-      { label: "Business cost", type: "Number" }, { label: "Supplier cost", type: "Number" },
+      { label: "Business cost", type: "Number" }, { label: "Investment", type: "Number" },
       { label: "Client organisation", type: "Reference" }, { label: "Client contact", type: "Reference" },
       { label: "Team lead", type: "Reference" },
     ],
