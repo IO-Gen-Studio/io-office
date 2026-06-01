@@ -60,7 +60,7 @@ export function CustomFieldValues({
 
   return (
     <div className="space-y-3 pt-2 border-t">
-      <p className="text-xs uppercase tracking-wide text-muted-foreground">Custom fields</p>
+      <p className="text-xs uppercase tracking-wide text-muted-foreground">Other information</p>
       <div className="grid grid-cols-2 gap-3">
         {defs.map((d) => (
           <div key={d.id} className={d.type === "long_text" || d.type === "checklist" ? "col-span-2 space-y-1" : "space-y-1"}>
