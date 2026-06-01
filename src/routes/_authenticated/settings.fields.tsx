@@ -225,28 +225,37 @@ function FieldsPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">Built-in fields</CardTitle>
+                <p className="text-xs text-muted-foreground">
+                  Rename dropdown options. The underlying value is preserved; only the label users see changes.
+                </p>
               </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Label</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead className="w-32" />
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {m.builtIn.map((b) => (
-                      <TableRow key={b.label}>
-                        <TableCell className="font-medium">{b.label}</TableCell>
-                        <TableCell>{b.type}</TableCell>
-                        <TableCell className="text-right">
-                          <Badge variant="secondary">Built-in</Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+              <CardContent className="space-y-6">
+                {BUILTIN_DROPDOWNS.filter((s) => s.module === m.key).map((spec) => (
+                  <BuiltinDropdownEditor key={`${spec.module}.${spec.key}`} module={spec.module} fieldKey={spec.key} fieldLabel={spec.label} />
+                ))}
+                {m.builtIn.filter((b) => b.type !== "Dropdown").length > 0 && (
+                  <div className="pt-2 border-t">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Other built-in fields</p>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Label</TableHead>
+                          <TableHead>Type</TableHead>
+                          <TableHead className="w-32" />
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {m.builtIn.filter((b) => b.type !== "Dropdown").map((b) => (
+                          <TableRow key={b.label}>
+                            <TableCell className="font-medium">{b.label}</TableCell>
+                            <TableCell>{b.type}</TableCell>
+                            <TableCell className="text-right"><Badge variant="secondary">Built-in</Badge></TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
