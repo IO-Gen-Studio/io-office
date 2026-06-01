@@ -12,6 +12,7 @@ function SettingsLayout() {
     ...(isAdmin ? [
       { to: "/settings/users", label: "Users & Access" },
       { to: "/settings/fields", label: "Other Information" },
+      { to: "/settings/milestones", label: "Milestones" },
     ] : []),
   ];
   return (
