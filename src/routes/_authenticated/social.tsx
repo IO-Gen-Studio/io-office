@@ -54,6 +54,9 @@ function SocialPage() {
     await logActivity({ module: "social", entity_type: "post", entity_id: p.id, verb: "deleted", summary: `Deleted ${p.platform} post` });
     toast.success("Deleted"); void load();
   };
+  const platformLabel = useBuiltinFieldLabel("social", "platform");
+  const approvalLabel = useBuiltinFieldLabel("social", "approval_status");
+  const postStatusLabel = useBuiltinFieldLabel("social", "post_status");
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
