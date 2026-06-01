@@ -187,7 +187,7 @@ export function CostBreakdown({
     if (rows.length === 0) { toast.error("Empty CSV"); return; }
     // Detect header
     const first = rows[0].map((c) => c.toLowerCase().trim());
-    const looksLikeHeader = first.some((c) => ["item", "item #", "item no", "description", "qty", "quantity", "final", "final cost", "supplier", "supplier cost"].includes(c));
+    const looksLikeHeader = first.some((c) => ["item", "item #", "item no", "description", "qty", "quantity", "final", "final cost", "supplier", "supplier cost", "investment"].includes(c));
     let headerMap: { item?: number; desc?: number; qty?: number; final?: number; supplier?: number } = {};
     let dataStart = 0;
     if (looksLikeHeader) {
@@ -196,7 +196,7 @@ export function CostBreakdown({
         if (c.includes("item")) headerMap.item = idx;
         else if (c.includes("desc")) headerMap.desc = idx;
         else if (c.includes("qty") || c.includes("quantity")) headerMap.qty = idx;
-        else if (c.includes("supplier")) headerMap.supplier = idx;
+        else if (c.includes("supplier") || c.includes("investment")) headerMap.supplier = idx;
         else if (c.includes("final") || c.includes("cost") || c.includes("price")) headerMap.final = idx;
       });
     } else {
