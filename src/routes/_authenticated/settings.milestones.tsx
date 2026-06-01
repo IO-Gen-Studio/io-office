@@ -125,9 +125,11 @@ function MilestonesSettings() {
                       </Button>
                     </div>
                     <Input
-                      value={t.label}
-                      onChange={(e) => setRows((rs) => rs.map((r) => r.id === t.id ? { ...r, label: e.target.value } : r))}
-                      onBlur={(e) => e.target.value !== rows.find((r) => r.id === t.id)?.label ? null : void updateField(t.id, { label: e.target.value })}
+                      defaultValue={t.label}
+                      onBlur={(e) => {
+                        const v = e.target.value.trim();
+                        if (v && v !== t.label) void updateField(t.id, { label: v });
+                      }}
                       onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
                     />
                     {tab === "projects" && (
@@ -143,10 +145,7 @@ function MilestonesSettings() {
                         </SelectContent>
                       </Select>
                     )}
-                    <Button variant="ghost" size="icon" onClick={() => updateField(t.id, { label: rows.find((r) => r.id === t.id)?.label ?? t.label })}>
-                      Save
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => remove(t.id)}>
+                    <Button variant="ghost" size="icon" onClick={() => remove(t.id)} title="Delete">
                       <Trash2 className="size-4" />
                     </Button>
                   </div>
