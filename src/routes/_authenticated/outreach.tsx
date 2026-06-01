@@ -88,20 +88,14 @@ function CampaignsTab({ editable, onOpen }: { editable: boolean; onOpen: (c: Cam
   };
   useEffect(() => { void load(); }, []);
 
-  const computeNext = (contacts: CC[]): { label: string; date: string } => {
+  const computeNext = (c: Campaign, contacts: CC[]): { label: string; date: string } => {
     if (!contacts || contacts.length === 0) return { label: "Add contacts", date: "—" };
+    const stagesMap = (c.stages ?? {}) as StagesMap;
     for (const stage of STAGES) {
-      const pending = contacts.filter((c) => !c.outreach?.[stage.key]?.sent_at);
+      const pending = contacts.filter((x) => !x.outreach?.[stage.key]?.sent_at);
       if (pending.length > 0) {
-        // Date = latest sent_at of previous stage, else campaign creation context "—"
-        const idx = STAGES.findIndex((s) => s.key === stage.key);
-        let date = "—";
-        if (idx > 0) {
-          const prev = STAGES[idx - 1].key;
-          const dates = contacts.map((c) => c.outreach?.[prev]?.sent_at).filter(Boolean) as string[];
-          if (dates.length) date = formatDateUK(dates.sort().slice(-1)[0]);
-        }
-        return { label: stage.label, date };
+        const due = stagesMap[stage.key]?.due_date;
+        return { label: stage.label, date: due ? formatDateUK(due) : "Not scheduled" };
       }
     }
     return { label: "Complete", date: "—" };
