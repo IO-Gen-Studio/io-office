@@ -373,7 +373,7 @@ function CampaignDetail({ campaign, editable, onBack }: { campaign: Campaign; ed
                         type="button"
                         variant="outline"
                         size="icon"
-                        className="h-8 w-8 shrink-0 rounded-sm"
+                        className="h-8 w-8 shrink-0"
                         title={linked ? `Open "${linked.name}"` : "Select a template first"}
                         disabled={!linked}
                         onClick={() => openTemplate(cfg.template_id)}
