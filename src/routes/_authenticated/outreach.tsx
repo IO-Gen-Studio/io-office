@@ -128,7 +128,7 @@ function CampaignsTab({ editable, onOpen }: { editable: boolean; onOpen: (c: Cam
             {rows.length === 0 ? <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">No campaigns yet.</TableCell></TableRow> :
               rows.map((c) => {
                 const contacts = contactsByCampaign[c.id] ?? [];
-                const next = computeNext(contacts);
+                const next = computeNext(c, contacts);
                 return (
                   <TableRow key={c.id} className="cursor-pointer hover:bg-muted/40" onClick={() => onOpen(c)}>
                     <TableCell className="font-medium">{c.name}</TableCell>
