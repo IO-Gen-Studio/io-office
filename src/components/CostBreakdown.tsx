@@ -45,6 +45,7 @@ export function CostBreakdown({
   const [items, setItems] = useState<Item[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [itemsLoadedFor, setItemsLoadedFor] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
 
   const loadVersions = async () => {
