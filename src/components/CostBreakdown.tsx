@@ -250,6 +250,21 @@ export function CostBreakdown({
           <Button size="sm" variant="outline" onClick={() => setCurrent(active.id)}>Set as current</Button>
         )}
         {active?.is_current && <Badge variant="secondary">Current</Badge>}
+        {editable && active && (
+          <Button
+            size="sm"
+            variant={editMode ? "default" : "outline"}
+            onClick={() => setEditMode((v) => !v)}
+            title={editMode ? "Finish editing" : "Edit items"}
+          >
+            {editMode ? <><Check className="size-4 mr-1" />Done</> : <><Pencil className="size-4 mr-1" />Edit</>}
+          </Button>
+        )}
+        {editable && active && (
+          <Button size="sm" variant="outline" onClick={exportXLSX} disabled={items.length === 0}>
+            <FileSpreadsheet className="size-4 mr-1" />Export XLSX
+          </Button>
+        )}
         {editable && (
           <div className="ml-auto flex gap-2">
             <Button size="sm" variant="outline" onClick={() => createVersion(true)} disabled={versions.length === 0}>Duplicate version</Button>
@@ -272,45 +287,45 @@ export function CostBreakdown({
                 <th className="text-left p-2">Description</th>
                 <th className="text-right p-2 w-20">Qty</th>
                 <th className="text-right p-2 w-32">Final cost</th>
-                <th className="text-right p-2 w-32">Supplier cost</th>
-                <th className="text-right p-2 w-32">Line total</th>
-                {editable && <th className="w-10" />}
+                <th className="text-right p-2 w-32">Investment</th>
+                <th className="text-right p-2 w-32">Profit</th>
+                {editable && editMode && <th className="w-10" />}
               </tr>
             </thead>
             <tbody>
               {items.length === 0 ? (
-                <tr><td colSpan={editable ? 7 : 6} className="text-center text-muted-foreground py-6">No items yet.</td></tr>
-              ) : items.map((i) => (
-                <tr key={i.id} className="border-b">
-                  <td className="p-1.5"><Input className="h-8" disabled={!editable} value={i.item_no ?? ""} onChange={(e) => updateItem(i.id, { item_no: e.target.value })} /></td>
-                  <td className="p-1.5"><Input className="h-8" disabled={!editable} value={i.description} onChange={(e) => updateItem(i.id, { description: e.target.value })} /></td>
-                  <td className="p-1.5"><Input className="h-8 text-right" type="number" disabled={!editable} value={i.quantity} onChange={(e) => updateItem(i.id, { quantity: Number(e.target.value) || 0 })} /></td>
-                  <td className="p-1.5"><Input className="h-8 text-right" type="number" disabled={!editable} value={i.final_cost} onChange={(e) => updateItem(i.id, { final_cost: Number(e.target.value) || 0 })} /></td>
-                  <td className="p-1.5"><Input className="h-8 text-right" type="number" disabled={!editable} value={i.supplier_cost} onChange={(e) => updateItem(i.id, { supplier_cost: Number(e.target.value) || 0 })} /></td>
-                  <td className="p-2 text-right tabular-nums">{formatGBP(Number(i.quantity || 0) * Number(i.final_cost || 0))}</td>
-                  {editable && <td className="p-1.5 text-right"><Button variant="ghost" size="icon" onClick={() => removeItem(i.id)}><Trash2 className="size-4" /></Button></td>}
-                </tr>
-              ))}
+                <tr><td colSpan={editable && editMode ? 7 : 6} className="text-center text-muted-foreground py-6">No items yet.</td></tr>
+              ) : items.map((i) => {
+                const lineFinal = Number(i.quantity || 0) * Number(i.final_cost || 0);
+                const lineInv = Number(i.quantity || 0) * Number(i.supplier_cost || 0);
+                const canEdit = editable && editMode;
+                return (
+                  <tr key={i.id} className="border-b">
+                    <td className="p-1.5"><Input className="h-8" disabled={!canEdit} value={i.item_no ?? ""} onChange={(e) => updateItem(i.id, { item_no: e.target.value })} /></td>
+                    <td className="p-1.5"><Input className="h-8" disabled={!canEdit} value={i.description} onChange={(e) => updateItem(i.id, { description: e.target.value })} /></td>
+                    <td className="p-1.5"><Input className="h-8 text-right" type="number" disabled={!canEdit} value={i.quantity} onChange={(e) => updateItem(i.id, { quantity: Number(e.target.value) || 0 })} /></td>
+                    <td className="p-1.5"><Input className="h-8 text-right" type="number" disabled={!canEdit} value={i.final_cost} onChange={(e) => updateItem(i.id, { final_cost: Number(e.target.value) || 0 })} /></td>
+                    <td className="p-1.5"><Input className="h-8 text-right" type="number" disabled={!canEdit} value={i.supplier_cost} onChange={(e) => updateItem(i.id, { supplier_cost: Number(e.target.value) || 0 })} /></td>
+                    <td className="p-2 text-right tabular-nums">{formatGBP(lineFinal - lineInv)}</td>
+                    {editable && editMode && <td className="p-1.5 text-right"><Button variant="ghost" size="icon" onClick={() => removeItem(i.id)}><Trash2 className="size-4" /></Button></td>}
+                  </tr>
+                );
+              })}
             </tbody>
             <tfoot className="bg-muted/20">
               <tr className="font-medium">
                 <td colSpan={3} className="p-2 text-right">Totals</td>
                 <td className="p-2 text-right tabular-nums">{formatGBP(totals.final)}</td>
                 <td className="p-2 text-right tabular-nums">{formatGBP(totals.supplier)}</td>
-                <td className="p-2 text-right tabular-nums">{formatGBP(totals.final)}</td>
-                {editable && <td />}
-              </tr>
-              <tr className="text-muted-foreground">
-                <td colSpan={3} className="p-2 text-right text-xs uppercase tracking-wide">Profit</td>
-                <td colSpan={3} className="p-2 text-right tabular-nums">{formatGBP(totals.final - totals.supplier)}</td>
-                {editable && <td />}
+                <td className="p-2 text-right tabular-nums">{formatGBP(totals.final - totals.supplier)}</td>
+                {editable && editMode && <td />}
               </tr>
             </tfoot>
           </table>
         </div>
       )}
 
-      {editable && active && (
+      {editable && active && editMode && (
         <div className="flex flex-wrap gap-2">
           <Button size="sm" variant="outline" onClick={addItem}><Plus className="size-4 mr-1" />Add item</Button>
           <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()}>
