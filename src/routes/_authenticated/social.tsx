@@ -161,12 +161,12 @@ function PlanDialog({ open, onOpenChange, plan, onSaved }: { open: boolean; onOp
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="max-w-xl max-h-[90vh] overflow-y-auto">
-        <SheetHeader><SheetTitle>{plan ? "Edit post" : "New post"}</SheetTitle></SheetHeader>
-        <div className="space-y-3">
+      <SheetContent className="w-[95vw] sm:max-w-[min(900px,95vw)] flex flex-col gap-0 p-0">
+        <SheetHeader className="p-6 pb-4 border-b shrink-0"><SheetTitle>{plan ? "Edit post" : "New post"}</SheetTitle></SheetHeader>
+        <div className="flex-1 overflow-y-auto p-6 space-y-3">
           <PlanDialogSelects platform={platform} setPlatform={setPlatform} approval={approval} setApproval={setApproval} status={status} setStatus={setStatus} scheduledAt={scheduledAt} setScheduledAt={setScheduledAt} />
           <div className="space-y-1"><Label>Title</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} /></div>
-          <div className="space-y-1"><Label>Copy</Label><Textarea rows={6} value={copy} onChange={(e) => setCopy(e.target.value)} /></div>
+          <div className="space-y-1"><Label>Copy</Label><Textarea rows={10} value={copy} onChange={(e) => setCopy(e.target.value)} className="min-h-[200px]" /></div>
           <div className="space-y-1">
             <Label>Media (image, video or PDF)</Label>
             <Input type="file" accept="image/*,video/*,application/pdf,.pdf" onChange={(e) => { const f = e.target.files?.[0]; if (f) void onUpload(f); }} />
@@ -175,7 +175,7 @@ function PlanDialog({ open, onOpenChange, plan, onSaved }: { open: boolean; onOp
           </div>
           <CustomFieldValues module="social" value={custom} onChange={setCustom} />
         </div>
-        <SheetFooter>
+        <SheetFooter className="p-6 pt-4 border-t shrink-0">
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button onClick={submit} className="bg-gradient-primary text-primary-foreground">Save</Button>
         </SheetFooter>

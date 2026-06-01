@@ -231,32 +231,34 @@ export function SocialPostMockupDialog({
   };
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <SheetHeader>
+      <SheetContent className="w-[95vw] sm:max-w-[min(1100px,95vw)] flex flex-col gap-0 p-0">
+        <SheetHeader className="p-6 pb-4 border-b shrink-0">
           <SheetTitle className="flex items-center gap-2">
             Preview <Badge variant="secondary" className="capitalize">{localPlan.platform}</Badge>
             {approved ? <Badge>Approved</Badge> : <Badge variant="outline">Not approved</Badge>}
           </SheetTitle>
         </SheetHeader>
-        {editing && editable ? (
-          <div className="space-y-2">
-            <Textarea value={draft} onChange={(e) => setDraft(e.target.value)} rows={6} />
-            <div className="flex gap-2 justify-end">
-              <Button variant="ghost" size="sm" onClick={() => { setEditing(false); setDraft(localPlan.copy); }}><X className="size-4 mr-1" />Cancel</Button>
-              <Button size="sm" onClick={saveCopy} disabled={saving}><Check className="size-4 mr-1" />{saving ? "Saving…" : "Save copy"}</Button>
+        <div className="flex-1 overflow-y-auto p-6">
+          {editing && editable ? (
+            <div className="space-y-2">
+              <Textarea value={draft} onChange={(e) => setDraft(e.target.value)} rows={12} className="min-h-[300px]" />
+              <div className="flex gap-2 justify-end">
+                <Button variant="ghost" size="sm" onClick={() => { setEditing(false); setDraft(localPlan.copy); }}><X className="size-4 mr-1" />Cancel</Button>
+                <Button size="sm" onClick={saveCopy} disabled={saving}><Check className="size-4 mr-1" />{saving ? "Saving…" : "Save copy"}</Button>
+              </div>
             </div>
-          </div>
-        ) : (
-          <div className="bg-muted/40 p-4 rounded-md relative">
-            {editable && (
-              <Button variant="outline" size="sm" className="absolute top-2 right-2 z-10" onClick={() => { setDraft(localPlan.copy); setEditing(true); }}>
-                <Pencil className="size-4 mr-1" />Edit copy
-              </Button>
-            )}
-            {renderMockup(localPlan)}
-          </div>
-        )}
-        <SheetFooter>
+          ) : (
+            <div className="bg-muted/40 p-4 rounded-md relative">
+              {editable && (
+                <Button variant="outline" size="sm" className="absolute top-2 right-2 z-10" onClick={() => { setDraft(localPlan.copy); setEditing(true); }}>
+                  <Pencil className="size-4 mr-1" />Edit copy
+                </Button>
+              )}
+              {renderMockup(localPlan)}
+            </div>
+          )}
+        </div>
+        <SheetFooter className="p-6 pt-4 border-t shrink-0">
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Close</Button>
           {editable && (approved ? (
             <Button variant="outline" onClick={() => setApproval("not_approved")}>Revoke approval</Button>
