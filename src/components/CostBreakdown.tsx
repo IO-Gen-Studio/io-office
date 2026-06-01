@@ -325,8 +325,8 @@ export function CostBreakdown({
               {items.length === 0 ? (
                 <tr><td colSpan={editable && editMode ? 7 : 6} className="text-center text-muted-foreground py-6">No items yet.</td></tr>
               ) : items.map((i) => {
-                const lineFinal = Number(i.quantity || 0) * Number(i.final_cost || 0);
-                const lineInv = Number(i.quantity || 0) * Number(i.supplier_cost || 0);
+                const lineFinal = Number(i.final_cost || 0);
+                const lineInv = Number(i.supplier_cost || 0);
                 const canEdit = editable && editMode;
                 return (
                   <tr key={i.id} className="border-b">
