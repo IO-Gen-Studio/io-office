@@ -480,3 +480,40 @@ function ProjectDialog({ open, onOpenChange, project, defaultType, orgs, contact
     </Dialog>
   );
 }
+
+function ProjectDialogSelects({
+  type, setType, status, setStatus, priority, setPriority,
+}: {
+  type: PType; setType: (v: PType) => void;
+  status: PStatus; setStatus: (v: PStatus) => void;
+  priority: Priority; setPriority: (v: Priority) => void;
+}) {
+  const typeOptions = useBuiltinFieldOptions("projects", "type");
+  const statusOptions = useBuiltinFieldOptions("projects", "status");
+  const priorityOptions = useBuiltinFieldOptions("projects", "priority");
+  return (
+    <div className="grid grid-cols-3 gap-3">
+      <div className="space-y-1">
+        <Label>Type</Label>
+        <Select value={type} onValueChange={(v) => setType(v as PType)}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>{typeOptions.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-1">
+        <Label>Status</Label>
+        <Select value={status} onValueChange={(v) => setStatus(v as PStatus)}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>{statusOptions.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-1">
+        <Label>Priority</Label>
+        <Select value={priority} onValueChange={(v) => setPriority(v as Priority)}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>{priorityOptions.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
+        </Select>
+      </div>
+    </div>
+  );
+}
