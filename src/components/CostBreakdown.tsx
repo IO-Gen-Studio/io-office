@@ -65,10 +65,14 @@ export function CostBreakdown({
     const { data } = await supabase
       .from("cost_items").select("*").eq("version_id", vid).order("position");
     setItems((data ?? []) as Item[]);
+    setItemsLoadedFor(vid);
   };
 
   useEffect(() => { void loadVersions(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [parentType, parentId]);
-  useEffect(() => { if (activeId) void loadItems(activeId); else setItems([]); }, [activeId]);
+  useEffect(() => {
+    if (activeId) void loadItems(activeId);
+    else { setItems([]); setItemsLoadedFor(null); }
+  }, [activeId]);
 
   const totals = useMemo(() => {
     return items.reduce(
