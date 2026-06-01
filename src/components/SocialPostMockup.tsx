@@ -205,11 +205,28 @@ export function SocialPostMockupDialog({
   editable: boolean;
   onApprovalChange?: () => void;
 }) {
-  if (!plan) return null;
-  const approved = plan.approval_status === "approved";
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [localPlan, setLocalPlan] = useState<MockupPlan | null>(plan);
+
+  useEffect(() => { setLocalPlan(plan); setEditing(false); setDraft(plan?.copy ?? ""); }, [plan?.id, open]);
+
+  if (!localPlan) return null;
+  const approved = localPlan.approval_status === "approved";
   const setApproval = async (next: ApprovalStatus) => {
-    const { error } = await supabase.from("social_plans").update({ approval_status: next }).eq("id", plan.id);
+    const { error } = await supabase.from("social_plans").update({ approval_status: next }).eq("id", localPlan.id);
     if (error) return;
+    onApprovalChange?.();
+  };
+  const saveCopy = async () => {
+    setSaving(true);
+    const { error } = await supabase.from("social_plans").update({ copy: draft }).eq("id", localPlan.id);
+    setSaving(false);
+    if (error) { toast.error(error.message); return; }
+    setLocalPlan({ ...localPlan, copy: draft });
+    setEditing(false);
+    toast.success("Copy updated");
     onApprovalChange?.();
   };
   return (
@@ -217,13 +234,28 @@ export function SocialPostMockupDialog({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            Preview <Badge variant="secondary" className="capitalize">{plan.platform}</Badge>
+            Preview <Badge variant="secondary" className="capitalize">{localPlan.platform}</Badge>
             {approved ? <Badge>Approved</Badge> : <Badge variant="outline">Not approved</Badge>}
           </DialogTitle>
         </DialogHeader>
-        <div className="bg-muted/40 p-4 rounded-md">
-          {renderMockup(plan)}
-        </div>
+        {editing && editable ? (
+          <div className="space-y-2">
+            <Textarea value={draft} onChange={(e) => setDraft(e.target.value)} rows={6} />
+            <div className="flex gap-2 justify-end">
+              <Button variant="ghost" size="sm" onClick={() => { setEditing(false); setDraft(localPlan.copy); }}><X className="size-4 mr-1" />Cancel</Button>
+              <Button size="sm" onClick={saveCopy} disabled={saving}><Check className="size-4 mr-1" />{saving ? "Saving…" : "Save copy"}</Button>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-muted/40 p-4 rounded-md relative">
+            {editable && (
+              <Button variant="outline" size="sm" className="absolute top-2 right-2 z-10" onClick={() => { setDraft(localPlan.copy); setEditing(true); }}>
+                <Pencil className="size-4 mr-1" />Edit copy
+              </Button>
+            )}
+            {renderMockup(localPlan)}
+          </div>
+        )}
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Close</Button>
           {editable && (approved ? (
