@@ -164,37 +164,7 @@ function PlanDialog({ open, onOpenChange, plan, onSaved }: { open: boolean; onOp
       <SheetContent className="max-w-xl max-h-[90vh] overflow-y-auto">
         <SheetHeader><SheetTitle>{plan ? "Edit post" : "New post"}</SheetTitle></SheetHeader>
         <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label>Platform</Label>
-              <Select value={platform} onValueChange={(v) => setPlatform(v as Platform)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{PLATFORMS.map((p) => <SelectItem key={p} value={p} className="capitalize">{p}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1"><Label>Scheduled date</Label><Input type="date" value={scheduledAt} onChange={(e) => setScheduledAt(e.target.value)} /></div>
-            <div className="space-y-1">
-              <Label>Approval</Label>
-              <Select value={approval} onValueChange={(v) => setApproval(v as ApprovalStatus)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="not_approved">Not approved</SelectItem>
-                  <SelectItem value="approved">Approved</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1">
-              <Label>Post status</Label>
-              <Select value={status} onValueChange={(v) => setStatus(v as PostStatus)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="not_posted">Not posted</SelectItem>
-                  <SelectItem value="posted">Posted</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          <PlanDialogSelects platform={platform} setPlatform={setPlatform} approval={approval} setApproval={setApproval} status={status} setStatus={setStatus} scheduledAt={scheduledAt} setScheduledAt={setScheduledAt} />
           <div className="space-y-1"><Label>Title</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} /></div>
           <div className="space-y-1"><Label>Copy</Label><Textarea rows={6} value={copy} onChange={(e) => setCopy(e.target.value)} /></div>
           <div className="space-y-1">
