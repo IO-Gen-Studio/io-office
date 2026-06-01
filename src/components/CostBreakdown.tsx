@@ -229,16 +229,15 @@ export function CostBreakdown({
 
   const exportXLSX = () => {
     const rows = items.map((i) => {
-      const qty = Number(i.quantity || 0);
       const finalCost = Number(i.final_cost || 0);
       const inv = Number(i.supplier_cost || 0);
       return {
         "Item #": i.item_no ?? "",
         "Description": i.description,
-        "Quantity": qty,
+        "Quantity": Number(i.quantity || 0),
         "Final Cost": finalCost,
         "Investment": inv,
-        "Profit": (qty * finalCost) - (qty * inv),
+        "Profit": finalCost - inv,
       };
     });
     rows.push({
