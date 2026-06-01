@@ -17,12 +17,13 @@ import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
 import { CustomFieldValues } from "@/components/CustomFieldValues";
 import { SocialPostMockupDialog } from "@/components/SocialPostMockup";
+import { useBuiltinFieldLabel, useBuiltinFieldOptions } from "@/lib/builtin-labels";
 
 type Platform = Database["public"]["Enums"]["social_platform"];
 type PostStatus = Database["public"]["Enums"]["post_status"];
 type ApprovalStatus = Database["public"]["Enums"]["approval_status"];
 
-const PLATFORMS: Platform[] = ["linkedin", "instagram", "x", "threads", "facebook", "tiktok", "youtube"];
+
 
 type Plan = {
   id: string; platform: Platform; title: string; copy: string; media_path: string | null;
@@ -53,6 +54,9 @@ function SocialPage() {
     await logActivity({ module: "social", entity_type: "post", entity_id: p.id, verb: "deleted", summary: `Deleted ${p.platform} post` });
     toast.success("Deleted"); void load();
   };
+  const platformLabel = useBuiltinFieldLabel("social", "platform");
+  const approvalLabel = useBuiltinFieldLabel("social", "approval_status");
+  const postStatusLabel = useBuiltinFieldLabel("social", "post_status");
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
@@ -74,12 +78,12 @@ function SocialPage() {
               {rows.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No posts planned.</TableCell></TableRow> :
                 rows.map((p) => (
                   <TableRow key={p.id}>
-                    <TableCell><Badge variant="secondary" className="capitalize">{p.platform}</Badge></TableCell>
+                    <TableCell><Badge variant="secondary">{platformLabel(p.platform)}</Badge></TableCell>
                     <TableCell className="font-medium">{p.title || "—"}</TableCell>
                     <TableCell className="max-w-md truncate text-muted-foreground">{p.copy || "—"}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">{p.scheduled_at ? new Date(p.scheduled_at).toLocaleDateString() : "—"}</TableCell>
-                    <TableCell>{p.approval_status === "approved" ? <Badge>Approved</Badge> : <Badge variant="outline">Not approved</Badge>}</TableCell>
-                    <TableCell><Badge variant={p.post_status === "posted" ? "default" : p.post_status === "cancelled" ? "destructive" : "secondary"} className="capitalize">{p.post_status.replace("_", " ")}</Badge></TableCell>
+                    <TableCell>{p.approval_status === "approved" ? <Badge>{approvalLabel("approved")}</Badge> : <Badge variant="outline">{approvalLabel("not_approved")}</Badge>}</TableCell>
+                    <TableCell><Badge variant={p.post_status === "posted" ? "default" : p.post_status === "cancelled" ? "destructive" : "secondary"}>{postStatusLabel(p.post_status)}</Badge></TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="icon" title="Preview" onClick={() => setViewing(p)}><Eye className="size-4" /></Button>
                       {editable && <>
@@ -160,37 +164,7 @@ function PlanDialog({ open, onOpenChange, plan, onSaved }: { open: boolean; onOp
       <SheetContent className="max-w-xl max-h-[90vh] overflow-y-auto">
         <SheetHeader><SheetTitle>{plan ? "Edit post" : "New post"}</SheetTitle></SheetHeader>
         <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label>Platform</Label>
-              <Select value={platform} onValueChange={(v) => setPlatform(v as Platform)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{PLATFORMS.map((p) => <SelectItem key={p} value={p} className="capitalize">{p}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1"><Label>Scheduled date</Label><Input type="date" value={scheduledAt} onChange={(e) => setScheduledAt(e.target.value)} /></div>
-            <div className="space-y-1">
-              <Label>Approval</Label>
-              <Select value={approval} onValueChange={(v) => setApproval(v as ApprovalStatus)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="not_approved">Not approved</SelectItem>
-                  <SelectItem value="approved">Approved</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1">
-              <Label>Post status</Label>
-              <Select value={status} onValueChange={(v) => setStatus(v as PostStatus)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="not_posted">Not posted</SelectItem>
-                  <SelectItem value="posted">Posted</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          <PlanDialogSelects platform={platform} setPlatform={setPlatform} approval={approval} setApproval={setApproval} status={status} setStatus={setStatus} scheduledAt={scheduledAt} setScheduledAt={setScheduledAt} />
           <div className="space-y-1"><Label>Title</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} /></div>
           <div className="space-y-1"><Label>Copy</Label><Textarea rows={6} value={copy} onChange={(e) => setCopy(e.target.value)} /></div>
           <div className="space-y-1">
@@ -233,6 +207,45 @@ function MediaPreview({ path, onRemove }: { path: string; onRemove: () => void }
         ) : (
           <p className="text-xs text-muted-foreground p-3">Preview not available for this file type.</p>
         )}
+      </div>
+    </div>
+  );
+}
+
+function PlanDialogSelects({
+  platform, setPlatform, approval, setApproval, status, setStatus, scheduledAt, setScheduledAt,
+}: {
+  platform: Platform; setPlatform: (v: Platform) => void;
+  approval: ApprovalStatus; setApproval: (v: ApprovalStatus) => void;
+  status: PostStatus; setStatus: (v: PostStatus) => void;
+  scheduledAt: string; setScheduledAt: (v: string) => void;
+}) {
+  const platformOptions = useBuiltinFieldOptions("social", "platform");
+  const approvalOptions = useBuiltinFieldOptions("social", "approval_status");
+  const postStatusOptions = useBuiltinFieldOptions("social", "post_status");
+  return (
+    <div className="grid grid-cols-2 gap-3">
+      <div className="space-y-1">
+        <Label>Platform</Label>
+        <Select value={platform} onValueChange={(v) => setPlatform(v as Platform)}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>{platformOptions.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-1"><Label>Scheduled date</Label><Input type="date" value={scheduledAt} onChange={(e) => setScheduledAt(e.target.value)} /></div>
+      <div className="space-y-1">
+        <Label>Approval</Label>
+        <Select value={approval} onValueChange={(v) => setApproval(v as ApprovalStatus)}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>{approvalOptions.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-1">
+        <Label>Post status</Label>
+        <Select value={status} onValueChange={(v) => setStatus(v as PostStatus)}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>{postStatusOptions.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
+        </Select>
       </div>
     </div>
   );

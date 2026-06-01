@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { CustomFieldValues } from "@/components/CustomFieldValues";
 import { CustomFieldDisplay, useCustomFieldColumns } from "@/components/CustomFieldDisplay";
 import { CostBreakdown } from "@/components/CostBreakdown";
+import { useBuiltinFieldLabel, useBuiltinFieldOptions } from "@/lib/builtin-labels";
 import type { Database } from "@/integrations/supabase/types";
 
 type PType = Database["public"]["Enums"]["project_type"];
@@ -104,24 +105,26 @@ function ProjectList({ editable, onOpen }: { editable: boolean; onOpen: (p: Proj
     void load();
   };
 
+  const statusLabel = useBuiltinFieldLabel("projects", "status");
+  const priorityLabel = useBuiltinFieldLabel("projects", "priority");
+  const statusOptions = useBuiltinFieldOptions("projects", "status");
+  const priorityOptions = useBuiltinFieldOptions("projects", "priority");
+
   const columns: DataTableColumn<Project>[] = [
     { key: "title", header: "Title", accessor: (r) => r.title, editable, editField: "title", type: "text" },
     { key: "client", header: "Client", accessor: (r) => orgs.find((o) => o.id === r.client_org_id)?.name ?? "" },
     { key: "lead", header: "Lead", accessor: (r) => profiles.find((u) => u.id === r.team_lead_id)?.full_name ?? "" },
     {
       key: "status", header: "Status", accessor: (r) => r.status,
-      render: (r) => <Badge variant="secondary" className="capitalize">{r.status.replace("_", " ")}</Badge>,
+      render: (r) => <Badge variant="secondary">{statusLabel(r.status)}</Badge>,
       editable, type: "select",
-      options: [
-        { value: "in_progress", label: "In progress" }, { value: "on_hold", label: "On hold" },
-        { value: "completed", label: "Completed" }, { value: "cancelled", label: "Cancelled" },
-      ],
+      options: statusOptions,
     },
     {
       key: "priority", header: "Priority", accessor: (r) => r.priority,
-      render: (r) => <Badge variant={r.priority === "high" ? "destructive" : r.priority === "low" ? "outline" : "default"} className="capitalize">{r.priority}</Badge>,
+      render: (r) => <Badge variant={r.priority === "high" ? "destructive" : r.priority === "low" ? "outline" : "default"}>{priorityLabel(r.priority)}</Badge>,
       editable, type: "select",
-      options: [{ value: "low", label: "Low" }, { value: "medium", label: "Medium" }, { value: "high", label: "High" }],
+      options: priorityOptions,
     },
     { key: "end_date", header: "End date", accessor: (r) => r.end_date, render: (r) => formatDateUK(r.end_date), editable, type: "date", align: "right" },
     { key: "total_cost", header: "Final Costs", accessor: (r) => Number(r.total_cost), render: (r) => formatGBP(r.total_cost), editable, type: "number", align: "right" },
@@ -426,36 +429,7 @@ function ProjectDialog({ open, onOpenChange, project, defaultType, orgs, contact
         <div className="space-y-3">
           <div className="space-y-1"><Label>Title *</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} /></div>
           <div className="space-y-1"><Label>Description</Label><Textarea value={description} onChange={(e) => setDescription(e.target.value)} /></div>
-          <div className="grid grid-cols-3 gap-3">
-            <div className="space-y-1">
-              <Label>Type</Label>
-              <Select value={type} onValueChange={(v) => setType(v as PType)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="project">Project</SelectItem><SelectItem value="work">Work</SelectItem></SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1">
-              <Label>Status</Label>
-              <Select value={status} onValueChange={(v) => setStatus(v as PStatus)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="in_progress">In progress</SelectItem>
-                  <SelectItem value="on_hold">On hold</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1">
-              <Label>Priority</Label>
-              <Select value={priority} onValueChange={(v) => setPriority(v as Priority)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low">Low</SelectItem><SelectItem value="medium">Medium</SelectItem><SelectItem value="high">High</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          <ProjectDialogSelects type={type} setType={setType} status={status} setStatus={setStatus} priority={priority} setPriority={setPriority} />
           <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1">
               <Label>Team lead</Label>
@@ -504,5 +478,42 @@ function ProjectDialog({ open, onOpenChange, project, defaultType, orgs, contact
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function ProjectDialogSelects({
+  type, setType, status, setStatus, priority, setPriority,
+}: {
+  type: PType; setType: (v: PType) => void;
+  status: PStatus; setStatus: (v: PStatus) => void;
+  priority: Priority; setPriority: (v: Priority) => void;
+}) {
+  const typeOptions = useBuiltinFieldOptions("projects", "type");
+  const statusOptions = useBuiltinFieldOptions("projects", "status");
+  const priorityOptions = useBuiltinFieldOptions("projects", "priority");
+  return (
+    <div className="grid grid-cols-3 gap-3">
+      <div className="space-y-1">
+        <Label>Type</Label>
+        <Select value={type} onValueChange={(v) => setType(v as PType)}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>{typeOptions.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-1">
+        <Label>Status</Label>
+        <Select value={status} onValueChange={(v) => setStatus(v as PStatus)}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>{statusOptions.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-1">
+        <Label>Priority</Label>
+        <Select value={priority} onValueChange={(v) => setPriority(v as Priority)}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>{priorityOptions.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
+        </Select>
+      </div>
+    </div>
   );
 }
