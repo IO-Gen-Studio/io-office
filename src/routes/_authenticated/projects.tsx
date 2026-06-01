@@ -429,36 +429,7 @@ function ProjectDialog({ open, onOpenChange, project, defaultType, orgs, contact
         <div className="space-y-3">
           <div className="space-y-1"><Label>Title *</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} /></div>
           <div className="space-y-1"><Label>Description</Label><Textarea value={description} onChange={(e) => setDescription(e.target.value)} /></div>
-          <div className="grid grid-cols-3 gap-3">
-            <div className="space-y-1">
-              <Label>Type</Label>
-              <Select value={type} onValueChange={(v) => setType(v as PType)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="project">Project</SelectItem><SelectItem value="work">Work</SelectItem></SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1">
-              <Label>Status</Label>
-              <Select value={status} onValueChange={(v) => setStatus(v as PStatus)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="in_progress">In progress</SelectItem>
-                  <SelectItem value="on_hold">On hold</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1">
-              <Label>Priority</Label>
-              <Select value={priority} onValueChange={(v) => setPriority(v as Priority)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low">Low</SelectItem><SelectItem value="medium">Medium</SelectItem><SelectItem value="high">High</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          <ProjectDialogSelects type={type} setType={setType} status={status} setStatus={setStatus} priority={priority} setPriority={setPriority} />
           <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1">
               <Label>Team lead</Label>
