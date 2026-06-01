@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth/auth-context";
 import { logActivity } from "@/lib/activity";
@@ -156,6 +156,7 @@ function SubDetail({ sub, editable, onBack, onSaved }: { sub: Sub; editable: boo
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [openEdit, setOpenEdit] = useState(false);
   const [customLabel, setCustomLabel] = useState("");
+  const seededRef = useRef<Set<string>>(new Set());
 
   const cycleLabel = useBuiltinFieldLabel("subscriptions", "billing_cycle");
   const statusLabel = useBuiltinFieldLabel("subscriptions", "status");
@@ -168,18 +169,22 @@ function SubDetail({ sub, editable, onBack, onSaved }: { sub: Sub; editable: boo
       supabase.from("subscriptions").select("*").eq("id", sub.id).single(),
     ]);
     let ms = (m ?? []) as Milestone[];
-    if (ms.length === 0) {
+    if (ms.length === 0 && !seededRef.current.has(sub.id)) {
+      seededRef.current.add(sub.id);
       const { data: tpls } = await supabase
         .from("milestone_templates").select("*")
         .eq("module", "subscriptions").order("position");
       if (tpls && tpls.length > 0) {
-        const { data: inserted } = await supabase.from("milestones").insert(
+        await supabase.from("milestones").upsert(
           (tpls as MTemplate[]).map((t) => ({
             parent_type: "subscription", parent_id: sub.id,
             label: t.label, position: t.position, is_custom: false,
-          })) as never
-        ).select();
-        ms = (inserted ?? []) as Milestone[];
+          })) as never,
+          { onConflict: "parent_type,parent_id,label", ignoreDuplicates: true } as never
+        );
+        const { data: reread } = await supabase.from("milestones")
+          .select("*").eq("parent_id", sub.id).eq("parent_type", "subscription").order("position");
+        ms = (reread ?? []) as Milestone[];
       }
     }
     setMilestones(ms);
