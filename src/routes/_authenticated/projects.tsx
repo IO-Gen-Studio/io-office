@@ -105,24 +105,26 @@ function ProjectList({ editable, onOpen }: { editable: boolean; onOpen: (p: Proj
     void load();
   };
 
+  const statusLabel = useBuiltinFieldLabel("projects", "status");
+  const priorityLabel = useBuiltinFieldLabel("projects", "priority");
+  const statusOptions = useBuiltinFieldOptions("projects", "status");
+  const priorityOptions = useBuiltinFieldOptions("projects", "priority");
+
   const columns: DataTableColumn<Project>[] = [
     { key: "title", header: "Title", accessor: (r) => r.title, editable, editField: "title", type: "text" },
     { key: "client", header: "Client", accessor: (r) => orgs.find((o) => o.id === r.client_org_id)?.name ?? "" },
     { key: "lead", header: "Lead", accessor: (r) => profiles.find((u) => u.id === r.team_lead_id)?.full_name ?? "" },
     {
       key: "status", header: "Status", accessor: (r) => r.status,
-      render: (r) => <Badge variant="secondary" className="capitalize">{r.status.replace("_", " ")}</Badge>,
+      render: (r) => <Badge variant="secondary">{statusLabel(r.status)}</Badge>,
       editable, type: "select",
-      options: [
-        { value: "in_progress", label: "In progress" }, { value: "on_hold", label: "On hold" },
-        { value: "completed", label: "Completed" }, { value: "cancelled", label: "Cancelled" },
-      ],
+      options: statusOptions,
     },
     {
       key: "priority", header: "Priority", accessor: (r) => r.priority,
-      render: (r) => <Badge variant={r.priority === "high" ? "destructive" : r.priority === "low" ? "outline" : "default"} className="capitalize">{r.priority}</Badge>,
+      render: (r) => <Badge variant={r.priority === "high" ? "destructive" : r.priority === "low" ? "outline" : "default"}>{priorityLabel(r.priority)}</Badge>,
       editable, type: "select",
-      options: [{ value: "low", label: "Low" }, { value: "medium", label: "Medium" }, { value: "high", label: "High" }],
+      options: priorityOptions,
     },
     { key: "end_date", header: "End date", accessor: (r) => r.end_date, render: (r) => formatDateUK(r.end_date), editable, type: "date", align: "right" },
     { key: "total_cost", header: "Final Costs", accessor: (r) => Number(r.total_cost), render: (r) => formatGBP(r.total_cost), editable, type: "number", align: "right" },
