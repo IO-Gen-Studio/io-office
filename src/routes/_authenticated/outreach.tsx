@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -171,19 +171,19 @@ function CampaignDialog({ open, onOpenChange, campaign, onSaved }: { open: boole
     toast.success("Saved"); onOpenChange(false); onSaved();
   };
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader><DialogTitle>{campaign ? "Edit campaign" : "New campaign"}</DialogTitle></DialogHeader>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent>
+        <SheetHeader><SheetTitle>{campaign ? "Edit campaign" : "New campaign"}</SheetTitle></SheetHeader>
         <div className="space-y-3">
           <div className="space-y-1"><Label>Name *</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
           <div className="space-y-1"><Label>Description</Label><Textarea value={description} onChange={(e) => setDescription(e.target.value)} /></div>
         </div>
-        <DialogFooter>
+        <SheetFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button onClick={submit} className="bg-gradient-primary text-primary-foreground" disabled={!name.trim()}>Save</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }
 
@@ -505,9 +505,9 @@ function CCDialog({ open, onOpenChange, contact, campaignId, leadOpts, onSaved }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>{contact ? "Edit contact" : "Add contact"}</DialogTitle></DialogHeader>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+        <SheetHeader><SheetTitle>{contact ? "Edit contact" : "Add contact"}</SheetTitle></SheetHeader>
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1"><Label>First name</Label><Input value={first} onChange={(e) => setFirst(e.target.value)} /></div>
@@ -528,12 +528,12 @@ function CCDialog({ open, onOpenChange, contact, campaignId, leadOpts, onSaved }
           <div className="space-y-1"><Label>Notes</Label><Textarea value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
           <CustomFieldValues module="outreach" value={custom} onChange={setCustom} />
         </div>
-        <DialogFooter>
+        <SheetFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button onClick={submit} className="bg-gradient-primary text-primary-foreground">Save</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }
 
@@ -608,20 +608,20 @@ function TemplateDialog({ open, onOpenChange, template, onSaved }: { open: boole
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader><DialogTitle>{template ? "Edit email template" : "New email template"}</DialogTitle></DialogHeader>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="max-w-2xl">
+        <SheetHeader><SheetTitle>{template ? "Edit email template" : "New email template"}</SheetTitle></SheetHeader>
         <div className="space-y-3">
           <div className="space-y-1"><Label>Name *</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
           <div className="space-y-1"><Label>Subject *</Label><Input value={subject} onChange={(e) => setSubject(e.target.value)} /></div>
           <div className="space-y-1"><Label>Body</Label><Textarea rows={10} value={body} onChange={(e) => setBody(e.target.value)} placeholder="Use {{first_name}}, {{organisation}}, etc." /></div>
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={approved} onChange={(e) => setApproved(e.target.checked)} />Approved for use</label>
         </div>
-        <DialogFooter>
+        <SheetFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button onClick={submit} className="bg-gradient-primary text-primary-foreground" disabled={!name.trim() || !subject.trim()}>Save</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }

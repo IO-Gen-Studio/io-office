@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -230,14 +230,14 @@ export function SocialPostMockupDialog({
     onApprovalChange?.();
   };
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle className="flex items-center gap-2">
             Preview <Badge variant="secondary" className="capitalize">{localPlan.platform}</Badge>
             {approved ? <Badge>Approved</Badge> : <Badge variant="outline">Not approved</Badge>}
-          </DialogTitle>
-        </DialogHeader>
+          </SheetTitle>
+        </SheetHeader>
         {editing && editable ? (
           <div className="space-y-2">
             <Textarea value={draft} onChange={(e) => setDraft(e.target.value)} rows={6} />
@@ -256,15 +256,15 @@ export function SocialPostMockupDialog({
             {renderMockup(localPlan)}
           </div>
         )}
-        <DialogFooter>
+        <SheetFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Close</Button>
           {editable && (approved ? (
             <Button variant="outline" onClick={() => setApproval("not_approved")}>Revoke approval</Button>
           ) : (
             <Button className="bg-gradient-primary text-primary-foreground" onClick={() => setApproval("approved")}>Approve post</Button>
           ))}
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }

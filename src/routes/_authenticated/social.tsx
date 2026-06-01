@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Pencil, Trash2, Eye } from "lucide-react";
@@ -156,9 +156,9 @@ function PlanDialog({ open, onOpenChange, plan, onSaved }: { open: boolean; onOp
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>{plan ? "Edit post" : "New post"}</DialogTitle></DialogHeader>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+        <SheetHeader><SheetTitle>{plan ? "Edit post" : "New post"}</SheetTitle></SheetHeader>
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
@@ -201,12 +201,12 @@ function PlanDialog({ open, onOpenChange, plan, onSaved }: { open: boolean; onOp
           </div>
           <CustomFieldValues module="social" value={custom} onChange={setCustom} />
         </div>
-        <DialogFooter>
+        <SheetFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button onClick={submit} className="bg-gradient-primary text-primary-foreground">Save</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }
 
