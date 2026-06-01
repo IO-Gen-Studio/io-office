@@ -167,7 +167,22 @@ function SubDetail({ sub, editable, onBack, onSaved }: { sub: Sub; editable: boo
       supabase.from("contacts").select("id,first_name,last_name,organisation_id").order("last_name"),
       supabase.from("subscriptions").select("*").eq("id", sub.id).single(),
     ]);
-    setMilestones((m ?? []) as Milestone[]);
+    let ms = (m ?? []) as Milestone[];
+    if (ms.length === 0) {
+      const { data: tpls } = await supabase
+        .from("milestone_templates").select("*")
+        .eq("module", "subscriptions").order("position");
+      if (tpls && tpls.length > 0) {
+        const { data: inserted } = await supabase.from("milestones").insert(
+          (tpls as MTemplate[]).map((t) => ({
+            parent_type: "subscription", parent_id: sub.id,
+            label: t.label, position: t.position, is_custom: false,
+          })) as never
+        ).select();
+        ms = (inserted ?? []) as Milestone[];
+      }
+    }
+    setMilestones(ms);
     setOrgs((o ?? []) as Org[]); setContacts((c ?? []) as Contact[]);
     if (fresh) onSaved(fresh as Sub);
   };
@@ -204,8 +219,11 @@ function SubDetail({ sub, editable, onBack, onSaved }: { sub: Sub; editable: boo
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft className="size-4 mr-1" />Back</Button>
         <div className="flex-1">
-          <h2 className="text-xl font-semibold">{sub.plan_name}</h2>
-          <p className="text-sm text-muted-foreground">{cycleLabel(sub.billing_cycle)} · {statusLabel(sub.status)}</p>
+          <h2 className="text-xl font-semibold">{orgs.find((o) => o.id === sub.client_org_id)?.name ?? "—"}</h2>
+          <p className="text-sm text-muted-foreground">
+            <span className="font-medium text-foreground">{sub.plan_name}</span> · {cycleLabel(sub.billing_cycle)}
+          </p>
+          <p className="text-sm text-muted-foreground">{statusLabel(sub.status)}</p>
         </div>
         {editable && <Button variant="outline" onClick={() => setOpenEdit(true)}><Pencil className="size-4 mr-2" />Edit</Button>}
       </div>
