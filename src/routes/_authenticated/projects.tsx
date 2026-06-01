@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { CustomFieldValues } from "@/components/CustomFieldValues";
 import { CustomFieldDisplay, useCustomFieldColumns } from "@/components/CustomFieldDisplay";
 import { CostBreakdown } from "@/components/CostBreakdown";
+import { useBuiltinFieldLabel, useBuiltinFieldOptions } from "@/lib/builtin-labels";
 import type { Database } from "@/integrations/supabase/types";
 
 type PType = Database["public"]["Enums"]["project_type"];
