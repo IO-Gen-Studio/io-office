@@ -253,7 +253,7 @@ function ProjectDetail({ project, editable, onBack, onSaved }: { project: Projec
           <CardContent className="pt-6 space-y-4">
             <CollapsibleTrigger asChild>
               <button type="button" className="flex w-full items-center justify-between text-left group">
-                <h3 className="font-semibold">Final Cost Breakdown</h3>
+                <h3 className="font-semibold">Cost Breakdown</h3>
                 <ChevronDown className="size-4 transition-transform group-data-[state=closed]:-rotate-90" />
               </button>
             </CollapsibleTrigger>
