@@ -153,8 +153,8 @@
 }
 
 @layer utilities {
-  .bg-gradient-primary { background-image: var(--gradient-primary); }
-  .bg-gradient-subtle { background-image: var(--gradient-subtle); }
+  .bg-gradient-primary { background-color: var(--color-primary); color: var(--color-primary-foreground); }
+  .bg-gradient-subtle { background-color: var(--color-background); }
   .shadow-soft { box-shadow: var(--shadow-soft); }
   .shadow-elegant { box-shadow: var(--shadow-elegant); }
   .text-gradient {
