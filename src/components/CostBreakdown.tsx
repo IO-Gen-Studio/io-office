@@ -219,13 +219,43 @@ export function CostBreakdown({
   };
 
   const downloadTemplate = () => {
-    const csv = "Item #,Description,Quantity,Final Cost,Supplier Cost\n1,Example line item,1,100,60\n";
+    const csv = "Item #,Description,Quantity,Final Cost,Investment\n1,Example line item,1,100,60\n";
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url; a.download = "cost-items-template.csv"; a.click();
     URL.revokeObjectURL(url);
   };
+
+  const exportXLSX = () => {
+    const rows = items.map((i) => {
+      const qty = Number(i.quantity || 0);
+      const finalCost = Number(i.final_cost || 0);
+      const inv = Number(i.supplier_cost || 0);
+      return {
+        "Item #": i.item_no ?? "",
+        "Description": i.description,
+        "Quantity": qty,
+        "Final Cost": finalCost,
+        "Investment": inv,
+        "Profit": (qty * finalCost) - (qty * inv),
+      };
+    });
+    rows.push({
+      "Item #": "",
+      "Description": "Totals",
+      "Quantity": 0,
+      "Final Cost": totals.final,
+      "Investment": totals.supplier,
+      "Profit": totals.final - totals.supplier,
+    });
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Cost breakdown");
+    const label = active?.label ?? `v${active?.version ?? 1}`;
+    XLSX.writeFile(wb, `cost-breakdown-${label}.xlsx`);
+  };
+
 
   if (loading) return <p className="text-sm text-muted-foreground">Loading cost breakdown…</p>;
 
