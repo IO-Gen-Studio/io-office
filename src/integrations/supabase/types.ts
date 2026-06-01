@@ -74,6 +74,39 @@ export type Database = {
         }
         Relationships: []
       }
+      builtin_field_labels: {
+        Row: {
+          created_at: string
+          field_key: string
+          id: string
+          label: string
+          module: Database["public"]["Enums"]["app_module"]
+          position: number
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          field_key: string
+          id?: string
+          label: string
+          module: Database["public"]["Enums"]["app_module"]
+          position?: number
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          created_at?: string
+          field_key?: string
+          id?: string
+          label?: string
+          module?: Database["public"]["Enums"]["app_module"]
+          position?: number
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
       campaign_contacts: {
         Row: {
           campaign_id: string
