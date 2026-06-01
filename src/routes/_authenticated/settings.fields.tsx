@@ -171,7 +171,7 @@ function FieldsPage() {
           <TabsContent key={m.key} value={m.key} className="space-y-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0">
-                <CardTitle className="text-base">Custom fields</CardTitle>
+                <CardTitle className="text-base">Other information</CardTitle>
                 <Button size="sm" onClick={() => setCreating(true)}>
                   <Plus className="h-4 w-4" /> Add field
                 </Button>
