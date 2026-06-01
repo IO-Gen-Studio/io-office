@@ -72,8 +72,8 @@ export function CostBreakdown({
   const totals = useMemo(() => {
     return items.reduce(
       (a, i) => ({
-        final: a.final + Number(i.quantity || 0) * Number(i.final_cost || 0),
-        supplier: a.supplier + Number(i.quantity || 0) * Number(i.supplier_cost || 0),
+        final: a.final + Number(i.final_cost || 0),
+        supplier: a.supplier + Number(i.supplier_cost || 0),
       }),
       { final: 0, supplier: 0 },
     );
@@ -229,16 +229,15 @@ export function CostBreakdown({
 
   const exportXLSX = () => {
     const rows = items.map((i) => {
-      const qty = Number(i.quantity || 0);
       const finalCost = Number(i.final_cost || 0);
       const inv = Number(i.supplier_cost || 0);
       return {
         "Item #": i.item_no ?? "",
         "Description": i.description,
-        "Quantity": qty,
+        "Quantity": Number(i.quantity || 0),
         "Final Cost": finalCost,
         "Investment": inv,
-        "Profit": (qty * finalCost) - (qty * inv),
+        "Profit": finalCost - inv,
       };
     });
     rows.push({
@@ -326,8 +325,8 @@ export function CostBreakdown({
               {items.length === 0 ? (
                 <tr><td colSpan={editable && editMode ? 7 : 6} className="text-center text-muted-foreground py-6">No items yet.</td></tr>
               ) : items.map((i) => {
-                const lineFinal = Number(i.quantity || 0) * Number(i.final_cost || 0);
-                const lineInv = Number(i.quantity || 0) * Number(i.supplier_cost || 0);
+                const lineFinal = Number(i.final_cost || 0);
+                const lineInv = Number(i.supplier_cost || 0);
                 const canEdit = editable && editMode;
                 return (
                   <tr key={i.id} className="border-b">

@@ -38,7 +38,7 @@ export function CustomFieldDisplay({
   const vals = value ?? {};
   return (
     <div className="space-y-2 pt-3 border-t">
-      <p className="text-xs uppercase tracking-wide text-muted-foreground">Custom fields</p>
+      <p className="text-xs uppercase tracking-wide text-muted-foreground">Other information</p>
       <div className="grid md:grid-cols-2 gap-x-6 gap-y-1 text-sm">
         {defs.map((d) => {
           const formatted = formatValue(d, vals[d.key]);
