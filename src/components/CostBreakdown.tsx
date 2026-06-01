@@ -45,6 +45,7 @@ export function CostBreakdown({
   const [items, setItems] = useState<Item[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [itemsLoadedFor, setItemsLoadedFor] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
 
   const loadVersions = async () => {
@@ -64,10 +65,14 @@ export function CostBreakdown({
     const { data } = await supabase
       .from("cost_items").select("*").eq("version_id", vid).order("position");
     setItems((data ?? []) as Item[]);
+    setItemsLoadedFor(vid);
   };
 
   useEffect(() => { void loadVersions(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [parentType, parentId]);
-  useEffect(() => { if (activeId) void loadItems(activeId); else setItems([]); }, [activeId]);
+  useEffect(() => {
+    if (activeId) void loadItems(activeId);
+    else { setItems([]); setItemsLoadedFor(null); }
+  }, [activeId]);
 
   const totals = useMemo(() => {
     return items.reduce(
@@ -79,7 +84,14 @@ export function CostBreakdown({
     );
   }, [items]);
 
-  useEffect(() => { onTotalsChange?.(totals); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [totals.final, totals.supplier]);
+  useEffect(() => {
+    // Only report totals once items have actually been loaded for the active version.
+    // Without this guard, an initial render with empty items overwrites the parent's
+    // stored cost with 0 before the real items arrive.
+    if (!activeId || itemsLoadedFor !== activeId) return;
+    onTotalsChange?.(totals);
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  }, [totals.final, totals.supplier, itemsLoadedFor, activeId]);
 
   const active = versions.find((v) => v.id === activeId) ?? null;
 
