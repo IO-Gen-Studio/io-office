@@ -5,7 +5,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { ExternalLink, FileText, Trash2 } from "lucide-react";
 
 export type CustomFieldModule = "crm" | "outreach" | "social" | "projects" | "subscriptions";
 
@@ -63,7 +66,7 @@ export function CustomFieldValues({
       <p className="text-xs uppercase tracking-wide text-muted-foreground">Other information</p>
       <div className="grid grid-cols-2 gap-3">
         {defs.map((d) => (
-          <div key={d.id} className={d.type === "long_text" || d.type === "checklist" ? "col-span-2 space-y-1" : "space-y-1"}>
+          <div key={d.id} className={d.type === "long_text" || d.type === "checklist" || d.type === "attachment" ? "col-span-2 space-y-1" : "space-y-1"}>
             <Label>{d.label}</Label>
             <FieldInput def={d} value={value?.[d.key]} onChange={(v) => set(d.key, v)} />
           </div>
@@ -125,6 +128,70 @@ function FieldInput({ def, value, onChange }: { def: CustomFieldDef; value: unkn
   }
 }
 
+/** Returns a short-lived signed URL for a private bucket path. */
+async function signUrl(path: string): Promise<string | null> {
+  const { data } = await supabase.storage.from("project-files").createSignedUrl(path, 60 * 60);
+  return data?.signedUrl ?? null;
+}
+
+function inferKind(path: string): "image" | "pdf" | "other" {
+  const ext = path.split(".").pop()?.toLowerCase() ?? "";
+  if (["png", "jpg", "jpeg", "gif", "webp", "avif", "svg"].includes(ext)) return "image";
+  if (ext === "pdf") return "pdf";
+  return "other";
+}
+
+export function AttachmentPreview({ path }: { path: string }) {
+  const [url, setUrl] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
+  const kind = inferKind(path);
+  const filename = path.split("/").pop() ?? path;
+
+  useEffect(() => {
+    let cancelled = false;
+    void signUrl(path).then((u) => { if (!cancelled) setUrl(u); });
+    return () => { cancelled = true; };
+  }, [path]);
+
+  if (!url) {
+    return <p className="text-xs text-muted-foreground truncate">Loading {filename}…</p>;
+  }
+
+  if (kind === "image") {
+    return (
+      <>
+        <button type="button" onClick={() => setOpen(true)} className="block rounded-md border bg-muted/30 overflow-hidden hover:opacity-90 transition">
+          <img src={url} alt={filename} className="max-h-48 object-contain" />
+        </button>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogContent className="max-w-4xl">
+            <img src={url} alt={filename} className="w-full h-auto" />
+          </DialogContent>
+        </Dialog>
+      </>
+    );
+  }
+
+  if (kind === "pdf") {
+    return (
+      <div className="space-y-2">
+        <div className="rounded-md border overflow-hidden bg-muted/30">
+          <iframe src={url} title={filename} className="w-full h-96" />
+        </div>
+        <a href={url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+          <ExternalLink className="size-3" /> Open in new tab
+        </a>
+      </div>
+    );
+  }
+
+  return (
+    <a href={url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-sm text-primary hover:underline">
+      <FileText className="size-4" /> {filename}
+    </a>
+  );
+}
+
 function AttachmentInput({ value, onChange }: { value: string | null | undefined; onChange: (v: unknown) => void }) {
   const [uploading, setUploading] = useState(false);
   const onUpload = async (file: File) => {
@@ -136,10 +203,21 @@ function AttachmentInput({ value, onChange }: { value: string | null | undefined
     onChange(path);
   };
   return (
-    <div className="space-y-1">
-      <Input type="file" onChange={(e) => { const f = e.target.files?.[0]; if (f) void onUpload(f); }} />
+    <div className="space-y-2">
+      {value ? (
+        <div className="space-y-2">
+          <AttachmentPreview path={value} />
+          <div className="flex items-center gap-2">
+            <Input type="file" onChange={(e) => { const f = e.target.files?.[0]; if (f) void onUpload(f); }} className="flex-1" />
+            <Button type="button" variant="ghost" size="icon" onClick={() => onChange(null)} title="Remove attachment">
+              <Trash2 className="size-4" />
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <Input type="file" onChange={(e) => { const f = e.target.files?.[0]; if (f) void onUpload(f); }} />
+      )}
       {uploading && <p className="text-xs text-muted-foreground">Uploading…</p>}
-      {value && <p className="text-xs text-muted-foreground truncate">Attached: {value}</p>}
     </div>
   );
 }

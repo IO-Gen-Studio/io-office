@@ -24,6 +24,7 @@ import { Route as AuthenticatedCrmRouteImport } from './routes/_authenticated/cr
 import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
 import { Route as AuthenticatedSettingsUsersRouteImport } from './routes/_authenticated/settings.users'
 import { Route as AuthenticatedSettingsProfileRouteImport } from './routes/_authenticated/settings.profile'
+import { Route as AuthenticatedSettingsMilestonesRouteImport } from './routes/_authenticated/settings.milestones'
 import { Route as AuthenticatedSettingsFieldsRouteImport } from './routes/_authenticated/settings.fields'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 
@@ -105,6 +106,12 @@ const AuthenticatedSettingsProfileRoute =
     path: '/profile',
     getParentRoute: () => AuthenticatedSettingsRoute,
   } as any)
+const AuthenticatedSettingsMilestonesRoute =
+  AuthenticatedSettingsMilestonesRouteImport.update({
+    id: '/milestones',
+    path: '/milestones',
+    getParentRoute: () => AuthenticatedSettingsRoute,
+  } as any)
 const AuthenticatedSettingsFieldsRoute =
   AuthenticatedSettingsFieldsRouteImport.update({
     id: '/fields',
@@ -132,6 +139,7 @@ export interface FileRoutesByFullPath {
   '/social': typeof AuthenticatedSocialRoute
   '/subscriptions': typeof AuthenticatedSubscriptionsRoute
   '/settings/fields': typeof AuthenticatedSettingsFieldsRoute
+  '/settings/milestones': typeof AuthenticatedSettingsMilestonesRoute
   '/settings/profile': typeof AuthenticatedSettingsProfileRoute
   '/settings/users': typeof AuthenticatedSettingsUsersRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -150,6 +158,7 @@ export interface FileRoutesByTo {
   '/social': typeof AuthenticatedSocialRoute
   '/subscriptions': typeof AuthenticatedSubscriptionsRoute
   '/settings/fields': typeof AuthenticatedSettingsFieldsRoute
+  '/settings/milestones': typeof AuthenticatedSettingsMilestonesRoute
   '/settings/profile': typeof AuthenticatedSettingsProfileRoute
   '/settings/users': typeof AuthenticatedSettingsUsersRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -170,6 +179,7 @@ export interface FileRoutesById {
   '/_authenticated/social': typeof AuthenticatedSocialRoute
   '/_authenticated/subscriptions': typeof AuthenticatedSubscriptionsRoute
   '/_authenticated/settings/fields': typeof AuthenticatedSettingsFieldsRoute
+  '/_authenticated/settings/milestones': typeof AuthenticatedSettingsMilestonesRoute
   '/_authenticated/settings/profile': typeof AuthenticatedSettingsProfileRoute
   '/_authenticated/settings/users': typeof AuthenticatedSettingsUsersRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -190,6 +200,7 @@ export interface FileRouteTypes {
     | '/social'
     | '/subscriptions'
     | '/settings/fields'
+    | '/settings/milestones'
     | '/settings/profile'
     | '/settings/users'
     | '/lovable/email/queue/process'
@@ -208,6 +219,7 @@ export interface FileRouteTypes {
     | '/social'
     | '/subscriptions'
     | '/settings/fields'
+    | '/settings/milestones'
     | '/settings/profile'
     | '/settings/users'
     | '/lovable/email/queue/process'
@@ -227,6 +239,7 @@ export interface FileRouteTypes {
     | '/_authenticated/social'
     | '/_authenticated/subscriptions'
     | '/_authenticated/settings/fields'
+    | '/_authenticated/settings/milestones'
     | '/_authenticated/settings/profile'
     | '/_authenticated/settings/users'
     | '/lovable/email/queue/process'
@@ -347,6 +360,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsProfileRouteImport
       parentRoute: typeof AuthenticatedSettingsRoute
     }
+    '/_authenticated/settings/milestones': {
+      id: '/_authenticated/settings/milestones'
+      path: '/milestones'
+      fullPath: '/settings/milestones'
+      preLoaderRoute: typeof AuthenticatedSettingsMilestonesRouteImport
+      parentRoute: typeof AuthenticatedSettingsRoute
+    }
     '/_authenticated/settings/fields': {
       id: '/_authenticated/settings/fields'
       path: '/fields'
@@ -366,12 +386,14 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedSettingsRouteChildren {
   AuthenticatedSettingsFieldsRoute: typeof AuthenticatedSettingsFieldsRoute
+  AuthenticatedSettingsMilestonesRoute: typeof AuthenticatedSettingsMilestonesRoute
   AuthenticatedSettingsProfileRoute: typeof AuthenticatedSettingsProfileRoute
   AuthenticatedSettingsUsersRoute: typeof AuthenticatedSettingsUsersRoute
 }
 
 const AuthenticatedSettingsRouteChildren: AuthenticatedSettingsRouteChildren = {
   AuthenticatedSettingsFieldsRoute: AuthenticatedSettingsFieldsRoute,
+  AuthenticatedSettingsMilestonesRoute: AuthenticatedSettingsMilestonesRoute,
   AuthenticatedSettingsProfileRoute: AuthenticatedSettingsProfileRoute,
   AuthenticatedSettingsUsersRoute: AuthenticatedSettingsUsersRoute,
 }

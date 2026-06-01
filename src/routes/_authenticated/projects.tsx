@@ -38,8 +38,8 @@ type Project = {
 type Profile = { id: string; full_name: string };
 type Org = { id: string; name: string };
 type Contact = { id: string; first_name: string; last_name: string; organisation_id: string | null };
-type Milestone = { id: string; project_id: string; label: string; due_date: string | null; completed_at: string | null; is_custom: boolean; position: number };
-type MTemplate = { id: string; label: string; position: number };
+type Milestone = { id: string; parent_id: string; parent_type: string; label: string; due_date: string | null; completed_at: string | null; is_custom: boolean; position: number };
+type MTemplate = { id: string; label: string; position: number; module: string; project_type: string | null };
 
 export const Route = createFileRoute("/_authenticated/projects")({ component: ProjectsPage });
 
@@ -177,7 +177,7 @@ function ProjectDetail({ project, editable, onBack, onSaved }: { project: Projec
 
   const load = async () => {
     const [{ data: m }, { data: o }, { data: pr }, { data: c }, { data: fresh }] = await Promise.all([
-      supabase.from("milestones").select("*").eq("project_id", project.id).order("position"),
+      supabase.from("milestones").select("*").eq("parent_id", project.id).eq("parent_type", "project").order("position"),
       supabase.from("organisations").select("id,name").order("name"),
       supabase.from("profiles").select("id,full_name").order("full_name"),
       supabase.from("contacts").select("id,first_name,last_name,organisation_id").order("last_name"),
@@ -205,9 +205,10 @@ function ProjectDetail({ project, editable, onBack, onSaved }: { project: Projec
   const addCustom = async () => {
     if (!customLabel.trim()) return;
     const { error } = await supabase.from("milestones").insert({
-      project_id: project.id, label: customLabel, is_custom: true,
+      parent_type: "project", parent_id: project.id, project_id: project.id,
+      label: customLabel, is_custom: true,
       position: milestones.length,
-    });
+    } as never);
     if (error) { toast.error(error.message); return; }
     setCustomLabel(""); void load();
   };
@@ -409,10 +410,17 @@ function ProjectDialog({ open, onOpenChange, project, defaultType, orgs, contact
     } else {
       const { data, error } = await supabase.from("projects").insert(payload).select().single();
       if (error) { toast.error(error.message); return; }
-      const { data: tpls } = await supabase.from("milestone_templates").select("*").order("position");
+      const { data: tpls } = await supabase
+        .from("milestone_templates").select("*")
+        .eq("module", "projects")
+        .or(`project_type.is.null,project_type.eq.${type}`)
+        .order("position");
       if (tpls && tpls.length > 0) {
         await supabase.from("milestones").insert(
-          (tpls as MTemplate[]).map((t) => ({ project_id: data.id, label: relabelForType(t.label, type), position: t.position, is_custom: false }))
+          (tpls as MTemplate[]).map((t) => ({
+            parent_type: "project", parent_id: data.id, project_id: data.id,
+            label: relabelForType(t.label, type), position: t.position, is_custom: false,
+          })) as never
         );
       }
       await logActivity({ module: "projects", entity_type: type, entity_id: data.id, verb: "created", summary: `Created ${type} ${title}` });

@@ -615,17 +615,23 @@ export type Database = {
         Row: {
           id: string
           label: string
+          module: string
           position: number
+          project_type: string | null
         }
         Insert: {
           id?: string
           label: string
+          module?: string
           position?: number
+          project_type?: string | null
         }
         Update: {
           id?: string
           label?: string
+          module?: string
           position?: number
+          project_type?: string | null
         }
         Relationships: []
       }
@@ -637,8 +643,10 @@ export type Database = {
           id: string
           is_custom: boolean
           label: string
+          parent_id: string | null
+          parent_type: string
           position: number
-          project_id: string
+          project_id: string | null
         }
         Insert: {
           completed_at?: string | null
@@ -647,8 +655,10 @@ export type Database = {
           id?: string
           is_custom?: boolean
           label: string
+          parent_id?: string | null
+          parent_type?: string
           position?: number
-          project_id: string
+          project_id?: string | null
         }
         Update: {
           completed_at?: string | null
@@ -657,8 +667,10 @@ export type Database = {
           id?: string
           is_custom?: boolean
           label?: string
+          parent_id?: string | null
+          parent_type?: string
           position?: number
-          project_id?: string
+          project_id?: string | null
         }
         Relationships: [
           {

@@ -1,4 +1,4 @@
-import { useCustomFieldDefs, type CustomFieldDef, type CustomFieldModule } from "@/components/CustomFieldValues";
+import { useCustomFieldDefs, type CustomFieldDef, type CustomFieldModule, AttachmentPreview } from "@/components/CustomFieldValues";
 import type { DataTableColumn } from "@/components/DataTable";
 
 function formatValue(def: CustomFieldDef, v: unknown): string {
@@ -39,9 +39,19 @@ export function CustomFieldDisplay({
   return (
     <div className="space-y-2 pt-3 border-t">
       <p className="text-xs uppercase tracking-wide text-muted-foreground">Other information</p>
-      <div className="grid md:grid-cols-2 gap-x-6 gap-y-1 text-sm">
+      <div className="grid md:grid-cols-2 gap-x-6 gap-y-3 text-sm">
         {defs.map((d) => {
-          const formatted = formatValue(d, vals[d.key]);
+          const raw = vals[d.key];
+          const hasValue = raw !== null && raw !== undefined && raw !== "";
+          if (d.type === "attachment") {
+            return (
+              <div key={d.id} className="md:col-span-2 space-y-1">
+                <span className="text-muted-foreground">{d.label}</span>
+                {hasValue ? <AttachmentPreview path={String(raw)} /> : <p className="font-medium">—</p>}
+              </div>
+            );
+          }
+          const formatted = formatValue(d, raw);
           return (
             <div key={d.id}>
               <span className="text-muted-foreground">{d.label}:</span>{" "}
