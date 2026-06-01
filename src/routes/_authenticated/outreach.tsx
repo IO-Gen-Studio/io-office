@@ -172,13 +172,13 @@ function CampaignDialog({ open, onOpenChange, campaign, onSaved }: { open: boole
   };
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent>
-        <SheetHeader><SheetTitle>{campaign ? "Edit campaign" : "New campaign"}</SheetTitle></SheetHeader>
-        <div className="space-y-3">
+      <SheetContent className="w-[95vw] sm:max-w-[min(800px,95vw)] flex flex-col gap-0 p-0">
+        <SheetHeader className="p-6 pb-4 border-b shrink-0"><SheetTitle>{campaign ? "Edit campaign" : "New campaign"}</SheetTitle></SheetHeader>
+        <div className="flex-1 overflow-y-auto p-6 space-y-3">
           <div className="space-y-1"><Label>Name *</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
-          <div className="space-y-1"><Label>Description</Label><Textarea value={description} onChange={(e) => setDescription(e.target.value)} /></div>
+          <div className="space-y-1"><Label>Description</Label><Textarea rows={6} className="min-h-[140px]" value={description} onChange={(e) => setDescription(e.target.value)} /></div>
         </div>
-        <SheetFooter>
+        <SheetFooter className="p-6 pt-4 border-t shrink-0">
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button onClick={submit} className="bg-gradient-primary text-primary-foreground" disabled={!name.trim()}>Save</Button>
         </SheetFooter>
@@ -506,18 +506,18 @@ function CCDialog({ open, onOpenChange, contact, campaignId, leadOpts, onSaved }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="max-w-xl max-h-[90vh] overflow-y-auto">
-        <SheetHeader><SheetTitle>{contact ? "Edit contact" : "Add contact"}</SheetTitle></SheetHeader>
-        <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
+      <SheetContent className="w-[95vw] sm:max-w-[min(900px,95vw)] flex flex-col gap-0 p-0">
+        <SheetHeader className="p-6 pb-4 border-b shrink-0"><SheetTitle>{contact ? "Edit contact" : "Add contact"}</SheetTitle></SheetHeader>
+        <div className="flex-1 overflow-y-auto p-6 space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="space-y-1"><Label>First name</Label><Input value={first} onChange={(e) => setFirst(e.target.value)} /></div>
             <div className="space-y-1"><Label>Last name</Label><Input value={last} onChange={(e) => setLast(e.target.value)} /></div>
             <div className="space-y-1"><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
             <div className="space-y-1"><Label>Job title</Label><Input value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} /></div>
             <div className="space-y-1"><Label>Organisation</Label><Input value={org} onChange={(e) => setOrg(e.target.value)} /></div>
             <div className="space-y-1"><Label>Industry</Label><Input value={industry} onChange={(e) => setIndustry(e.target.value)} /></div>
-            <div className="space-y-1 col-span-2"><Label>Website</Label><Input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://" /></div>
-            <div className="space-y-1 col-span-2">
+            <div className="space-y-1 md:col-span-2"><Label>Website</Label><Input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://" /></div>
+            <div className="space-y-1 md:col-span-2">
               <Label>Lead status</Label>
               <Select value={status} onValueChange={setStatus}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -525,10 +525,10 @@ function CCDialog({ open, onOpenChange, contact, campaignId, leadOpts, onSaved }
               </Select>
             </div>
           </div>
-          <div className="space-y-1"><Label>Notes</Label><Textarea value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
+          <div className="space-y-1"><Label>Notes</Label><Textarea rows={5} className="min-h-[120px]" value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
           <CustomFieldValues module="outreach" value={custom} onChange={setCustom} />
         </div>
-        <SheetFooter>
+        <SheetFooter className="p-6 pt-4 border-t shrink-0">
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button onClick={submit} className="bg-gradient-primary text-primary-foreground">Save</Button>
         </SheetFooter>
@@ -609,15 +609,15 @@ function TemplateDialog({ open, onOpenChange, template, onSaved }: { open: boole
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="max-w-2xl">
-        <SheetHeader><SheetTitle>{template ? "Edit email template" : "New email template"}</SheetTitle></SheetHeader>
-        <div className="space-y-3">
+      <SheetContent className="w-[95vw] sm:max-w-[min(1100px,95vw)] flex flex-col gap-0 p-0">
+        <SheetHeader className="p-6 pb-4 border-b shrink-0"><SheetTitle>{template ? "Edit email template" : "New email template"}</SheetTitle></SheetHeader>
+        <div className="flex-1 overflow-y-auto p-6 space-y-3">
           <div className="space-y-1"><Label>Name *</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
           <div className="space-y-1"><Label>Subject *</Label><Input value={subject} onChange={(e) => setSubject(e.target.value)} /></div>
-          <div className="space-y-1"><Label>Body</Label><Textarea rows={10} value={body} onChange={(e) => setBody(e.target.value)} placeholder="Use {{first_name}}, {{organisation}}, etc." /></div>
+          <div className="space-y-1"><Label>Body</Label><Textarea rows={18} value={body} onChange={(e) => setBody(e.target.value)} placeholder="Use {{first_name}}, {{organisation}}, etc." className="min-h-[400px]" /></div>
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={approved} onChange={(e) => setApproved(e.target.checked)} />Approved for use</label>
         </div>
-        <SheetFooter>
+        <SheetFooter className="p-6 pt-4 border-t shrink-0">
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button onClick={submit} className="bg-gradient-primary text-primary-foreground" disabled={!name.trim() || !subject.trim()}>Save</Button>
         </SheetFooter>
