@@ -156,6 +156,7 @@ function SubDetail({ sub, editable, onBack, onSaved }: { sub: Sub; editable: boo
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [openEdit, setOpenEdit] = useState(false);
   const [customLabel, setCustomLabel] = useState("");
+  const seededRef = useRef<Set<string>>(new Set());
 
   const cycleLabel = useBuiltinFieldLabel("subscriptions", "billing_cycle");
   const statusLabel = useBuiltinFieldLabel("subscriptions", "status");
