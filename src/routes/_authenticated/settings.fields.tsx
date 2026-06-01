@@ -399,3 +399,75 @@ function FieldDialog({
     </Dialog>
   );
 }
+
+function BuiltinDropdownEditor({
+  module, fieldKey, fieldLabel,
+}: { module: BuiltinModule; fieldKey: string; fieldLabel: string }) {
+  const spec = BUILTIN_DROPDOWNS.find((s) => s.module === module && s.key === fieldKey);
+  const { overrides, reload } = useBuiltinLabels();
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState<string | null>(null);
+
+  if (!spec) return null;
+
+  const labelFor = (value: string) =>
+    drafts[value] ?? overrides[`${module}.${fieldKey}.${value}`] ?? spec.options.find((o) => o.value === value)?.defaultLabel ?? value;
+
+  const save = async (value: string) => {
+    const next = (drafts[value] ?? "").trim();
+    if (!next) return toast.error("Label cannot be empty");
+    setSaving(value);
+    const { error } = await supabase.from("builtin_field_labels").upsert(
+      { module, field_key: fieldKey, value, label: next },
+      { onConflict: "module,field_key,value" },
+    );
+    setSaving(null);
+    if (error) return toast.error(error.message);
+    setDrafts((d) => { const { [value]: _, ...rest } = d; return rest; });
+    await reload();
+    toast.success("Label updated");
+  };
+
+  const reset = async (value: string) => {
+    setSaving(value);
+    const { error } = await supabase.from("builtin_field_labels")
+      .delete().eq("module", module).eq("field_key", fieldKey).eq("value", value);
+    setSaving(null);
+    if (error) return toast.error(error.message);
+    setDrafts((d) => { const { [value]: _, ...rest } = d; return rest; });
+    await reload();
+    toast.success("Reset to default");
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-medium">{fieldLabel}</p>
+        <Badge variant="outline" className="text-xs">Dropdown</Badge>
+      </div>
+      <div className="space-y-1.5">
+        {spec.options.map((o) => {
+          const current = labelFor(o.value);
+          const hasOverride = overrides[`${module}.${fieldKey}.${o.value}`] !== undefined;
+          const dirty = drafts[o.value] !== undefined && drafts[o.value] !== (overrides[`${module}.${fieldKey}.${o.value}`] ?? o.defaultLabel);
+          return (
+            <div key={o.value} className="flex items-center gap-2">
+              <code className="text-xs text-muted-foreground font-mono w-32 truncate" title={o.value}>{o.value}</code>
+              <Input
+                value={current}
+                onChange={(e) => setDrafts((d) => ({ ...d, [o.value]: e.target.value }))}
+                className="flex-1"
+              />
+              <Button size="sm" variant="default" disabled={!dirty || saving === o.value} onClick={() => save(o.value)}>
+                Save
+              </Button>
+              <Button size="sm" variant="ghost" disabled={!hasOverride || saving === o.value} onClick={() => reset(o.value)}>
+                Reset
+              </Button>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
