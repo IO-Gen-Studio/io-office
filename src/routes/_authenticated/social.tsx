@@ -23,7 +23,7 @@ type Platform = Database["public"]["Enums"]["social_platform"];
 type PostStatus = Database["public"]["Enums"]["post_status"];
 type ApprovalStatus = Database["public"]["Enums"]["approval_status"];
 
-const PLATFORMS: Platform[] = ["linkedin", "instagram", "x", "threads", "facebook", "tiktok", "youtube"];
+
 
 type Plan = {
   id: string; platform: Platform; title: string; copy: string; media_path: string | null;
