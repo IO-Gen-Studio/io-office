@@ -69,25 +69,27 @@ function SubscriptionsPage() {
     return sum + (r.billing_cycle === "yearly" ? c / 12 : r.billing_cycle === "quarterly" ? c / 3 : c);
   }, 0);
 
+  const cycleLabel = useBuiltinFieldLabel("subscriptions", "billing_cycle");
+  const subStatusLabel = useBuiltinFieldLabel("subscriptions", "status");
+  const cycleOptions = useBuiltinFieldOptions("subscriptions", "billing_cycle");
+  const subStatusOptions = useBuiltinFieldOptions("subscriptions", "status");
+
   const columns: DataTableColumn<Sub>[] = [
     { key: "plan_name", header: "Plan", accessor: (r) => r.plan_name, editable, type: "text" },
     { key: "client", header: "Client", accessor: (r) => orgs.find((o) => o.id === r.client_org_id)?.name ?? "" },
     {
       key: "billing_cycle", header: "Cycle", accessor: (r) => r.billing_cycle,
-      render: (r) => <span className="capitalize">{r.billing_cycle}</span>,
+      render: (r) => <span>{cycleLabel(r.billing_cycle)}</span>,
       editable, type: "select",
-      options: [{ value: "monthly", label: "Monthly" }, { value: "quarterly", label: "Quarterly" }, { value: "yearly", label: "Yearly" }],
+      options: cycleOptions,
     },
     { key: "cost", header: "Final Costs", accessor: (r) => Number(r.cost), render: (r) => formatGBP(r.cost), editable, type: "number", align: "right" },
     { key: "renewal_date", header: "Renewal", accessor: (r) => r.renewal_date, render: (r) => formatDateUK(r.renewal_date), editable, type: "date" },
     {
       key: "status", header: "Status", accessor: (r) => r.status,
-      render: (r) => <Badge variant={r.status === "active" ? "default" : r.status === "past_due" ? "destructive" : "secondary"} className="capitalize">{r.status.replace("_", " ")}</Badge>,
+      render: (r) => <Badge variant={r.status === "active" ? "default" : r.status === "past_due" ? "destructive" : "secondary"}>{subStatusLabel(r.status)}</Badge>,
       editable, type: "select",
-      options: [
-        { value: "active", label: "Active" }, { value: "paused", label: "Paused" },
-        { value: "past_due", label: "Past due" }, { value: "cancelled", label: "Cancelled" },
-      ],
+      options: subStatusOptions,
     },
   ];
   const customCols = useCustomFieldColumns<Sub>("subscriptions");
