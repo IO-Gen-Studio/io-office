@@ -11,10 +11,7 @@ import {
 import { useAuth } from "@/lib/auth/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
-  DropdownMenuSeparator, DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import logoUrl from "@/assets/io-gen-logo.png";
@@ -85,28 +82,31 @@ function AuthLayout() {
                 </Badge>
               )}
             </Link>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+            <Sheet>
+              <SheetTrigger asChild>
                 <Button variant="ghost" className="gap-2 px-2">
                   <Avatar className="size-7">
-                    <AvatarFallback className="bg-gradient-primary text-primary-foreground text-xs">
+                    <AvatarFallback className="bg-primary text-primary-foreground text-xs">
                       {(profile?.full_name || user?.email || "U").slice(0,2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <span className="hidden md:inline text-sm">{profile?.full_name || user?.email}</span>
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>{profile?.email}</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild><Link to="/settings/profile">Profile</Link></DropdownMenuItem>
-                {isAdmin && <DropdownMenuItem asChild><Link to="/settings/users">User management</Link></DropdownMenuItem>}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => signOut()}>
-                  <LogOut className="size-4 mr-2" /> Sign out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-full sm:max-w-sm">
+                <SheetHeader>
+                  <SheetTitle>Account</SheetTitle>
+                </SheetHeader>
+                <div className="mt-6 space-y-1">
+                  <div className="px-3 py-2 text-xs text-muted-foreground">{profile?.email}</div>
+                  <Link to="/settings/profile" className="block rounded-lg px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground">Profile</Link>
+                  {isAdmin && <Link to="/settings/users" className="block rounded-lg px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground">User management</Link>}
+                  <button onClick={() => signOut()} className="w-full text-left flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground">
+                    <LogOut className="size-4" /> Sign out
+                  </button>
+                </div>
+              </SheetContent>
+            </Sheet>
           </header>
           <main className="flex-1 overflow-auto"><Outlet /></main>
         </div>
