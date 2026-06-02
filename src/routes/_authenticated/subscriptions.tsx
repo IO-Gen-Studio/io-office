@@ -430,7 +430,27 @@ function SubDialog({ open, onOpenChange, sub, orgs, contacts, planOpts, onSaved 
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>{sub ? "Edit subscription" : "New subscription"}</DialogTitle></DialogHeader>
         <div className="space-y-3">
-          <div className="space-y-1"><Label>Plan name *</Label><Input value={plan} onChange={(e) => setPlan(e.target.value)} /></div>
+          <div className="space-y-1">
+            <Label>Plan *</Label>
+            {(() => {
+              const labels = planOpts.map((p) => p.label);
+              const inList = !plan || labels.includes(plan);
+              return (
+                <>
+                  <Select value={inList ? (plan || "__none__") : "__other__"} onValueChange={(v) => setPlan(v === "__none__" || v === "__other__" ? "" : v)}>
+                    <SelectTrigger><SelectValue placeholder="Select a plan…" /></SelectTrigger>
+                    <SelectContent>
+                      {planOpts.map((p) => <SelectItem key={p.id} value={p.label}>{p.label}</SelectItem>)}
+                      {!inList && plan && <SelectItem value="__other__">{plan} (legacy)</SelectItem>}
+                    </SelectContent>
+                  </Select>
+                  {planOpts.length === 0 && (
+                    <p className="text-xs text-muted-foreground">No plans configured yet. Add some in Settings → Subscription Plans.</p>
+                  )}
+                </>
+              );
+            })()}
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1"><Label>Final Costs (£)</Label><Input type="number" value={cost} onChange={(e) => setCost(e.target.value)} /><p className="text-xs text-muted-foreground">Use the breakdown in the detail view to auto-calculate this.</p></div>
             <div className="space-y-1">
