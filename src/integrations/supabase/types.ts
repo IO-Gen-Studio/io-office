@@ -36,7 +36,7 @@ export type Database = {
           metadata?: Json
           module: Database["public"]["Enums"]["app_module"]
           summary: string
-          tenant_id: string
+          tenant_id?: string
           verb: string
         }
         Update: {
@@ -75,7 +75,7 @@ export type Database = {
           entity_id: string
           entity_type: string
           id?: string
-          tenant_id: string
+          tenant_id?: string
           user_id: string
         }
         Update: {
@@ -115,7 +115,7 @@ export type Database = {
           label: string
           module: Database["public"]["Enums"]["app_module"]
           position?: number
-          tenant_id: string
+          tenant_id?: string
           updated_at?: string
           value: string
         }
@@ -173,7 +173,7 @@ export type Database = {
           notes?: string | null
           organisation?: string | null
           outreach?: Json
-          tenant_id: string
+          tenant_id?: string
           updated_at?: string
           website?: string | null
         }
@@ -221,7 +221,7 @@ export type Database = {
         Insert: {
           campaign_id: string
           template_id: string
-          tenant_id: string
+          tenant_id?: string
         }
         Update: {
           campaign_id?: string
@@ -270,7 +270,7 @@ export type Database = {
           id?: string
           name: string
           stages?: Json
-          tenant_id: string
+          tenant_id?: string
           updated_at?: string
         }
         Update: {
@@ -323,7 +323,7 @@ export type Database = {
           notes?: string | null
           organisation_id?: string | null
           phone?: string | null
-          tenant_id: string
+          tenant_id?: string
           updated_at?: string
         }
         Update: {
@@ -423,7 +423,7 @@ export type Database = {
           label?: string | null
           parent_id: string
           parent_type: string
-          tenant_id: string
+          tenant_id?: string
           version: number
         }
         Update: {
@@ -467,7 +467,7 @@ export type Database = {
           module: Database["public"]["Enums"]["app_module"]
           options?: Json
           position?: number
-          tenant_id: string
+          tenant_id?: string
           type: Database["public"]["Enums"]["custom_field_type"]
         }
         Update: {
@@ -574,7 +574,7 @@ export type Database = {
           id?: string
           name: string
           subject: string
-          tenant_id: string
+          tenant_id?: string
           updated_at?: string
         }
         Update: {
@@ -645,7 +645,7 @@ export type Database = {
           id?: string
           location?: string | null
           start_time?: string | null
-          tenant_id: string
+          tenant_id?: string
           title: string
           updated_at?: string
         }
@@ -691,7 +691,7 @@ export type Database = {
           expiry_ts: string
           id?: string
           refresh_token: string
-          tenant_id: string
+          tenant_id?: string
           updated_at?: string
           user_id: string
         }
@@ -731,7 +731,7 @@ export type Database = {
           key: string
           label: string
           position?: number
-          tenant_id: string
+          tenant_id?: string
         }
         Update: {
           id?: string
@@ -766,7 +766,7 @@ export type Database = {
           module?: string
           position?: number
           project_type?: string | null
-          tenant_id: string
+          tenant_id?: string
         }
         Update: {
           id?: string
@@ -811,7 +811,7 @@ export type Database = {
           parent_type?: string
           position?: number
           project_id?: string | null
-          tenant_id: string
+          tenant_id?: string
         }
         Update: {
           completed_at?: string | null
@@ -857,7 +857,7 @@ export type Database = {
           can_view?: boolean
           id?: string
           module: Database["public"]["Enums"]["app_module"]
-          tenant_id: string
+          tenant_id?: string
           user_id: string
         }
         Update: {
@@ -896,7 +896,7 @@ export type Database = {
           id?: string
           link?: string | null
           read_at?: string | null
-          tenant_id: string
+          tenant_id?: string
           title: string
           type: string
           user_id: string
@@ -943,7 +943,7 @@ export type Database = {
           industry?: string | null
           name: string
           notes?: string | null
-          tenant_id: string
+          tenant_id?: string
           updated_at?: string
           website?: string | null
         }
@@ -982,7 +982,7 @@ export type Database = {
           key: string
           label: string
           position?: number
-          tenant_id: string
+          tenant_id?: string
         }
         Update: {
           id?: string
@@ -1077,7 +1077,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["project_status"]
           supplier_cost?: number
           team_lead_id?: string | null
-          tenant_id: string
+          tenant_id?: string
           title: string
           total_cost?: number
           type?: Database["public"]["Enums"]["project_type"]
@@ -1155,7 +1155,7 @@ export type Database = {
           platform: Database["public"]["Enums"]["social_platform"]
           post_status?: Database["public"]["Enums"]["post_status"]
           scheduled_at?: string | null
-          tenant_id: string
+          tenant_id?: string
           title?: string
           updated_at?: string
         }
@@ -1197,7 +1197,7 @@ export type Database = {
           id?: string
           label: string
           position?: number
-          tenant_id: string
+          tenant_id?: string
         }
         Update: {
           created_at?: string
@@ -1244,7 +1244,7 @@ export type Database = {
           plan_name: string
           renewal_date?: string | null
           status?: Database["public"]["Enums"]["subscription_status"]
-          tenant_id: string
+          tenant_id?: string
           updated_at?: string
         }
         Update: {
