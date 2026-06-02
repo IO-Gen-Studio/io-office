@@ -26,7 +26,7 @@ export type CustomFieldDef = {
   position: number;
 };
 
-const refTableMap: Record<string, { table: string; labelExpr: (r: Record<string, unknown>) => string }> = {
+export const refTableMap: Record<string, { table: string; labelExpr: (r: Record<string, unknown>) => string }> = {
   contacts: { table: "contacts", labelExpr: (r) => `${r.first_name ?? ""} ${r.last_name ?? ""}`.trim() || "(unnamed)" },
   organisations: { table: "organisations", labelExpr: (r) => String(r.name ?? "") },
   campaigns: { table: "campaigns", labelExpr: (r) => String(r.name ?? "") },
