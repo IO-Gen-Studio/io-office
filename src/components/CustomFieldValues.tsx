@@ -192,6 +192,28 @@ export function AttachmentPreview({ path }: { path: string }) {
   );
 }
 
+export function ReferencePreview({ target, value }: { target: string; value: string }) {
+  const cfg = refTableMap[target];
+  const [label, setLabel] = useState<string | null>(null);
+  useEffect(() => {
+    if (!cfg || !value) { setLabel(null); return; }
+    let cancelled = false;
+    (async () => {
+      const cols = target === "contacts" ? "id, first_name, last_name"
+        : target === "profiles" ? "id, full_name, email"
+        : target === "projects" ? "id, title"
+        : target === "subscriptions" ? "id, plan_name"
+        : "id, name";
+      const { data } = await supabase.from(cfg.table as never).select(cols).eq("id", value).maybeSingle();
+      if (cancelled) return;
+      setLabel(data ? cfg.labelExpr(data as Record<string, unknown>) : null);
+    })();
+    return () => { cancelled = true; };
+  }, [target, value]);
+  if (!cfg) return <span>{value}</span>;
+  return <span>{label ?? "…"}</span>;
+}
+
 function AttachmentInput({ value, onChange }: { value: string | null | undefined; onChange: (v: unknown) => void }) {
   const [uploading, setUploading] = useState(false);
   const onUpload = async (file: File) => {
