@@ -209,10 +209,12 @@ function EditUserDialog({ open, onOpenChange, profile, isAdmin, access, onSaved 
   };
 
   const resetPw = async () => {
+    if (newPassword.length < 8) { toast.error("Generate or enter a password (min 8 chars) first."); return; }
     try {
       await resetFn({ data: { user_id: profile.id, password: newPassword } });
       toast.success("Password reset. Share it with the user.");
       navigator.clipboard.writeText(newPassword);
+      setNewPassword("");
     } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
   };
 
