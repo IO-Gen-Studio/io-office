@@ -9,6 +9,7 @@ export type ProfileRow = {
   email: string;
   active: boolean;
   must_change_password: boolean;
+  active_tenant_id: string | null;
 };
 
 export type ModuleAccessRow = {
@@ -16,6 +17,15 @@ export type ModuleAccessRow = {
   module: string;
   can_view: boolean;
   can_edit: boolean;
+  tenant_id: string;
+};
+
+export type TenantRow = {
+  id: string;
+  name: string;
+  slug: string;
+  logo_url: string | null;
+  active: boolean;
 };
 
 export type AuthContextValue = {
@@ -23,12 +33,16 @@ export type AuthContextValue = {
   user: User | null;
   profile: ProfileRow | null;
   isAdmin: boolean;
+  isSuperAdmin: boolean;
   moduleAccess: ModuleAccessRow[];
+  tenants: TenantRow[];
+  activeTenantId: string | null;
   loading: boolean;
   canView: (module: string) => boolean;
   canEdit: (module: string) => boolean;
   signOut: () => Promise<void>;
   refresh: () => Promise<void>;
+  switchTenant: (tenantId: string) => Promise<void>;
 };
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
