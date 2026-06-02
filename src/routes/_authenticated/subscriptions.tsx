@@ -32,6 +32,7 @@ type Org = { id: string; name: string };
 type Contact = { id: string; first_name: string; last_name: string; organisation_id: string | null };
 type Milestone = { id: string; parent_id: string; parent_type: string; label: string; due_date: string | null; completed_at: string | null; is_custom: boolean; position: number };
 type MTemplate = { id: string; label: string; position: number; module: string; project_type: string | null };
+type PlanOpt = { id: string; label: string; position: number };
 
 export const Route = createFileRoute("/_authenticated/subscriptions")({ component: SubscriptionsPage });
 
@@ -58,15 +59,18 @@ function SubList({ editable, onOpen }: { editable: boolean; onOpen: (s: Sub) => 
   const [rows, setRows] = useState<Sub[]>([]);
   const [orgs, setOrgs] = useState<Org[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
+  const [planOpts, setPlanOpts] = useState<PlanOpt[]>([]);
   const [open, setOpen] = useState(false);
 
   const load = async () => {
-    const [{ data: s }, { data: o }, { data: c }] = await Promise.all([
+    const [{ data: s }, { data: o }, { data: c }, { data: p }] = await Promise.all([
       supabase.from("subscriptions").select("*").order("renewal_date", { ascending: true, nullsFirst: false }),
       supabase.from("organisations").select("id,name").order("name"),
       supabase.from("contacts").select("id,first_name,last_name,organisation_id").order("last_name"),
+      supabase.from("subscription_plan_options").select("*").order("position"),
     ]);
     setRows((s ?? []) as Sub[]); setOrgs((o ?? []) as Org[]); setContacts((c ?? []) as Contact[]);
+    setPlanOpts((p ?? []) as PlanOpt[]);
   };
   useEffect(() => { void load(); }, []);
 
@@ -94,8 +98,9 @@ function SubList({ editable, onOpen }: { editable: boolean; onOpen: (s: Sub) => 
   const cycleOptions = useBuiltinFieldOptions("subscriptions", "billing_cycle");
   const subStatusOptions = useBuiltinFieldOptions("subscriptions", "status");
 
+  const planOptions = planOpts.map((p) => ({ value: p.label, label: p.label }));
   const columns: DataTableColumn<Sub>[] = [
-    { key: "plan_name", header: "Plan", accessor: (r) => r.plan_name, editable, type: "text" },
+    { key: "plan_name", header: "Plan", accessor: (r) => r.plan_name, editable, type: "select", options: planOptions },
     { key: "client", header: "Client", accessor: (r) => orgs.find((o) => o.id === r.client_org_id)?.name ?? "" },
     {
       key: "billing_cycle", header: "Cycle", accessor: (r) => r.billing_cycle,
@@ -145,7 +150,7 @@ function SubList({ editable, onOpen }: { editable: boolean; onOpen: (s: Sub) => 
         </CardContent>
       </Card>
 
-      <SubDialog open={open} onOpenChange={setOpen} sub={null} orgs={orgs} contacts={contacts} onSaved={load} />
+      <SubDialog open={open} onOpenChange={setOpen} sub={null} orgs={orgs} contacts={contacts} planOpts={planOpts} onSaved={load} />
     </>
   );
 }
@@ -154,6 +159,7 @@ function SubDetail({ sub, editable, onBack, onSaved }: { sub: Sub; editable: boo
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [orgs, setOrgs] = useState<Org[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
+  const [planOpts, setPlanOpts] = useState<PlanOpt[]>([]);
   const [openEdit, setOpenEdit] = useState(false);
   const [customLabel, setCustomLabel] = useState("");
   const seededRef = useRef<Set<string>>(new Set());
@@ -162,12 +168,14 @@ function SubDetail({ sub, editable, onBack, onSaved }: { sub: Sub; editable: boo
   const statusLabel = useBuiltinFieldLabel("subscriptions", "status");
 
   const load = async () => {
-    const [{ data: m }, { data: o }, { data: c }, { data: fresh }] = await Promise.all([
+    const [{ data: m }, { data: o }, { data: c }, { data: p }, { data: fresh }] = await Promise.all([
       supabase.from("milestones").select("*").eq("parent_id", sub.id).eq("parent_type", "subscription").order("position"),
       supabase.from("organisations").select("id,name").order("name"),
       supabase.from("contacts").select("id,first_name,last_name,organisation_id").order("last_name"),
+      supabase.from("subscription_plan_options").select("*").order("position"),
       supabase.from("subscriptions").select("*").eq("id", sub.id).single(),
     ]);
+    setPlanOpts((p ?? []) as PlanOpt[]);
     let ms = (m ?? []) as Milestone[];
     if (ms.length === 0 && !seededRef.current.has(sub.id)) {
       seededRef.current.add(sub.id);
@@ -342,7 +350,7 @@ function SubDetail({ sub, editable, onBack, onSaved }: { sub: Sub; editable: boo
         </Card>
       </Collapsible>
 
-      <SubDialog open={openEdit} onOpenChange={setOpenEdit} sub={sub} orgs={orgs} contacts={contacts} onSaved={load} />
+      <SubDialog open={openEdit} onOpenChange={setOpenEdit} sub={sub} orgs={orgs} contacts={contacts} planOpts={planOpts} onSaved={load} />
     </div>
   );
 }
@@ -362,8 +370,8 @@ function Info({ label, value }: { label: string; value: string }) {
   return <div><span className="text-muted-foreground">{label}:</span> <span className="font-medium">{value}</span></div>;
 }
 
-function SubDialog({ open, onOpenChange, sub, orgs, contacts, onSaved }: {
-  open: boolean; onOpenChange: (o: boolean) => void; sub: Sub | null; orgs: Org[]; contacts: Contact[]; onSaved: () => void;
+function SubDialog({ open, onOpenChange, sub, orgs, contacts, planOpts, onSaved }: {
+  open: boolean; onOpenChange: (o: boolean) => void; sub: Sub | null; orgs: Org[]; contacts: Contact[]; planOpts: PlanOpt[]; onSaved: () => void;
 }) {
   const [plan, setPlan] = useState(""); const [cost, setCost] = useState("0");
   const [cycle, setCycle] = useState("monthly");
@@ -422,7 +430,27 @@ function SubDialog({ open, onOpenChange, sub, orgs, contacts, onSaved }: {
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>{sub ? "Edit subscription" : "New subscription"}</DialogTitle></DialogHeader>
         <div className="space-y-3">
-          <div className="space-y-1"><Label>Plan name *</Label><Input value={plan} onChange={(e) => setPlan(e.target.value)} /></div>
+          <div className="space-y-1">
+            <Label>Plan *</Label>
+            {(() => {
+              const labels = planOpts.map((p) => p.label);
+              const inList = !plan || labels.includes(plan);
+              return (
+                <>
+                  <Select value={inList ? (plan || "__none__") : "__other__"} onValueChange={(v) => setPlan(v === "__none__" || v === "__other__" ? "" : v)}>
+                    <SelectTrigger><SelectValue placeholder="Select a plan…" /></SelectTrigger>
+                    <SelectContent>
+                      {planOpts.map((p) => <SelectItem key={p.id} value={p.label}>{p.label}</SelectItem>)}
+                      {!inList && plan && <SelectItem value="__other__">{plan} (legacy)</SelectItem>}
+                    </SelectContent>
+                  </Select>
+                  {planOpts.length === 0 && (
+                    <p className="text-xs text-muted-foreground">No plans configured yet. Add some in Settings → Subscription Plans.</p>
+                  )}
+                </>
+              );
+            })()}
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1"><Label>Final Costs (£)</Label><Input type="number" value={cost} onChange={(e) => setCost(e.target.value)} /><p className="text-xs text-muted-foreground">Use the breakdown in the detail view to auto-calculate this.</p></div>
             <div className="space-y-1">

@@ -193,7 +193,7 @@ function EditUserDialog({ open, onOpenChange, profile, isAdmin, access, onSaved 
       return { module: m.key, can_view: !!a?.can_view, can_edit: !!a?.can_edit };
     }),
   );
-  const [newPassword, setNewPassword] = useState(() => generatePassword());
+  const [newPassword, setNewPassword] = useState("");
   const [saving, setSaving] = useState(false);
 
   const save = async () => {
@@ -209,10 +209,12 @@ function EditUserDialog({ open, onOpenChange, profile, isAdmin, access, onSaved 
   };
 
   const resetPw = async () => {
+    if (newPassword.length < 8) { toast.error("Generate or enter a password (min 8 chars) first."); return; }
     try {
       await resetFn({ data: { user_id: profile.id, password: newPassword } });
       toast.success("Password reset. Share it with the user.");
       navigator.clipboard.writeText(newPassword);
+      setNewPassword("");
     } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
   };
 
@@ -265,8 +267,17 @@ function EditUserDialog({ open, onOpenChange, profile, isAdmin, access, onSaved 
 
           <div className="space-y-2 rounded-lg border border-border p-3">
             <div className="flex items-center gap-2 text-sm font-medium"><KeyRound className="size-4" />Reset password</div>
-            <PasswordField value={newPassword} onChange={setNewPassword} />
-            <Button variant="outline" size="sm" onClick={resetPw}>Set new password</Button>
+            <p className="text-xs text-muted-foreground">The user's current password stays unchanged unless you generate or enter a new one and click "Set new password".</p>
+            <div className="flex gap-2">
+              <Input value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Leave empty to keep current password" className="font-mono" />
+              <Button type="button" variant="outline" size="icon" onClick={() => setNewPassword(generatePassword())} title="Generate">
+                <RefreshCw className="size-4" />
+              </Button>
+              <Button type="button" variant="outline" size="icon" disabled={!newPassword} onClick={() => { navigator.clipboard.writeText(newPassword); toast.success("Copied"); }} title="Copy">
+                <Copy className="size-4" />
+              </Button>
+            </div>
+            <Button variant="outline" size="sm" onClick={resetPw} disabled={newPassword.length < 8}>Set new password</Button>
           </div>
         </div>
         <DialogFooter>

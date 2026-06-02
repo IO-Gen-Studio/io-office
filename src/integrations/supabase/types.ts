@@ -955,6 +955,27 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_plan_options: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          position: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label: string
+          position?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          position?: number
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           billing_cycle: string
@@ -1159,6 +1180,7 @@ export type Database = {
         | "facebook"
         | "tiktok"
         | "youtube"
+        | "eventbrite"
       subscription_status: "active" | "paused" | "cancelled" | "past_due"
     }
     CompositeTypes: {
@@ -1322,6 +1344,7 @@ export const Constants = {
         "facebook",
         "tiktok",
         "youtube",
+        "eventbrite",
       ],
       subscription_status: ["active", "paused", "cancelled", "past_due"],
     },

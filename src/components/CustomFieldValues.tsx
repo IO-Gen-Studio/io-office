@@ -26,7 +26,7 @@ export type CustomFieldDef = {
   position: number;
 };
 
-const refTableMap: Record<string, { table: string; labelExpr: (r: Record<string, unknown>) => string }> = {
+export const refTableMap: Record<string, { table: string; labelExpr: (r: Record<string, unknown>) => string }> = {
   contacts: { table: "contacts", labelExpr: (r) => `${r.first_name ?? ""} ${r.last_name ?? ""}`.trim() || "(unnamed)" },
   organisations: { table: "organisations", labelExpr: (r) => String(r.name ?? "") },
   campaigns: { table: "campaigns", labelExpr: (r) => String(r.name ?? "") },
@@ -190,6 +190,28 @@ export function AttachmentPreview({ path }: { path: string }) {
       <FileText className="size-4" /> {filename}
     </a>
   );
+}
+
+export function ReferencePreview({ target, value }: { target: string; value: string }) {
+  const cfg = refTableMap[target];
+  const [label, setLabel] = useState<string | null>(null);
+  useEffect(() => {
+    if (!cfg || !value) { setLabel(null); return; }
+    let cancelled = false;
+    (async () => {
+      const cols = target === "contacts" ? "id, first_name, last_name"
+        : target === "profiles" ? "id, full_name, email"
+        : target === "projects" ? "id, title"
+        : target === "subscriptions" ? "id, plan_name"
+        : "id, name";
+      const { data } = await supabase.from(cfg.table as never).select(cols).eq("id", value).maybeSingle();
+      if (cancelled) return;
+      setLabel(data ? cfg.labelExpr(data as Record<string, unknown>) : null);
+    })();
+    return () => { cancelled = true; };
+  }, [target, value]);
+  if (!cfg) return <span>{value}</span>;
+  return <span>{label ?? "…"}</span>;
 }
 
 function AttachmentInput({ value, onChange }: { value: string | null | undefined; onChange: (v: unknown) => void }) {

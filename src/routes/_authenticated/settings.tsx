@@ -13,6 +13,7 @@ function SettingsLayout() {
       { to: "/settings/users", label: "Users & Access" },
       { to: "/settings/fields", label: "Other Information" },
       { to: "/settings/milestones", label: "Milestones" },
+      { to: "/settings/plans", label: "Subscription Plans" },
     ] : []),
   ];
   return (

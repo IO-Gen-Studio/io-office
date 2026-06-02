@@ -46,6 +46,7 @@ export const BUILTIN_DROPDOWNS: BuiltinFieldSpec[] = [
       { value: "facebook", defaultLabel: "Facebook" },
       { value: "tiktok", defaultLabel: "TikTok" },
       { value: "youtube", defaultLabel: "YouTube" },
+      { value: "eventbrite", defaultLabel: "Eventbrite" },
     ],
   },
   {

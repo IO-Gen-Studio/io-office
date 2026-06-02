@@ -183,6 +183,39 @@ function ThreadsMockup({ plan }: { plan: MockupPlan }) {
   );
 }
 
+function EventbriteMockup({ plan }: { plan: MockupPlan }) {
+  const eventDate = plan.scheduled_at ? new Date(plan.scheduled_at) : null;
+  return (
+    <div className="mx-auto w-full max-w-[560px] rounded-lg border bg-white text-zinc-900 shadow-sm overflow-hidden">
+      <div className="bg-zinc-100 aspect-[2/1] grid place-items-center overflow-hidden">
+        {plan.media_path
+          ? <Media path={plan.media_path} className="w-full h-full object-cover" />
+          : <span className="text-zinc-400 text-sm">Event cover image</span>}
+      </div>
+      <div className="p-4 space-y-3">
+        {eventDate && (
+          <div className="text-xs font-semibold uppercase tracking-wide text-[#d1410c]">
+            {eventDate.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
+            {" · "}
+            {eventDate.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
+          </div>
+        )}
+        <div className="text-lg font-bold leading-tight">{plan.title || "Untitled event"}</div>
+        <div className="flex items-center gap-2 text-xs text-zinc-500">
+          <Avatar /> <span>Hosted by Your Brand</span>
+        </div>
+        <div className="text-sm text-zinc-700 whitespace-pre-wrap line-clamp-6">{plan.copy}</div>
+        <div className="flex items-center justify-between pt-2 border-t">
+          <div className="text-sm font-semibold">Free · Online</div>
+          <button className="rounded-md bg-[#d1410c] hover:bg-[#b53509] text-white text-sm font-semibold px-4 py-2">
+            Register
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function renderMockup(plan: MockupPlan) {
   switch (plan.platform) {
     case "instagram": return <InstagramMockup plan={plan} />;
@@ -192,6 +225,7 @@ function renderMockup(plan: MockupPlan) {
     case "tiktok": return <TikTokMockup plan={plan} />;
     case "youtube": return <YouTubeMockup plan={plan} />;
     case "threads": return <ThreadsMockup plan={plan} />;
+    case "eventbrite": return <EventbriteMockup plan={plan} />;
     default: return <LinkedInMockup plan={plan} />;
   }
 }
