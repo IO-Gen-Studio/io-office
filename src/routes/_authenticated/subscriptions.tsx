@@ -98,8 +98,9 @@ function SubList({ editable, onOpen }: { editable: boolean; onOpen: (s: Sub) => 
   const cycleOptions = useBuiltinFieldOptions("subscriptions", "billing_cycle");
   const subStatusOptions = useBuiltinFieldOptions("subscriptions", "status");
 
+  const planOptions = planOpts.map((p) => ({ value: p.label, label: p.label }));
   const columns: DataTableColumn<Sub>[] = [
-    { key: "plan_name", header: "Plan", accessor: (r) => r.plan_name, editable, type: "text" },
+    { key: "plan_name", header: "Plan", accessor: (r) => r.plan_name, editable, type: "select", options: planOptions },
     { key: "client", header: "Client", accessor: (r) => orgs.find((o) => o.id === r.client_org_id)?.name ?? "" },
     {
       key: "billing_cycle", header: "Cycle", accessor: (r) => r.billing_cycle,
