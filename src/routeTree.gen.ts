@@ -23,6 +23,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedCrmRouteImport } from './routes/_authenticated/crm'
 import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
 import { Route as AuthenticatedSettingsUsersRouteImport } from './routes/_authenticated/settings.users'
+import { Route as AuthenticatedSettingsTenantsRouteImport } from './routes/_authenticated/settings.tenants'
 import { Route as AuthenticatedSettingsProfileRouteImport } from './routes/_authenticated/settings.profile'
 import { Route as AuthenticatedSettingsPlansRouteImport } from './routes/_authenticated/settings.plans'
 import { Route as AuthenticatedSettingsMilestonesRouteImport } from './routes/_authenticated/settings.milestones'
@@ -101,6 +102,12 @@ const AuthenticatedSettingsUsersRoute =
     path: '/users',
     getParentRoute: () => AuthenticatedSettingsRoute,
   } as any)
+const AuthenticatedSettingsTenantsRoute =
+  AuthenticatedSettingsTenantsRouteImport.update({
+    id: '/tenants',
+    path: '/tenants',
+    getParentRoute: () => AuthenticatedSettingsRoute,
+  } as any)
 const AuthenticatedSettingsProfileRoute =
   AuthenticatedSettingsProfileRouteImport.update({
     id: '/profile',
@@ -149,6 +156,7 @@ export interface FileRoutesByFullPath {
   '/settings/milestones': typeof AuthenticatedSettingsMilestonesRoute
   '/settings/plans': typeof AuthenticatedSettingsPlansRoute
   '/settings/profile': typeof AuthenticatedSettingsProfileRoute
+  '/settings/tenants': typeof AuthenticatedSettingsTenantsRoute
   '/settings/users': typeof AuthenticatedSettingsUsersRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
@@ -169,6 +177,7 @@ export interface FileRoutesByTo {
   '/settings/milestones': typeof AuthenticatedSettingsMilestonesRoute
   '/settings/plans': typeof AuthenticatedSettingsPlansRoute
   '/settings/profile': typeof AuthenticatedSettingsProfileRoute
+  '/settings/tenants': typeof AuthenticatedSettingsTenantsRoute
   '/settings/users': typeof AuthenticatedSettingsUsersRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
@@ -191,6 +200,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/milestones': typeof AuthenticatedSettingsMilestonesRoute
   '/_authenticated/settings/plans': typeof AuthenticatedSettingsPlansRoute
   '/_authenticated/settings/profile': typeof AuthenticatedSettingsProfileRoute
+  '/_authenticated/settings/tenants': typeof AuthenticatedSettingsTenantsRoute
   '/_authenticated/settings/users': typeof AuthenticatedSettingsUsersRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
@@ -213,6 +223,7 @@ export interface FileRouteTypes {
     | '/settings/milestones'
     | '/settings/plans'
     | '/settings/profile'
+    | '/settings/tenants'
     | '/settings/users'
     | '/lovable/email/queue/process'
   fileRoutesByTo: FileRoutesByTo
@@ -233,6 +244,7 @@ export interface FileRouteTypes {
     | '/settings/milestones'
     | '/settings/plans'
     | '/settings/profile'
+    | '/settings/tenants'
     | '/settings/users'
     | '/lovable/email/queue/process'
   id:
@@ -254,6 +266,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/milestones'
     | '/_authenticated/settings/plans'
     | '/_authenticated/settings/profile'
+    | '/_authenticated/settings/tenants'
     | '/_authenticated/settings/users'
     | '/lovable/email/queue/process'
   fileRoutesById: FileRoutesById
@@ -366,6 +379,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsUsersRouteImport
       parentRoute: typeof AuthenticatedSettingsRoute
     }
+    '/_authenticated/settings/tenants': {
+      id: '/_authenticated/settings/tenants'
+      path: '/tenants'
+      fullPath: '/settings/tenants'
+      preLoaderRoute: typeof AuthenticatedSettingsTenantsRouteImport
+      parentRoute: typeof AuthenticatedSettingsRoute
+    }
     '/_authenticated/settings/profile': {
       id: '/_authenticated/settings/profile'
       path: '/profile'
@@ -409,6 +429,7 @@ interface AuthenticatedSettingsRouteChildren {
   AuthenticatedSettingsMilestonesRoute: typeof AuthenticatedSettingsMilestonesRoute
   AuthenticatedSettingsPlansRoute: typeof AuthenticatedSettingsPlansRoute
   AuthenticatedSettingsProfileRoute: typeof AuthenticatedSettingsProfileRoute
+  AuthenticatedSettingsTenantsRoute: typeof AuthenticatedSettingsTenantsRoute
   AuthenticatedSettingsUsersRoute: typeof AuthenticatedSettingsUsersRoute
 }
 
@@ -417,6 +438,7 @@ const AuthenticatedSettingsRouteChildren: AuthenticatedSettingsRouteChildren = {
   AuthenticatedSettingsMilestonesRoute: AuthenticatedSettingsMilestonesRoute,
   AuthenticatedSettingsPlansRoute: AuthenticatedSettingsPlansRoute,
   AuthenticatedSettingsProfileRoute: AuthenticatedSettingsProfileRoute,
+  AuthenticatedSettingsTenantsRoute: AuthenticatedSettingsTenantsRoute,
   AuthenticatedSettingsUsersRoute: AuthenticatedSettingsUsersRoute,
 }
 
@@ -463,13 +485,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

@@ -5,11 +5,12 @@ import { useAuth } from "@/lib/auth/auth-context";
 export const Route = createFileRoute("/_authenticated/settings")({ component: SettingsLayout });
 
 function SettingsLayout() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, isSuperAdmin } = useAuth();
   const path = useRouterState({ select: (r) => r.location.pathname });
   const tabs = [
     { to: "/settings/profile", label: "Profile" },
-    ...(isAdmin ? [
+    ...(isSuperAdmin ? [{ to: "/settings/tenants", label: "Organisations" }] : []),
+    ...(isAdmin || isSuperAdmin ? [
       { to: "/settings/users", label: "Users & Access" },
       { to: "/settings/fields", label: "Other Information" },
       { to: "/settings/milestones", label: "Milestones" },

@@ -20,13 +20,17 @@ import { toast } from "sonner";
 import { generatePassword } from "@/lib/password";
 import { Copy, Plus, RefreshCw, KeyRound, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth/auth-context";
 
 export const Route = createFileRoute("/_authenticated/settings/users")({
   beforeLoad: async () => {
     const { data } = await supabase.auth.getUser();
     if (!data.user) throw redirect({ to: "/login" });
-    const { data: r } = await supabase.from("user_roles").select("role").eq("user_id", data.user.id).eq("role","admin").maybeSingle();
-    if (!r) throw redirect({ to: "/dashboard" });
+    const [{ data: r }, { data: s }] = await Promise.all([
+      supabase.from("user_roles").select("role").eq("user_id", data.user.id).eq("role","admin").maybeSingle(),
+      supabase.from("super_admins").select("user_id").eq("user_id", data.user.id).maybeSingle(),
+    ]);
+    if (!r && !s) throw redirect({ to: "/dashboard" });
   },
   component: UsersPage,
 });
@@ -42,9 +46,10 @@ const MODULES = [
 ] as const;
 
 type Profile = { id: string; email: string; full_name: string; job_title: string | null; active: boolean; must_change_password: boolean };
-type Access = { user_id: string; module: string; can_view: boolean; can_edit: boolean };
+type Access = { user_id: string; module: string; can_view: boolean; can_edit: boolean; tenant_id: string };
 
 function UsersPage() {
+  const { activeTenantId, isSuperAdmin, tenants } = useAuth();
   const listFn = useServerFn(adminListUsers);
   const [loading, setLoading] = useState(true);
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -56,20 +61,27 @@ function UsersPage() {
   const reload = async () => {
     setLoading(true);
     try {
-      const r = await listFn();
+      const r = await listFn({ data: { tenant_id: activeTenantId ?? undefined } } as never);
       setProfiles(r.profiles as Profile[]);
-      setAdminIds(new Set(r.roles.filter((x) => x.role === "admin").map((x) => x.user_id)));
+      setAdminIds(new Set(r.roles.filter((x: { role: string; user_id: string }) => x.role === "admin").map((x: { role: string; user_id: string }) => x.user_id)));
       setAccess(r.access as Access[]);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to load");
     } finally { setLoading(false); }
   };
-  useEffect(() => { void reload(); }, []);
+  useEffect(() => { void reload(); }, [activeTenantId]);
+
+  const tenantLabel = tenants.find((t) => t.id === activeTenantId)?.name ?? "—";
 
   return (
     <Card className="shadow-soft">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Users & access</CardTitle>
+        <div>
+          <CardTitle>Users & access</CardTitle>
+          <p className="text-xs text-muted-foreground mt-1">
+            {isSuperAdmin ? `Showing all users. Module access edits apply to organisation: ${tenantLabel}` : `Members of ${tenantLabel}`}
+          </p>
+        </div>
         <Button onClick={() => setCreateOpen(true)} className="bg-gradient-primary text-primary-foreground">
           <Plus className="size-4 mr-2" />New user
         </Button>
@@ -109,7 +121,8 @@ function UsersPage() {
           onOpenChange={(o) => !o && setEditing(null)}
           profile={editing}
           isAdmin={adminIds.has(editing.id)}
-          access={access.filter((a) => a.user_id === editing.id)}
+          tenantId={activeTenantId ?? ""}
+          access={access.filter((a) => a.user_id === editing.id && a.tenant_id === activeTenantId)}
           onSaved={reload}
         />
       )}
@@ -175,8 +188,8 @@ function CreateUserDialog({ open, onOpenChange, onCreated }: { open: boolean; on
   );
 }
 
-function EditUserDialog({ open, onOpenChange, profile, isAdmin, access, onSaved }: {
-  open: boolean; onOpenChange: (o: boolean) => void; profile: Profile; isAdmin: boolean; access: Access[]; onSaved: () => void;
+function EditUserDialog({ open, onOpenChange, profile, isAdmin, tenantId, access, onSaved }: {
+  open: boolean; onOpenChange: (o: boolean) => void; profile: Profile; isAdmin: boolean; tenantId: string; access: Access[]; onSaved: () => void;
 }) {
   const updateFn = useServerFn(adminUpdateProfile);
   const roleFn = useServerFn(adminSetAdminRole);
@@ -201,7 +214,9 @@ function EditUserDialog({ open, onOpenChange, profile, isAdmin, access, onSaved 
     try {
       await updateFn({ data: { user_id: profile.id, full_name: fullName, job_title: jobTitle || null, active } });
       await roleFn({ data: { user_id: profile.id, is_admin: admin } });
-      await accessFn({ data: { user_id: profile.id, entries } });
+      if (tenantId) {
+        await accessFn({ data: { user_id: profile.id, tenant_id: tenantId, entries } });
+      }
       toast.success("Saved");
       onSaved(); onOpenChange(false);
     } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
