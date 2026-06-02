@@ -350,7 +350,7 @@ function SubDetail({ sub, editable, onBack, onSaved }: { sub: Sub; editable: boo
         </Card>
       </Collapsible>
 
-      <SubDialog open={openEdit} onOpenChange={setOpenEdit} sub={sub} orgs={orgs} contacts={contacts} onSaved={load} />
+      <SubDialog open={openEdit} onOpenChange={setOpenEdit} sub={sub} orgs={orgs} contacts={contacts} planOpts={planOpts} onSaved={load} />
     </div>
   );
 }
