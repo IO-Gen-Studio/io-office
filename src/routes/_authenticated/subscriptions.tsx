@@ -370,8 +370,8 @@ function Info({ label, value }: { label: string; value: string }) {
   return <div><span className="text-muted-foreground">{label}:</span> <span className="font-medium">{value}</span></div>;
 }
 
-function SubDialog({ open, onOpenChange, sub, orgs, contacts, onSaved }: {
-  open: boolean; onOpenChange: (o: boolean) => void; sub: Sub | null; orgs: Org[]; contacts: Contact[]; onSaved: () => void;
+function SubDialog({ open, onOpenChange, sub, orgs, contacts, planOpts, onSaved }: {
+  open: boolean; onOpenChange: (o: boolean) => void; sub: Sub | null; orgs: Org[]; contacts: Contact[]; planOpts: PlanOpt[]; onSaved: () => void;
 }) {
   const [plan, setPlan] = useState(""); const [cost, setCost] = useState("0");
   const [cycle, setCycle] = useState("monthly");
