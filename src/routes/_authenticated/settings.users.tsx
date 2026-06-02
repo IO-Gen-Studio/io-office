@@ -193,7 +193,7 @@ function EditUserDialog({ open, onOpenChange, profile, isAdmin, access, onSaved 
       return { module: m.key, can_view: !!a?.can_view, can_edit: !!a?.can_edit };
     }),
   );
-  const [newPassword, setNewPassword] = useState(() => generatePassword());
+  const [newPassword, setNewPassword] = useState("");
   const [saving, setSaving] = useState(false);
 
   const save = async () => {
