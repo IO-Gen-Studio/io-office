@@ -15,7 +15,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { DataTable, type DataTableColumn } from "@/components/DataTable";
-import { Plus, Pencil, Trash2, ArrowLeft, FolderOpen, ChevronDown } from "lucide-react";
+import { Plus, Pencil, Trash2, ArrowLeft, FolderOpen, ChevronDown, FileDown } from "lucide-react";
+import { generateCostProposalPdf, fetchCostItems } from "@/lib/cost-proposal-pdf";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import { CustomFieldValues } from "@/components/CustomFieldValues";
@@ -229,6 +230,21 @@ function ProjectDetail({ project, editable, onBack, onSaved }: { project: Projec
           <h2 className="text-xl font-semibold">{project.title}</h2>
           <p className="text-sm text-muted-foreground capitalize">{project.type} · {project.status.replace("_", " ")} · {project.priority} priority</p>
         </div>
+        <Button
+          variant="outline"
+          onClick={async () => {
+            try {
+              const items = await fetchCostItems("project", project.id);
+              await generateCostProposalPdf({
+                kind: project.type === "work" ? "work" : "project",
+                clientName: orgs.find((o) => o.id === project.client_org_id)?.name,
+                title: project.title,
+                description: project.description,
+                items,
+              });
+            } catch (e) { toast.error((e as Error).message); }
+          }}
+        ><FileDown className="size-4 mr-2" />Export PDF</Button>
         {editable && <Button variant="outline" onClick={() => setOpenEdit(true)}><Pencil className="size-4 mr-2" />Edit</Button>}
       </div>
 

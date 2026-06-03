@@ -14,7 +14,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { DataTable, type DataTableColumn } from "@/components/DataTable";
-import { Plus, Pencil, Trash2, ArrowLeft, FolderOpen, ChevronDown } from "lucide-react";
+import { Plus, Pencil, Trash2, ArrowLeft, FolderOpen, ChevronDown, FileDown } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { generateCostProposalPdf, fetchCostItems } from "@/lib/cost-proposal-pdf";
 import { toast } from "sonner";
 import { CustomFieldValues } from "@/components/CustomFieldValues";
 import { CustomFieldDisplay, useCustomFieldColumns } from "@/components/CustomFieldDisplay";
@@ -26,6 +28,7 @@ type SStatus = Database["public"]["Enums"]["subscription_status"];
 type Sub = {
   id: string; plan_name: string; cost: number; billing_cycle: string;
   renewal_date: string | null; status: SStatus; client_org_id: string | null; client_contact_id: string | null;
+  description: string | null;
   custom: Record<string, unknown> | null;
 };
 type Org = { id: string; name: string };
