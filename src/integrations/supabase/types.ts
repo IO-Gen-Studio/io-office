@@ -1453,6 +1453,10 @@ export type Database = {
       is_active: { Args: { _user_id: string }; Returns: boolean }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_tenant_owner: {
+        Args: { _tenant_id: string; _user_id: string }
+        Returns: boolean
+      }
       log_activity: {
         Args: {
           _entity_id: string

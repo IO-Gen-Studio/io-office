@@ -44,6 +44,7 @@ function AuthLayout() {
   const [unread, setUnread] = useState(0);
   const navigate = useNavigate();
   const redirectedRef = useRef(false);
+  const activeTenantName = tenants.find((tenant) => tenant.id === activeTenantId)?.name ?? (isSuperAdmin ? "Select organisation" : tenants[0]?.name);
 
   useEffect(() => {
     if (!loading && profile?.must_change_password && !redirectedRef.current) {
@@ -74,12 +75,12 @@ function AuthLayout() {
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-14 border-b border-border bg-card/50 backdrop-blur flex items-center px-4 gap-2 sticky top-0 z-10">
             <SidebarTrigger />
-            {tenants.length > 0 && (
+            {(tenants.length > 0 || isSuperAdmin) && (
               tenants.length === 1 && !isSuperAdmin ? (
                 <span className="text-sm font-medium ml-2 truncate max-w-[200px]">{tenants[0].name}</span>
               ) : (
-                <Select value={activeTenantId ?? undefined} onValueChange={(v) => { void switchTenant(v); }}>
-                  <SelectTrigger className="w-[220px] h-8 ml-2"><SelectValue placeholder="Select organisation" /></SelectTrigger>
+                <Select value={activeTenantId ?? undefined} onValueChange={(v) => { void switchTenant(v); }} disabled={tenants.length === 0}>
+                  <SelectTrigger className="w-[220px] h-8 ml-2"><SelectValue placeholder={activeTenantName} /></SelectTrigger>
                   <SelectContent>
                     {tenants.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}{!t.active && " (disabled)"}</SelectItem>)}
                   </SelectContent>
