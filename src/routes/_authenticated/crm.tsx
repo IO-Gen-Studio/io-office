@@ -30,7 +30,7 @@ function CrmPage() {
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       <div className="flex items-baseline justify-between">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">CRM</h1>
+          <h1 className="text-xl font-semibold tracking-tight">Contacts</h1>
           <p className="text-muted-foreground mt-1">Contacts, leads and organisations.</p>
         </div>
       </div>
