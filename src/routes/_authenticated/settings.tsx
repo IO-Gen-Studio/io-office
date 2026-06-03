@@ -15,6 +15,7 @@ function SettingsLayout() {
       { to: "/settings/fields", label: "Other Information" },
       { to: "/settings/milestones", label: "Milestones" },
       { to: "/settings/plans", label: "Subscription Plans" },
+      { to: "/settings/cost-proposal", label: "Cost Proposal" },
     ] : []),
   ];
   return (
