@@ -6,6 +6,7 @@ import {
   adminAssignTenantMember, adminRemoveTenantMember, adminSetSuperAdmin, adminListUsers,
 } from "@/lib/admin.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth/auth-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
