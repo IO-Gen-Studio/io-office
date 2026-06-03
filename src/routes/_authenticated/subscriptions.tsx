@@ -397,6 +397,7 @@ function SubDialog({ open, onOpenChange, sub, orgs, contacts, planOpts, onSaved 
   const [cycle, setCycle] = useState("monthly");
   const [renewal, setRenewal] = useState(""); const [status, setStatus] = useState<SStatus>("active");
   const [org, setOrg] = useState<string>("__none__"); const [contact, setContact] = useState<string>("__none__");
+  const [description, setDescription] = useState("");
   const [customVals, setCustomVals] = useState<Record<string, unknown>>({});
 
   const cycleOptions = useBuiltinFieldOptions("subscriptions", "billing_cycle");
@@ -407,6 +408,7 @@ function SubDialog({ open, onOpenChange, sub, orgs, contacts, planOpts, onSaved 
     setCycle(sub?.billing_cycle ?? "monthly"); setRenewal(sub?.renewal_date ?? "");
     setStatus(sub?.status ?? "active");
     setOrg(sub?.client_org_id ?? "__none__"); setContact(sub?.client_contact_id ?? "__none__");
+    setDescription(sub?.description ?? "");
     setCustomVals((sub?.custom ?? {}) as Record<string, unknown>);
   }, [sub, open]);
 
@@ -417,6 +419,7 @@ function SubDialog({ open, onOpenChange, sub, orgs, contacts, planOpts, onSaved 
       renewal_date: renewal || null, status,
       client_org_id: org === "__none__" ? null : org,
       client_contact_id: contact === "__none__" ? null : contact,
+      description: description || null,
       custom: customVals as never,
     };
     if (sub) {
