@@ -403,6 +403,41 @@ export type Database = {
           },
         ]
       }
+      cost_proposal_settings: {
+        Row: {
+          conditions_project: string[]
+          conditions_subscription: string[]
+          conditions_work: string[]
+          template_path: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          conditions_project?: string[]
+          conditions_subscription?: string[]
+          conditions_work?: string[]
+          template_path?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          conditions_project?: string[]
+          conditions_subscription?: string[]
+          conditions_work?: string[]
+          template_path?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cost_proposal_settings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cost_versions: {
         Row: {
           created_at: string
@@ -1225,6 +1260,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           custom: Json
+          description: string | null
           id: string
           plan_name: string
           renewal_date: string | null
@@ -1240,6 +1276,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           custom?: Json
+          description?: string | null
           id?: string
           plan_name: string
           renewal_date?: string | null
@@ -1255,6 +1292,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           custom?: Json
+          description?: string | null
           id?: string
           plan_name?: string
           renewal_date?: string | null

@@ -14,7 +14,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { DataTable, type DataTableColumn } from "@/components/DataTable";
-import { Plus, Pencil, Trash2, ArrowLeft, FolderOpen, ChevronDown } from "lucide-react";
+import { Plus, Pencil, Trash2, ArrowLeft, FolderOpen, ChevronDown, FileDown } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { generateCostProposalPdf, fetchCostItems } from "@/lib/cost-proposal-pdf";
 import { toast } from "sonner";
 import { CustomFieldValues } from "@/components/CustomFieldValues";
 import { CustomFieldDisplay, useCustomFieldColumns } from "@/components/CustomFieldDisplay";
@@ -26,6 +28,7 @@ type SStatus = Database["public"]["Enums"]["subscription_status"];
 type Sub = {
   id: string; plan_name: string; cost: number; billing_cycle: string;
   renewal_date: string | null; status: SStatus; client_org_id: string | null; client_contact_id: string | null;
+  description: string | null;
   custom: Record<string, unknown> | null;
 };
 type Org = { id: string; name: string };
@@ -238,6 +241,22 @@ function SubDetail({ sub, editable, onBack, onSaved }: { sub: Sub; editable: boo
           </p>
           <p className="text-sm text-muted-foreground">{statusLabel(sub.status)}</p>
         </div>
+        <Button
+          variant="outline"
+          onClick={async () => {
+            try {
+              const items = await fetchCostItems("subscription", sub.id);
+              await generateCostProposalPdf({
+                kind: "subscription",
+                clientName: orgs.find((o) => o.id === sub.client_org_id)?.name,
+                title: sub.plan_name,
+                description: sub.description,
+                renewalDate: sub.renewal_date,
+                items,
+              });
+            } catch (e) { toast.error((e as Error).message); }
+          }}
+        ><FileDown className="size-4 mr-2" />Export PDF</Button>
         {editable && <Button variant="outline" onClick={() => setOpenEdit(true)}><Pencil className="size-4 mr-2" />Edit</Button>}
       </div>
 
@@ -256,6 +275,7 @@ function SubDetail({ sub, editable, onBack, onSaved }: { sub: Sub; editable: boo
             <Info label="Status" value={statusLabel(sub.status)} />
             <Info label="Renewal date" value={formatDateUK(sub.renewal_date) || "—"} />
           </div>
+          {sub.description && <p className="text-sm text-muted-foreground whitespace-pre-wrap">{sub.description}</p>}
           <CustomFieldDisplay module="subscriptions" value={sub.custom} />
         </CardContent>
       </Card>
@@ -377,6 +397,7 @@ function SubDialog({ open, onOpenChange, sub, orgs, contacts, planOpts, onSaved 
   const [cycle, setCycle] = useState("monthly");
   const [renewal, setRenewal] = useState(""); const [status, setStatus] = useState<SStatus>("active");
   const [org, setOrg] = useState<string>("__none__"); const [contact, setContact] = useState<string>("__none__");
+  const [description, setDescription] = useState("");
   const [customVals, setCustomVals] = useState<Record<string, unknown>>({});
 
   const cycleOptions = useBuiltinFieldOptions("subscriptions", "billing_cycle");
@@ -387,6 +408,7 @@ function SubDialog({ open, onOpenChange, sub, orgs, contacts, planOpts, onSaved 
     setCycle(sub?.billing_cycle ?? "monthly"); setRenewal(sub?.renewal_date ?? "");
     setStatus(sub?.status ?? "active");
     setOrg(sub?.client_org_id ?? "__none__"); setContact(sub?.client_contact_id ?? "__none__");
+    setDescription(sub?.description ?? "");
     setCustomVals((sub?.custom ?? {}) as Record<string, unknown>);
   }, [sub, open]);
 
@@ -397,6 +419,7 @@ function SubDialog({ open, onOpenChange, sub, orgs, contacts, planOpts, onSaved 
       renewal_date: renewal || null, status,
       client_org_id: org === "__none__" ? null : org,
       client_contact_id: contact === "__none__" ? null : contact,
+      description: description || null,
       custom: customVals as never,
     };
     if (sub) {
@@ -450,6 +473,10 @@ function SubDialog({ open, onOpenChange, sub, orgs, contacts, planOpts, onSaved 
                 </>
               );
             })()}
+          </div>
+          <div className="space-y-1">
+            <Label>Description</Label>
+            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Shown on the cost proposal PDF" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1"><Label>Final Costs (£)</Label><Input type="number" value={cost} onChange={(e) => setCost(e.target.value)} /><p className="text-xs text-muted-foreground">Use the breakdown in the detail view to auto-calculate this.</p></div>
