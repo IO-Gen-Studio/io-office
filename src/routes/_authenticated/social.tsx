@@ -110,6 +110,7 @@ function SocialPage() {
 }
 
 function PlanDialog({ open, onOpenChange, plan, onSaved }: { open: boolean; onOpenChange: (o: boolean) => void; plan: Plan | null; onSaved: () => void }) {
+  const { activeTenantId } = useAuth();
   const [platform, setPlatform] = useState<Platform>("linkedin");
   const [title, setTitle] = useState("");
   const [copy, setCopy] = useState(""); const [scheduledAt, setScheduledAt] = useState("");
@@ -131,14 +132,16 @@ function PlanDialog({ open, onOpenChange, plan, onSaved }: { open: boolean; onOp
   }, [plan, open]);
 
   const onUpload = async (file: File) => {
+    if (!activeTenantId) { toast.error("Select an organisation first"); return; }
     setUploading(true);
-    const path = `${Date.now()}-${file.name}`;
+    const path = `${activeTenantId}/${Date.now()}-${file.name}`;
     const { error } = await supabase.storage.from("social-media").upload(path, file);
     setUploading(false);
     if (error) { toast.error(error.message); return; }
     setMediaPath(path);
     toast.success("Uploaded");
   };
+
 
   const submit = async () => {
     const payload = {
