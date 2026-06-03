@@ -217,13 +217,17 @@ export function ReferencePreview({ target, value }: { target: string; value: str
 function AttachmentInput({ value, onChange }: { value: string | null | undefined; onChange: (v: unknown) => void }) {
   const [uploading, setUploading] = useState(false);
   const onUpload = async (file: File) => {
+    const { data: prof } = await supabase.from("profiles").select("active_tenant_id").eq("id", (await supabase.auth.getUser()).data.user?.id ?? "").maybeSingle();
+    const tenantId = prof?.active_tenant_id;
+    if (!tenantId) { toast.error("Select an organisation first"); return; }
     setUploading(true);
-    const path = `custom/${Date.now()}-${file.name}`;
+    const path = `${tenantId}/custom/${Date.now()}-${file.name}`;
     const { error } = await supabase.storage.from("project-files").upload(path, file);
     setUploading(false);
     if (error) return toast.error(error.message);
     onChange(path);
   };
+
   return (
     <div className="space-y-2">
       {value ? (
