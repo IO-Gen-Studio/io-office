@@ -1423,6 +1423,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      cost_version_in_current_tenant: {
+        Args: { _version_id: string }
+        Returns: boolean
+      }
       current_tenant_id: { Args: never; Returns: string }
       delete_email: {
         Args: { message_id: number; queue_name: string }
@@ -1453,6 +1457,10 @@ export type Database = {
       is_active: { Args: { _user_id: string }; Returns: boolean }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_tenant_member: {
+        Args: { _tenant_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_tenant_owner: {
         Args: { _tenant_id: string; _user_id: string }
         Returns: boolean
@@ -1476,6 +1484,11 @@ export type Database = {
           source_queue: string
         }
         Returns: number
+      }
+      profile_active_tenant_id: { Args: { _user_id: string }; Returns: string }
+      profile_must_change_password: {
+        Args: { _user_id: string }
+        Returns: boolean
       }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
