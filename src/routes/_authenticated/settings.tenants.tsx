@@ -6,6 +6,7 @@ import {
   adminAssignTenantMember, adminRemoveTenantMember, adminSetSuperAdmin, adminListUsers,
 } from "@/lib/admin.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth/auth-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +38,7 @@ type Member = { tenant_id: string; user_id: string; role: string };
 function TenantsPage() {
   const listFn = useServerFn(adminListTenants);
   const usersFn = useServerFn(adminListUsers);
+  const { refresh: refreshAuth } = useAuth();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [users, setUsers] = useState<Profile[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
@@ -49,6 +51,8 @@ function TenantsPage() {
     setUsers((u as { profiles: Profile[] }).profiles);
     setMembers((u as { members: Member[] }).members);
     setSupers((u as { supers: { user_id: string }[] }).supers.map((s) => s.user_id));
+    // Refresh auth context so the header tenant switcher picks up new orgs/members
+    await refreshAuth();
   };
   useEffect(() => { void reload(); }, []);
 
