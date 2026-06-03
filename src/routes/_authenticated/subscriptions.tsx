@@ -474,6 +474,10 @@ function SubDialog({ open, onOpenChange, sub, orgs, contacts, planOpts, onSaved 
               );
             })()}
           </div>
+          <div className="space-y-1">
+            <Label>Description</Label>
+            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Shown on the cost proposal PDF" />
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1"><Label>Final Costs (£)</Label><Input type="number" value={cost} onChange={(e) => setCost(e.target.value)} /><p className="text-xs text-muted-foreground">Use the breakdown in the detail view to auto-calculate this.</p></div>
             <div className="space-y-1">
