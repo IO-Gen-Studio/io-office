@@ -30,7 +30,7 @@ const NAV: { to: string; label: string; icon: typeof LayoutDashboard; module?: s
   { to: "/calendar", label: "Calendar", icon: CalendarDays, module: "calendar" },
 ];
 const BIZ_DEV = [
-  { to: "/crm", label: "CRM", icon: Users, module: "crm" },
+  { to: "/crm", label: "Contacts", icon: Users, module: "crm" },
   { to: "/outreach", label: "Email Outreach", icon: Mail, module: "outreach" },
   { to: "/social", label: "Social Planner", icon: Megaphone, module: "social" },
 ];
