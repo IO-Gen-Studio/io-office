@@ -241,6 +241,22 @@ function SubDetail({ sub, editable, onBack, onSaved }: { sub: Sub; editable: boo
           </p>
           <p className="text-sm text-muted-foreground">{statusLabel(sub.status)}</p>
         </div>
+        <Button
+          variant="outline"
+          onClick={async () => {
+            try {
+              const items = await fetchCostItems("subscription", sub.id);
+              await generateCostProposalPdf({
+                kind: "subscription",
+                clientName: orgs.find((o) => o.id === sub.client_org_id)?.name,
+                title: sub.plan_name,
+                description: sub.description,
+                renewalDate: sub.renewal_date,
+                items,
+              });
+            } catch (e) { toast.error((e as Error).message); }
+          }}
+        ><FileDown className="size-4 mr-2" />Export PDF</Button>
         {editable && <Button variant="outline" onClick={() => setOpenEdit(true)}><Pencil className="size-4 mr-2" />Edit</Button>}
       </div>
 
@@ -259,6 +275,7 @@ function SubDetail({ sub, editable, onBack, onSaved }: { sub: Sub; editable: boo
             <Info label="Status" value={statusLabel(sub.status)} />
             <Info label="Renewal date" value={formatDateUK(sub.renewal_date) || "—"} />
           </div>
+          {sub.description && <p className="text-sm text-muted-foreground whitespace-pre-wrap">{sub.description}</p>}
           <CustomFieldDisplay module="subscriptions" value={sub.custom} />
         </CardContent>
       </Card>
