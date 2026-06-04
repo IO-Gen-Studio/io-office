@@ -215,6 +215,12 @@ export async function generateCostProposalPdf(input: CostProposalInput): Promise
     );
   }
 
+  // Totals row
+  const totalQty = input.items.reduce((s, i) => s + Number(i.quantity ?? 0), 0);
+  const totalCost = input.items.reduce((s, i) => s + Number(i.final_cost ?? 0), 0);
+  await ensureSpace(30);
+  drawRow(["", "Total", String(totalQty), formatGBP(totalCost)], { bold: true, rowHeight: 26 });
+
   y -= 16;
 
   // Renewal (subscriptions only)

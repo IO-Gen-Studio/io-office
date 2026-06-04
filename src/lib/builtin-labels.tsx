@@ -78,6 +78,7 @@ export const BUILTIN_DROPDOWNS: BuiltinFieldSpec[] = [
       { value: "active", defaultLabel: "Active" },
       { value: "paused", defaultLabel: "Paused" },
       { value: "past_due", defaultLabel: "Past due" },
+      { value: "pending_renewal", defaultLabel: "Pending renewal" },
       { value: "cancelled", defaultLabel: "Cancelled" },
     ],
   },

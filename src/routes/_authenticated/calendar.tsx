@@ -19,6 +19,7 @@ type Ev = { date: string; label: string; detail?: string; kind: "milestone" | "p
 
 type EventRow = {
   id: string; title: string; description: string | null; event_date: string;
+  end_date: string | null;
   start_time: string | null; end_time: string | null; location: string | null; created_by: string | null;
 };
 
@@ -46,7 +47,17 @@ function CalendarPage() {
     (pr ?? []).forEach((p) => out.push({ date: p.end_date as string, label: `Due: ${p.title}`, kind: "project" }));
     const evs = (ev ?? []) as EventRow[];
     setEventRows(evs);
-    evs.forEach((e) => out.push({ date: e.event_date, label: e.title, detail: e.description ?? undefined, kind: "event", eventId: e.id }));
+    evs.forEach((e) => {
+      const start = e.event_date;
+      const end = e.end_date && e.end_date > e.event_date ? e.end_date : e.event_date;
+      const d = new Date(start + "T00:00:00");
+      const last = new Date(end + "T00:00:00");
+      while (d <= last) {
+        const ds = d.toISOString().slice(0, 10);
+        out.push({ date: ds, label: e.title, detail: e.description ?? undefined, kind: "event", eventId: e.id });
+        d.setDate(d.getDate() + 1);
+      }
+    });
     setEvents(out);
   };
 
@@ -77,7 +88,12 @@ function CalendarPage() {
   };
 
   const selectedItems = selectedDate ? byDay.get(selectedDate) ?? [] : [];
-  const selectedEvents = selectedDate ? eventRows.filter((e) => e.event_date === selectedDate) : [];
+  const selectedEvents = selectedDate
+    ? eventRows.filter((e) => {
+        const end = e.end_date && e.end_date > e.event_date ? e.end_date : e.event_date;
+        return selectedDate >= e.event_date && selectedDate <= end;
+      })
+    : [];
 
   const removeEvent = async (id: string) => {
     if (!confirm("Delete this event?")) return;
@@ -158,6 +174,11 @@ function CalendarPage() {
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1">
                           <p className="font-medium">{e.title}</p>
+                          {e.end_date && e.end_date > e.event_date && (
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(e.event_date).toLocaleDateString("en-GB")} – {new Date(e.end_date).toLocaleDateString("en-GB")}
+                            </p>
+                          )}
                           {(e.start_time || e.end_time) && (
                             <p className="text-xs text-muted-foreground">{e.start_time ?? ""}{e.end_time ? ` – ${e.end_time}` : ""}</p>
                           )}
@@ -213,6 +234,7 @@ function EventDialog({ open, onOpenChange, event, defaultDate, onSaved }: {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [eventDate, setEventDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [location, setLocation] = useState("");
@@ -221,6 +243,7 @@ function EventDialog({ open, onOpenChange, event, defaultDate, onSaved }: {
     setTitle(event?.title ?? "");
     setDescription(event?.description ?? "");
     setEventDate(event?.event_date ?? defaultDate ?? new Date().toISOString().slice(0, 10));
+    setEndDate(event?.end_date ?? "");
     setStartTime(event?.start_time ?? "");
     setEndTime(event?.end_time ?? "");
     setLocation(event?.location ?? "");
@@ -228,8 +251,13 @@ function EventDialog({ open, onOpenChange, event, defaultDate, onSaved }: {
 
   const submit = async () => {
     if (!title.trim() || !eventDate) return;
+    if (endDate && endDate < eventDate) {
+      toast.error("End date must be on or after start date");
+      return;
+    }
     const payload = {
       title, description: description || null, event_date: eventDate,
+      end_date: endDate || null,
       start_time: startTime || null, end_time: endTime || null,
       location: location || null,
       created_by: event?.created_by ?? user?.id ?? null,
@@ -250,7 +278,11 @@ function EventDialog({ open, onOpenChange, event, defaultDate, onSaved }: {
         <DialogHeader><DialogTitle>{event ? "Edit event" : "New event"}</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1"><Label>Title *</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} /></div>
-          <div className="space-y-1"><Label>Date *</Label><Input type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)} /></div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1"><Label>Start date *</Label><Input type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)} /></div>
+            <div className="space-y-1"><Label>End date</Label><Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} /></div>
+          </div>
+          <p className="text-xs text-muted-foreground -mt-1">Leave end date empty for single-day events. Use it for multi-day events like holidays.</p>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1"><Label>Start time</Label><Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} /></div>
             <div className="space-y-1"><Label>End time</Label><Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} /></div>

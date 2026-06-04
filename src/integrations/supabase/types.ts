@@ -662,6 +662,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           description: string | null
+          end_date: string | null
           end_time: string | null
           event_date: string
           id: string
@@ -675,6 +676,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          end_date?: string | null
           end_time?: string | null
           event_date: string
           id?: string
@@ -688,6 +690,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          end_date?: string | null
           end_time?: string | null
           event_date?: string
           id?: string
@@ -1573,7 +1576,12 @@ export type Database = {
         | "tiktok"
         | "youtube"
         | "eventbrite"
-      subscription_status: "active" | "paused" | "cancelled" | "past_due"
+      subscription_status:
+        | "active"
+        | "paused"
+        | "cancelled"
+        | "past_due"
+        | "pending_renewal"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1738,7 +1746,13 @@ export const Constants = {
         "youtube",
         "eventbrite",
       ],
-      subscription_status: ["active", "paused", "cancelled", "past_due"],
+      subscription_status: [
+        "active",
+        "paused",
+        "cancelled",
+        "past_due",
+        "pending_renewal",
+      ],
     },
   },
 } as const
