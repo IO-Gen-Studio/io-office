@@ -19,6 +19,7 @@ type Ev = { date: string; label: string; detail?: string; kind: "milestone" | "p
 
 type EventRow = {
   id: string; title: string; description: string | null; event_date: string;
+  end_date: string | null;
   start_time: string | null; end_time: string | null; location: string | null; created_by: string | null;
 };
 
