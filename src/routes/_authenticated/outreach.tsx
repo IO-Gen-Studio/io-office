@@ -248,7 +248,7 @@ function CampaignDialog({ open, onOpenChange, campaign, onSaved }: { open: boole
   );
 }
 
-function CampaignDetail({ campaign, editable, onBack }: { campaign: Campaign; editable: boolean; onBack: () => void }) {
+function CampaignDetail({ campaign, editable, onEdit, onDelete }: { campaign: Campaign; editable: boolean; onEdit: () => void; onDelete: () => void }) {
   const [rows, setRows] = useState<CC[]>([]);
   const [leadOpts, setLeadOpts] = useState<LeadOpt[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
