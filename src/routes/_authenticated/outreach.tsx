@@ -214,10 +214,6 @@ function OutreachPage() {
   );
 }
 
-
-function CampaignsTab({ editable, onOpen }: { editable: boolean; onOpen: (c: Campaign) => void }) {
-  const [rows, setRows] = useState<Campaign[]>([]);
-
 function CampaignDialog({ open, onOpenChange, campaign, onSaved }: { open: boolean; onOpenChange: (o: boolean) => void; campaign: Campaign | null; onSaved: () => void }) {
   const [name, setName] = useState(""); const [description, setDescription] = useState("");
   useEffect(() => { setName(campaign?.name ?? ""); setDescription(campaign?.description ?? ""); }, [campaign, open]);
