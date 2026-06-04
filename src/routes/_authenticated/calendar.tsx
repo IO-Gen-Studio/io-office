@@ -234,6 +234,7 @@ function EventDialog({ open, onOpenChange, event, defaultDate, onSaved }: {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [eventDate, setEventDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [location, setLocation] = useState("");
@@ -242,6 +243,7 @@ function EventDialog({ open, onOpenChange, event, defaultDate, onSaved }: {
     setTitle(event?.title ?? "");
     setDescription(event?.description ?? "");
     setEventDate(event?.event_date ?? defaultDate ?? new Date().toISOString().slice(0, 10));
+    setEndDate(event?.end_date ?? "");
     setStartTime(event?.start_time ?? "");
     setEndTime(event?.end_time ?? "");
     setLocation(event?.location ?? "");
@@ -249,8 +251,13 @@ function EventDialog({ open, onOpenChange, event, defaultDate, onSaved }: {
 
   const submit = async () => {
     if (!title.trim() || !eventDate) return;
+    if (endDate && endDate < eventDate) {
+      toast.error("End date must be on or after start date");
+      return;
+    }
     const payload = {
       title, description: description || null, event_date: eventDate,
+      end_date: endDate || null,
       start_time: startTime || null, end_time: endTime || null,
       location: location || null,
       created_by: event?.created_by ?? user?.id ?? null,
@@ -271,7 +278,11 @@ function EventDialog({ open, onOpenChange, event, defaultDate, onSaved }: {
         <DialogHeader><DialogTitle>{event ? "Edit event" : "New event"}</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1"><Label>Title *</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} /></div>
-          <div className="space-y-1"><Label>Date *</Label><Input type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)} /></div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1"><Label>Start date *</Label><Input type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)} /></div>
+            <div className="space-y-1"><Label>End date</Label><Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} /></div>
+          </div>
+          <p className="text-xs text-muted-foreground -mt-1">Leave end date empty for single-day events. Use it for multi-day events like holidays.</p>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1"><Label>Start time</Label><Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} /></div>
             <div className="space-y-1"><Label>End time</Label><Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} /></div>
