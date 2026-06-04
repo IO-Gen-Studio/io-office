@@ -121,7 +121,7 @@ function OutreachPage() {
         )}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[320px,1fr]">
+      <div className="grid gap-6 md:grid-cols-[280px,1fr]">
         <div className="space-y-6">
           <Card className="shadow-soft">
             <CardContent className="pt-5 px-4 pb-4 space-y-3">
