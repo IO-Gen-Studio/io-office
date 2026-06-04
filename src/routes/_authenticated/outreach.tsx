@@ -14,7 +14,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Pencil, Trash2, ArrowLeft, Search, Download, Upload, ExternalLink } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Download, Upload, ExternalLink, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { formatDateUK } from "@/lib/format";
 import { CustomFieldValues } from "@/components/CustomFieldValues";
