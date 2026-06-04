@@ -612,55 +612,6 @@ function CCDialog({ open, onOpenChange, contact, campaignId, leadOpts, onSaved }
   );
 }
 
-function TemplatesTab({ editable }: { editable: boolean }) {
-  const [rows, setRows] = useState<Template[]>([]);
-  const [open, setOpen] = useState(false);
-  const [editing, setEditing] = useState<Template | null>(null);
-
-  const load = async () => {
-    const { data } = await supabase.from("email_templates").select("*").order("name");
-    setRows((data ?? []) as Template[]);
-  };
-  useEffect(() => { void load(); }, []);
-
-  const remove = async (t: Template) => {
-    if (!confirm(`Delete template "${t.name}"?`)) return;
-    const { error } = await supabase.from("email_templates").delete().eq("id", t.id);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Deleted"); void load();
-  };
-
-  return (
-    <Card className="shadow-soft">
-      <CardContent className="pt-6 space-y-4">
-        <div className="flex justify-end">
-          {editable && <Button className="bg-gradient-primary text-primary-foreground" onClick={() => { setEditing(null); setOpen(true); }}><Plus className="size-4 mr-2" />New email template</Button>}
-        </div>
-        <Table>
-          <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Subject</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
-          <TableBody>
-            {rows.length === 0 ? <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">No templates yet.</TableCell></TableRow> :
-              rows.map((t) => (
-                <TableRow key={t.id}>
-                  <TableCell className="font-medium">{t.name}</TableCell>
-                  <TableCell className="text-muted-foreground">{t.subject}</TableCell>
-                  <TableCell>{t.approved ? <Badge>Approved</Badge> : <Badge variant="secondary">Draft</Badge>}</TableCell>
-                  <TableCell className="text-right">
-                    {editable && <>
-                      <Button variant="ghost" size="icon" onClick={() => { setEditing(t); setOpen(true); }}><Pencil className="size-4" /></Button>
-                      <Button variant="ghost" size="icon" onClick={() => remove(t)}><Trash2 className="size-4" /></Button>
-                    </>}
-                  </TableCell>
-                </TableRow>
-              ))}
-          </TableBody>
-        </Table>
-        <TemplateDialog open={open} onOpenChange={setOpen} template={editing} onSaved={load} />
-      </CardContent>
-    </Card>
-  );
-}
-
 function TemplateDialog({ open, onOpenChange, template, onSaved }: { open: boolean; onOpenChange: (o: boolean) => void; template: Template | null; onSaved: () => void }) {
   const [name, setName] = useState(""); const [subject, setSubject] = useState("");
   const [body, setBody] = useState(""); const [approved, setApproved] = useState(false);
