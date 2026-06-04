@@ -174,6 +174,11 @@ function CalendarPage() {
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1">
                           <p className="font-medium">{e.title}</p>
+                          {e.end_date && e.end_date > e.event_date && (
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(e.event_date).toLocaleDateString("en-GB")} – {new Date(e.end_date).toLocaleDateString("en-GB")}
+                            </p>
+                          )}
                           {(e.start_time || e.end_time) && (
                             <p className="text-xs text-muted-foreground">{e.start_time ?? ""}{e.end_time ? ` – ${e.end_time}` : ""}</p>
                           )}
