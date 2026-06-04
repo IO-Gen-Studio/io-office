@@ -47,7 +47,17 @@ function CalendarPage() {
     (pr ?? []).forEach((p) => out.push({ date: p.end_date as string, label: `Due: ${p.title}`, kind: "project" }));
     const evs = (ev ?? []) as EventRow[];
     setEventRows(evs);
-    evs.forEach((e) => out.push({ date: e.event_date, label: e.title, detail: e.description ?? undefined, kind: "event", eventId: e.id }));
+    evs.forEach((e) => {
+      const start = e.event_date;
+      const end = e.end_date && e.end_date > e.event_date ? e.end_date : e.event_date;
+      const d = new Date(start + "T00:00:00");
+      const last = new Date(end + "T00:00:00");
+      while (d <= last) {
+        const ds = d.toISOString().slice(0, 10);
+        out.push({ date: ds, label: e.title, detail: e.description ?? undefined, kind: "event", eventId: e.id });
+        d.setDate(d.getDate() + 1);
+      }
+    });
     setEvents(out);
   };
 
