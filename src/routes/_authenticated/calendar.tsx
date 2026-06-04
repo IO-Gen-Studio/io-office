@@ -88,7 +88,12 @@ function CalendarPage() {
   };
 
   const selectedItems = selectedDate ? byDay.get(selectedDate) ?? [] : [];
-  const selectedEvents = selectedDate ? eventRows.filter((e) => e.event_date === selectedDate) : [];
+  const selectedEvents = selectedDate
+    ? eventRows.filter((e) => {
+        const end = e.end_date && e.end_date > e.event_date ? e.end_date : e.event_date;
+        return selectedDate >= e.event_date && selectedDate <= end;
+      })
+    : [];
 
   const removeEvent = async (id: string) => {
     if (!confirm("Delete this event?")) return;
