@@ -8,13 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Pencil, Trash2, Search, Download, Upload, ExternalLink, FileText } from "lucide-react";
+import { Plus, Pencil, Trash2, ArrowLeft, Search, Download, Upload, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { formatDateUK } from "@/lib/format";
 import { CustomFieldValues } from "@/components/CustomFieldValues";
@@ -45,35 +45,48 @@ type LeadOpt = { key: string; label: string };
 function OutreachPage() {
   const { canEdit } = useAuth();
   const editable = canEdit("outreach");
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [active, setActive] = useState<Campaign | null>(null);
+  return (
+    <div className="p-6 max-w-7xl mx-auto space-y-6">
+      <div className="flex items-baseline justify-between">
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight">Email Outreach</h1>
+          <p className="text-muted-foreground mt-1">Plan and track campaigns. Emails are sent from your own mailbox.</p>
+        </div>
+      </div>
+      {active ? (
+        <CampaignDetail campaign={active} editable={editable} onBack={() => setActive(null)} />
+      ) : (
+        <Tabs defaultValue="campaigns">
+          <TabsList>
+            <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
+            <TabsTrigger value="templates">Email Templates</TabsTrigger>
+          </TabsList>
+          <TabsContent value="campaigns" className="mt-4"><CampaignsTab editable={editable} onOpen={setActive} /></TabsContent>
+          <TabsContent value="templates" className="mt-4"><TemplatesTab editable={editable} /></TabsContent>
+        </Tabs>
+      )}
+    </div>
+  );
+}
+
+function CampaignsTab({ editable, onOpen }: { editable: boolean; onOpen: (c: Campaign) => void }) {
+  const [rows, setRows] = useState<Campaign[]>([]);
   const [contactsByCampaign, setContactsByCampaign] = useState<Record<string, CC[]>>({});
-  const [activeId, setActiveId] = useState<string | null>(null);
-  const [templates, setTemplates] = useState<Template[]>([]);
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<Campaign | null>(null);
 
-  const [campaignDialogOpen, setCampaignDialogOpen] = useState(false);
-  const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
-  const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
-  const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
-
-  const loadCampaigns = async () => {
+  const load = async () => {
     const [{ data: cs }, { data: cc }] = await Promise.all([
       supabase.from("campaigns").select("*").order("created_at", { ascending: false }),
       supabase.from("campaign_contacts").select("*"),
     ]);
-    const list = (cs ?? []) as Campaign[];
-    setCampaigns(list);
+    setRows((cs ?? []) as Campaign[]);
     const map: Record<string, CC[]> = {};
     ((cc ?? []) as CC[]).forEach((r) => { (map[r.campaign_id] ||= []).push(r); });
     setContactsByCampaign(map);
-    setActiveId((prev) => prev && list.some((c) => c.id === prev) ? prev : (list[0]?.id ?? null));
   };
-  const loadTemplates = async () => {
-    const { data } = await supabase.from("email_templates").select("*").order("name");
-    setTemplates((data ?? []) as Template[]);
-  };
-  useEffect(() => { void loadCampaigns(); void loadTemplates(); }, []);
-
-  const active = useMemo(() => campaigns.find((c) => c.id === activeId) ?? null, [campaigns, activeId]);
+  useEffect(() => { void load(); }, []);
 
   const computeNext = (c: Campaign, contacts: CC[]): { label: string; date: string } => {
     if (!contacts || contacts.length === 0) return { label: "Add contacts", date: "—" };
@@ -88,129 +101,55 @@ function OutreachPage() {
     return { label: "Complete", date: "—" };
   };
 
-  const removeCampaign = async (c: Campaign) => {
+  const remove = async (c: Campaign) => {
     if (!confirm(`Delete campaign "${c.name}"?`)) return;
     const { error } = await supabase.from("campaigns").delete().eq("id", c.id);
     if (error) { toast.error(error.message); return; }
     await logActivity({ module: "outreach", entity_type: "campaign", entity_id: c.id, verb: "deleted", summary: `Deleted campaign ${c.name}` });
-    toast.success("Deleted"); void loadCampaigns();
-  };
-  const removeTemplate = async (t: Template) => {
-    if (!confirm(`Delete template "${t.name}"?`)) return;
-    const { error } = await supabase.from("email_templates").delete().eq("id", t.id);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Deleted"); void loadTemplates();
+    toast.success("Deleted"); void load();
   };
 
   return (
-    <div className="p-6 max-w-[1400px] mx-auto space-y-6">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Email Marketing &amp; Sprints</h1>
-          <p className="text-muted-foreground mt-1 text-sm">Design separate outreach flows, assign triggers (initial, follow up, last, responses) and build responsive templates.</p>
+    <Card className="shadow-soft">
+      <CardContent className="pt-6 space-y-4">
+        <div className="flex justify-end">
+          {editable && <Button className="bg-gradient-primary text-primary-foreground" onClick={() => { setEditing(null); setOpen(true); }}><Plus className="size-4 mr-2" />New campaign</Button>}
         </div>
-        {editable && (
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => { setEditingTemplate(null); setTemplateDialogOpen(true); }}>
-              <FileText className="size-4 mr-2" />New Template
-            </Button>
-            <Button className="bg-gradient-primary text-primary-foreground" onClick={() => { setEditingCampaign(null); setCampaignDialogOpen(true); }}>
-              <Plus className="size-4 mr-2" />New Campaign
-            </Button>
-          </div>
-        )}
-      </div>
-
-      <div className="grid gap-6 md:grid-cols-[280px,1fr]">
-        <div className="space-y-6">
-          <Card className="shadow-soft">
-            <CardContent className="pt-5 px-4 pb-4 space-y-3">
-              <div className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Campaign Outbox</div>
-              {campaigns.length === 0 ? (
-                <div className="text-sm text-muted-foreground py-6 text-center">No campaigns yet.</div>
-              ) : (
-                <div className="space-y-2 max-h-[440px] overflow-y-auto pr-1">
-                  {campaigns.map((c) => {
-                    const contacts = contactsByCampaign[c.id] ?? [];
-                    const next = computeNext(c, contacts);
-                    const isActive = c.id === activeId;
-                    return (
-                      <button
-                        key={c.id}
-                        type="button"
-                        onClick={() => setActiveId(c.id)}
-                        className={cn(
-                          "w-full text-left rounded-lg border p-3 transition-colors group",
-                          isActive
-                            ? "bg-foreground text-background border-foreground"
-                            : "bg-card hover:bg-muted/50 border-border",
-                        )}
-                      >
-                        <div className="font-medium text-sm truncate">{c.name}</div>
-                        <div className={cn("text-xs mt-1 flex items-center justify-between gap-2", isActive ? "text-background/70" : "text-muted-foreground")}>
-                          <span className="capitalize">{next.label}</span>
-                          <span className="tabular-nums">{contacts.length} · {next.date}</span>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-soft">
-            <CardContent className="pt-5 px-4 pb-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">Templates</div>
-                {editable && (
-                  <button type="button" onClick={() => { setEditingTemplate(null); setTemplateDialogOpen(true); }} className="text-xs text-primary hover:underline font-medium">
-                    + Add
-                  </button>
-                )}
-              </div>
-              {templates.length === 0 ? (
-                <div className="text-sm text-muted-foreground py-6 text-center">No templates yet.</div>
-              ) : (
-                <div className="space-y-1 max-h-[300px] overflow-y-auto pr-1">
-                  {templates.map((t) => (
-                    <div key={t.id} className="flex items-center justify-between gap-2 rounded-md border border-border bg-card hover:bg-muted/40 px-3 py-2">
-                      <span className="text-sm font-medium truncate flex-1">{t.name}</span>
-                      {editable && (
-                        <div className="flex items-center gap-2 text-xs shrink-0">
-                          <button type="button" className="text-primary hover:underline" onClick={() => { setEditingTemplate(t); setTemplateDialogOpen(true); }}>Edit</button>
-                          <button type="button" className="text-destructive hover:underline" onClick={() => void removeTemplate(t)}>Delete</button>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        <div>
-          {active ? (
-            <CampaignDetail
-              campaign={active}
-              editable={editable}
-              onEdit={() => { setEditingCampaign(active); setCampaignDialogOpen(true); }}
-              onDelete={() => void removeCampaign(active)}
-            />
-          ) : (
-            <Card className="shadow-soft">
-              <CardContent className="py-16 text-center text-muted-foreground text-sm">
-                Select a campaign from the left or create a new one to get started.
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </div>
-
-      <CampaignDialog open={campaignDialogOpen} onOpenChange={setCampaignDialogOpen} campaign={editingCampaign} onSaved={loadCampaigns} />
-      <TemplateDialog open={templateDialogOpen} onOpenChange={setTemplateDialogOpen} template={editingTemplate} onSaved={loadTemplates} />
-    </div>
+        <Table>
+          <TableHeader><TableRow>
+            <TableHead>Name</TableHead>
+            <TableHead>Description</TableHead>
+            <TableHead className="text-right">Contacts</TableHead>
+            <TableHead>Next action</TableHead>
+            <TableHead>Next action date</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableRow></TableHeader>
+          <TableBody>
+            {rows.length === 0 ? <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">No campaigns yet.</TableCell></TableRow> :
+              rows.map((c) => {
+                const contacts = contactsByCampaign[c.id] ?? [];
+                const next = computeNext(c, contacts);
+                return (
+                  <TableRow key={c.id} className="cursor-pointer hover:bg-muted/40" onClick={() => onOpen(c)}>
+                    <TableCell className="font-medium">{c.name}</TableCell>
+                    <TableCell className="text-muted-foreground">{c.description || "—"}</TableCell>
+                    <TableCell className="text-right">{contacts.length}</TableCell>
+                    <TableCell>{next.label}</TableCell>
+                    <TableCell className="text-muted-foreground">{next.date}</TableCell>
+                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                      {editable && <>
+                        <Button variant="ghost" size="icon" onClick={() => { setEditing(c); setOpen(true); }}><Pencil className="size-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => remove(c)}><Trash2 className="size-4" /></Button>
+                      </>}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+          </TableBody>
+        </Table>
+        <CampaignDialog open={open} onOpenChange={setOpen} campaign={editing} onSaved={load} />
+      </CardContent>
+    </Card>
   );
 }
 
@@ -248,7 +187,7 @@ function CampaignDialog({ open, onOpenChange, campaign, onSaved }: { open: boole
   );
 }
 
-function CampaignDetail({ campaign, editable, onEdit, onDelete }: { campaign: Campaign; editable: boolean; onEdit: () => void; onDelete: () => void }) {
+function CampaignDetail({ campaign, editable, onBack }: { campaign: Campaign; editable: boolean; onBack: () => void }) {
   const [rows, setRows] = useState<CC[]>([]);
   const [leadOpts, setLeadOpts] = useState<LeadOpt[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
@@ -385,27 +324,13 @@ function CampaignDetail({ campaign, editable, onEdit, onDelete }: { campaign: Ca
 
   return (
     <div className="space-y-4">
-      <Card className="shadow-soft">
-        <CardContent className="pt-6 space-y-4">
-          <div className="flex items-start justify-between gap-4">
-            <div className="space-y-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="uppercase tracking-wide text-[10px]">Campaign Engine</Badge>
-                <Badge variant="outline" className="text-[10px]">Stage: Draft</Badge>
-              </div>
-              <h2 className="text-2xl font-semibold tracking-tight truncate">{campaign.name}</h2>
-              {campaign.description && <p className="text-sm text-muted-foreground">{campaign.description}</p>}
-            </div>
-            {editable && (
-              <div className="flex gap-2 shrink-0">
-                <Button variant="outline" size="sm" onClick={onEdit}><Pencil className="size-4 mr-1" />Edit</Button>
-                <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={onDelete}><Trash2 className="size-4 mr-1" />Delete</Button>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
+      <div className="flex items-center gap-3">
+        <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft className="size-4 mr-1" />Campaigns</Button>
+        <div>
+          <h2 className="text-xl font-semibold">{campaign.name}</h2>
+          {campaign.description && <p className="text-sm text-muted-foreground">{campaign.description}</p>}
+        </div>
+      </div>
 
       <Card className="shadow-soft">
         <CardContent className="pt-6 space-y-3">
@@ -609,6 +534,55 @@ function CCDialog({ open, onOpenChange, contact, campaignId, leadOpts, onSaved }
         </SheetFooter>
       </SheetContent>
     </Sheet>
+  );
+}
+
+function TemplatesTab({ editable }: { editable: boolean }) {
+  const [rows, setRows] = useState<Template[]>([]);
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<Template | null>(null);
+
+  const load = async () => {
+    const { data } = await supabase.from("email_templates").select("*").order("name");
+    setRows((data ?? []) as Template[]);
+  };
+  useEffect(() => { void load(); }, []);
+
+  const remove = async (t: Template) => {
+    if (!confirm(`Delete template "${t.name}"?`)) return;
+    const { error } = await supabase.from("email_templates").delete().eq("id", t.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Deleted"); void load();
+  };
+
+  return (
+    <Card className="shadow-soft">
+      <CardContent className="pt-6 space-y-4">
+        <div className="flex justify-end">
+          {editable && <Button className="bg-gradient-primary text-primary-foreground" onClick={() => { setEditing(null); setOpen(true); }}><Plus className="size-4 mr-2" />New email template</Button>}
+        </div>
+        <Table>
+          <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Subject</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+          <TableBody>
+            {rows.length === 0 ? <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">No templates yet.</TableCell></TableRow> :
+              rows.map((t) => (
+                <TableRow key={t.id}>
+                  <TableCell className="font-medium">{t.name}</TableCell>
+                  <TableCell className="text-muted-foreground">{t.subject}</TableCell>
+                  <TableCell>{t.approved ? <Badge>Approved</Badge> : <Badge variant="secondary">Draft</Badge>}</TableCell>
+                  <TableCell className="text-right">
+                    {editable && <>
+                      <Button variant="ghost" size="icon" onClick={() => { setEditing(t); setOpen(true); }}><Pencil className="size-4" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => remove(t)}><Trash2 className="size-4" /></Button>
+                    </>}
+                  </TableCell>
+                </TableRow>
+              ))}
+          </TableBody>
+        </Table>
+        <TemplateDialog open={open} onOpenChange={setOpen} template={editing} onSaved={load} />
+      </CardContent>
+    </Card>
   );
 }
 
