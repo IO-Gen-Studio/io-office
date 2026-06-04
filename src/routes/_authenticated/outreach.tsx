@@ -385,13 +385,27 @@ function CampaignDetail({ campaign, editable, onEdit, onDelete }: { campaign: Ca
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft className="size-4 mr-1" />Campaigns</Button>
-        <div>
-          <h2 className="text-xl font-semibold">{campaign.name}</h2>
-          {campaign.description && <p className="text-sm text-muted-foreground">{campaign.description}</p>}
-        </div>
-      </div>
+      <Card className="shadow-soft">
+        <CardContent className="pt-6 space-y-4">
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className="uppercase tracking-wide text-[10px]">Campaign Engine</Badge>
+                <Badge variant="outline" className="text-[10px]">Stage: Draft</Badge>
+              </div>
+              <h2 className="text-2xl font-semibold tracking-tight truncate">{campaign.name}</h2>
+              {campaign.description && <p className="text-sm text-muted-foreground">{campaign.description}</p>}
+            </div>
+            {editable && (
+              <div className="flex gap-2 shrink-0">
+                <Button variant="outline" size="sm" onClick={onEdit}><Pencil className="size-4 mr-1" />Edit</Button>
+                <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={onDelete}><Trash2 className="size-4 mr-1" />Delete</Button>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
 
       <Card className="shadow-soft">
         <CardContent className="pt-6 space-y-3">
