@@ -119,7 +119,7 @@ function SocialPage() {
           </Table>
         </CardContent>
       </Card>
-      <PlanDialog open={open} onOpenChange={setOpen} plan={editing} onSaved={load} />
+      <PlanDialog open={open} onOpenChange={setOpen} plan={editing} profiles={profiles} onSaved={load} />
       <SocialPostMockupDialog
         open={!!viewing}
         onOpenChange={(o) => { if (!o) setViewing(null); }}
