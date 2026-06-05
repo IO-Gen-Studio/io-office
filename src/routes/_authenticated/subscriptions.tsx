@@ -504,7 +504,13 @@ function SubDialog({ open, onOpenChange, sub, orgs, contacts, planOpts, onSaved 
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1"><Label>Renewal date</Label><Input type="date" value={renewal} onChange={(e) => setRenewal(e.target.value)} /></div>
+            <div className="space-y-1">
+              <Label>Renewal date</Label>
+              <div className="flex gap-2">
+                <Input type="date" value={renewal} onChange={(e) => setRenewal(e.target.value)} />
+                {renewal && <Button type="button" variant="ghost" size="sm" onClick={() => setRenewal("")}>Clear</Button>}
+              </div>
+            </div>
             <div className="space-y-1">
               <Label>Status</Label>
               <Select value={status} onValueChange={(v) => setStatus(v as SStatus)}>
