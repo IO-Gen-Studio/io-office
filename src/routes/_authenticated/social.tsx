@@ -39,13 +39,18 @@ function SocialPage() {
   const { canEdit } = useAuth();
   const editable = canEdit("social");
   const [rows, setRows] = useState<Plan[]>([]);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Plan | null>(null);
   const [viewing, setViewing] = useState<Plan | null>(null);
 
   const load = async () => {
-    const { data } = await supabase.from("social_plans").select("*").order("scheduled_at", { ascending: true, nullsFirst: false });
+    const [{ data }, { data: pf }] = await Promise.all([
+      supabase.from("social_plans").select("*").order("scheduled_at", { ascending: true, nullsFirst: false }),
+      supabase.from("profiles").select("id,full_name").order("full_name"),
+    ]);
     setRows((data ?? []) as Plan[]);
+    setProfiles((pf ?? []) as Profile[]);
   };
   useEffect(() => { void load(); }, []);
 
@@ -59,6 +64,14 @@ function SocialPage() {
   const platformLabel = useBuiltinFieldLabel("social", "platform");
   const approvalLabel = useBuiltinFieldLabel("social", "approval_status");
   const postStatusLabel = useBuiltinFieldLabel("social", "post_status");
+
+  // Pin "for_approval" rows to the top
+  const sortedRows = [...rows].sort((a, b) => {
+    const aFor = a.approval_status === "for_approval" ? 0 : 1;
+    const bFor = b.approval_status === "for_approval" ? 0 : 1;
+    if (aFor !== bFor) return aFor - bFor;
+    return 0;
+  });
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
@@ -77,14 +90,20 @@ function SocialPage() {
               <TableHead>Approval</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              {rows.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No posts planned.</TableCell></TableRow> :
-                rows.map((p) => (
-                  <TableRow key={p.id}>
+              {sortedRows.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No posts planned.</TableCell></TableRow> :
+                sortedRows.map((p) => {
+                  const isForApproval = p.approval_status === "for_approval";
+                  return (
+                  <TableRow key={p.id} className={isForApproval ? "bg-amber-100/60 dark:bg-amber-500/10 hover:bg-amber-100 dark:hover:bg-amber-500/20" : undefined}>
                     <TableCell><Badge variant="secondary">{platformLabel(p.platform)}</Badge></TableCell>
                     <TableCell className="font-medium">{p.title || "—"}</TableCell>
                     <TableCell className="max-w-md truncate text-muted-foreground">{p.copy || "—"}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">{p.scheduled_at ? new Date(p.scheduled_at).toLocaleDateString() : "—"}</TableCell>
-                    <TableCell>{p.approval_status === "approved" ? <Badge>{approvalLabel("approved")}</Badge> : <Badge variant="outline">{approvalLabel("not_approved")}</Badge>}</TableCell>
+                    <TableCell>
+                      {p.approval_status === "approved" ? <Badge>{approvalLabel("approved")}</Badge>
+                        : p.approval_status === "for_approval" ? <Badge className="bg-amber-500 text-white hover:bg-amber-600">{approvalLabel("for_approval")}</Badge>
+                        : <Badge variant="outline">{approvalLabel("not_approved")}</Badge>}
+                    </TableCell>
                     <TableCell><Badge variant={p.post_status === "posted" ? "default" : p.post_status === "cancelled" ? "destructive" : "secondary"}>{postStatusLabel(p.post_status)}</Badge></TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="icon" title="Preview" onClick={() => setViewing(p)}><Eye className="size-4" /></Button>
@@ -94,7 +113,8 @@ function SocialPage() {
                       </>}
                     </TableCell>
                   </TableRow>
-                ))}
+                  );
+                })}
             </TableBody>
           </Table>
         </CardContent>
