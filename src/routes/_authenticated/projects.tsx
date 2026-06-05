@@ -487,8 +487,20 @@ function ProjectDialog({ open, onOpenChange, project, defaultType, orgs, contact
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1"><Label>Start date</Label><Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} /></div>
-            <div className="space-y-1"><Label>End date</Label><Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} /></div>
+            <div className="space-y-1">
+              <Label>Start date</Label>
+              <div className="flex gap-2">
+                <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                {startDate && <Button type="button" variant="ghost" size="sm" onClick={() => setStartDate("")}>Clear</Button>}
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label>End date</Label>
+              <div className="flex gap-2">
+                <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+                {endDate && <Button type="button" variant="ghost" size="sm" onClick={() => setEndDate("")}>Clear</Button>}
+              </div>
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1"><Label>Final Costs (£)</Label><Input type="number" value={totalCost} onChange={(e) => setTotalCost(e.target.value)} /><p className="text-xs text-muted-foreground">Use the itemised breakdown below to auto-calculate this.</p></div>
