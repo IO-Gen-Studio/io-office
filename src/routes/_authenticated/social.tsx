@@ -230,6 +230,27 @@ function PlanDialog({ open, onOpenChange, plan, profiles, onSaved }: { open: boo
             {uploading && <p className="text-xs text-muted-foreground">Uploading…</p>}
             {mediaPath && <MediaPreview path={mediaPath} onRemove={() => setMediaPath(null)} />}
           </div>
+          {approval === "for_approval" && (
+            <div className="space-y-1">
+              <Label>Approvers</Label>
+              <p className="text-xs text-muted-foreground">Selected reviewers will be notified.</p>
+              <div className="max-h-48 overflow-y-auto rounded-md border divide-y">
+                {profiles.length === 0 ? (
+                  <p className="p-3 text-sm text-muted-foreground">No users available.</p>
+                ) : profiles.map((p) => (
+                  <label key={p.id} className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted/40 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={approvers.includes(p.id)}
+                      onChange={() => toggleApprover(p.id)}
+                      className="size-4"
+                    />
+                    <span>{p.full_name || "—"}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
           <CustomFieldValues module="social" value={custom} onChange={setCustom} />
         </div>
         <SheetFooter className="p-6 pt-4 border-t shrink-0">
