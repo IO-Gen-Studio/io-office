@@ -50,12 +50,14 @@ function CalendarPage() {
     evs.forEach((e) => {
       const start = e.event_date;
       const end = e.end_date && e.end_date > e.event_date ? e.end_date : e.event_date;
-      const d = new Date(start + "T00:00:00");
-      const last = new Date(end + "T00:00:00");
-      while (d <= last) {
-        const ds = d.toISOString().slice(0, 10);
+      // Iterate purely on the YYYY-MM-DD string to avoid timezone shifts
+      let ds = start;
+      while (ds <= end) {
         out.push({ date: ds, label: e.title, detail: e.description ?? undefined, kind: "event", eventId: e.id });
-        d.setDate(d.getDate() + 1);
+        // advance one day using UTC math so DST never moves the date
+        const [y, m, d] = ds.split("-").map(Number);
+        const next = new Date(Date.UTC(y, m - 1, d + 1));
+        ds = `${next.getUTCFullYear()}-${String(next.getUTCMonth() + 1).padStart(2, "0")}-${String(next.getUTCDate()).padStart(2, "0")}`;
       }
     });
     setEvents(out);
