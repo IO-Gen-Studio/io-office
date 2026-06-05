@@ -12,6 +12,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ChevronLeft, ChevronRight, Plus, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
+import { formatDateUK } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/calendar")({ component: CalendarPage });
 
