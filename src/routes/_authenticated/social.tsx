@@ -28,8 +28,10 @@ type ApprovalStatus = Database["public"]["Enums"]["approval_status"];
 type Plan = {
   id: string; platform: Platform; title: string; copy: string; media_path: string | null;
   scheduled_at: string | null; post_status: PostStatus; approval_status: ApprovalStatus;
+  approvers: string[] | null;
   custom?: Record<string, unknown> | null;
 };
+type Profile = { id: string; full_name: string };
 
 export const Route = createFileRoute("/_authenticated/social")({ component: SocialPage });
 
