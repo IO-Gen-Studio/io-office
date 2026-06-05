@@ -131,8 +131,8 @@ function SocialPage() {
   );
 }
 
-function PlanDialog({ open, onOpenChange, plan, onSaved }: { open: boolean; onOpenChange: (o: boolean) => void; plan: Plan | null; onSaved: () => void }) {
-  const { activeTenantId } = useAuth();
+function PlanDialog({ open, onOpenChange, plan, profiles, onSaved }: { open: boolean; onOpenChange: (o: boolean) => void; plan: Plan | null; profiles: Profile[]; onSaved: () => void }) {
+  const { activeTenantId, user } = useAuth();
   const [platform, setPlatform] = useState<Platform>("linkedin");
   const [title, setTitle] = useState("");
   const [copy, setCopy] = useState(""); const [scheduledAt, setScheduledAt] = useState("");
@@ -141,6 +141,8 @@ function PlanDialog({ open, onOpenChange, plan, onSaved }: { open: boolean; onOp
   const [mediaPath, setMediaPath] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [custom, setCustom] = useState<Record<string, unknown>>({});
+  const [approvers, setApprovers] = useState<string[]>([]);
+  const previousApproversRef = useRef<string[]>([]);
 
   useEffect(() => {
     setPlatform(plan?.platform ?? "linkedin");
@@ -151,6 +153,9 @@ function PlanDialog({ open, onOpenChange, plan, onSaved }: { open: boolean; onOp
     setStatus(plan?.post_status ?? "not_posted");
     setMediaPath(plan?.media_path ?? null);
     setCustom((plan?.custom as Record<string, unknown>) ?? {});
+    const initial = (plan?.approvers ?? []) as string[];
+    setApprovers(initial);
+    previousApproversRef.current = initial;
   }, [plan, open]);
 
   const onUpload = async (file: File) => {
@@ -164,22 +169,49 @@ function PlanDialog({ open, onOpenChange, plan, onSaved }: { open: boolean; onOp
     toast.success("Uploaded");
   };
 
+  const toggleApprover = (id: string) => {
+    setApprovers((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
+  };
+
+  const notifyApprovers = async (planId: string, newApproverIds: string[]) => {
+    if (newApproverIds.length === 0 || !activeTenantId) return;
+    const rows = newApproverIds.map((uid) => ({
+      user_id: uid,
+      tenant_id: activeTenantId,
+      type: "social_approval_request",
+      title: "Post needs your approval",
+      body: `${title || platform} is awaiting your review`,
+      link: "/social",
+    }));
+    await supabase.from("notifications").insert(rows as never);
+  };
 
   const submit = async () => {
+    const effectiveApprovers = approval === "for_approval" ? approvers : [];
     const payload = {
       platform, title, copy, media_path: mediaPath,
       scheduled_at: scheduledAt ? new Date(scheduledAt).toISOString() : null,
       approval_status: approval, post_status: status,
+      approvers: effectiveApprovers,
       custom: custom as never,
     };
+    let savedId: string;
     if (plan) {
       const { error } = await supabase.from("social_plans").update(payload).eq("id", plan.id);
       if (error) { toast.error(error.message); return; }
+      savedId = plan.id;
       await logActivity({ module: "social", entity_type: "post", entity_id: plan.id, verb: "updated", summary: `Updated ${platform} post` });
     } else {
       const { data, error } = await supabase.from("social_plans").insert(payload).select().single();
       if (error) { toast.error(error.message); return; }
+      savedId = data.id;
       await logActivity({ module: "social", entity_type: "post", entity_id: data.id, verb: "created", summary: `Planned ${platform} post` });
+    }
+    // Notify only newly added approvers (don't spam) and exclude the current user
+    if (approval === "for_approval") {
+      const prev = new Set(previousApproversRef.current);
+      const toNotify = effectiveApprovers.filter((id) => !prev.has(id) && id !== user?.id);
+      await notifyApprovers(savedId, toNotify);
     }
     toast.success("Saved"); onOpenChange(false); onSaved();
   };
