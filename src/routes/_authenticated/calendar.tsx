@@ -160,7 +160,7 @@ function CalendarPage() {
         <SheetContent className="w-full sm:max-w-md overflow-y-auto">
           <SheetHeader>
             <SheetTitle>
-              {selectedDate ? new Date(selectedDate).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" }) : ""}
+              {selectedDate ? (() => { const [y, m, d] = selectedDate.split("-").map(Number); return new Date(y, m - 1, d).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" }); })() : ""}
             </SheetTitle>
           </SheetHeader>
           <div className="mt-4 space-y-4">
