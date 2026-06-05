@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth/auth-context";
 import { logActivity } from "@/lib/activity";
@@ -28,8 +28,10 @@ type ApprovalStatus = Database["public"]["Enums"]["approval_status"];
 type Plan = {
   id: string; platform: Platform; title: string; copy: string; media_path: string | null;
   scheduled_at: string | null; post_status: PostStatus; approval_status: ApprovalStatus;
+  approvers: string[] | null;
   custom?: Record<string, unknown> | null;
 };
+type Profile = { id: string; full_name: string };
 
 export const Route = createFileRoute("/_authenticated/social")({ component: SocialPage });
 
@@ -37,13 +39,18 @@ function SocialPage() {
   const { canEdit } = useAuth();
   const editable = canEdit("social");
   const [rows, setRows] = useState<Plan[]>([]);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Plan | null>(null);
   const [viewing, setViewing] = useState<Plan | null>(null);
 
   const load = async () => {
-    const { data } = await supabase.from("social_plans").select("*").order("scheduled_at", { ascending: true, nullsFirst: false });
+    const [{ data }, { data: pf }] = await Promise.all([
+      supabase.from("social_plans").select("*").order("scheduled_at", { ascending: true, nullsFirst: false }),
+      supabase.from("profiles").select("id,full_name").order("full_name"),
+    ]);
     setRows((data ?? []) as Plan[]);
+    setProfiles((pf ?? []) as Profile[]);
   };
   useEffect(() => { void load(); }, []);
 
@@ -57,6 +64,14 @@ function SocialPage() {
   const platformLabel = useBuiltinFieldLabel("social", "platform");
   const approvalLabel = useBuiltinFieldLabel("social", "approval_status");
   const postStatusLabel = useBuiltinFieldLabel("social", "post_status");
+
+  // Pin "for_approval" rows to the top
+  const sortedRows = [...rows].sort((a, b) => {
+    const aFor = a.approval_status === "for_approval" ? 0 : 1;
+    const bFor = b.approval_status === "for_approval" ? 0 : 1;
+    if (aFor !== bFor) return aFor - bFor;
+    return 0;
+  });
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
@@ -75,14 +90,20 @@ function SocialPage() {
               <TableHead>Approval</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              {rows.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No posts planned.</TableCell></TableRow> :
-                rows.map((p) => (
-                  <TableRow key={p.id}>
+              {sortedRows.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No posts planned.</TableCell></TableRow> :
+                sortedRows.map((p) => {
+                  const isForApproval = p.approval_status === "for_approval";
+                  return (
+                  <TableRow key={p.id} className={isForApproval ? "bg-amber-100/60 dark:bg-amber-500/10 hover:bg-amber-100 dark:hover:bg-amber-500/20" : undefined}>
                     <TableCell><Badge variant="secondary">{platformLabel(p.platform)}</Badge></TableCell>
                     <TableCell className="font-medium">{p.title || "—"}</TableCell>
                     <TableCell className="max-w-md truncate text-muted-foreground">{p.copy || "—"}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">{p.scheduled_at ? new Date(p.scheduled_at).toLocaleDateString() : "—"}</TableCell>
-                    <TableCell>{p.approval_status === "approved" ? <Badge>{approvalLabel("approved")}</Badge> : <Badge variant="outline">{approvalLabel("not_approved")}</Badge>}</TableCell>
+                    <TableCell>
+                      {p.approval_status === "approved" ? <Badge>{approvalLabel("approved")}</Badge>
+                        : p.approval_status === "for_approval" ? <Badge className="bg-amber-500 text-white hover:bg-amber-600">{approvalLabel("for_approval")}</Badge>
+                        : <Badge variant="outline">{approvalLabel("not_approved")}</Badge>}
+                    </TableCell>
                     <TableCell><Badge variant={p.post_status === "posted" ? "default" : p.post_status === "cancelled" ? "destructive" : "secondary"}>{postStatusLabel(p.post_status)}</Badge></TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="icon" title="Preview" onClick={() => setViewing(p)}><Eye className="size-4" /></Button>
@@ -92,12 +113,13 @@ function SocialPage() {
                       </>}
                     </TableCell>
                   </TableRow>
-                ))}
+                  );
+                })}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
-      <PlanDialog open={open} onOpenChange={setOpen} plan={editing} onSaved={load} />
+      <PlanDialog open={open} onOpenChange={setOpen} plan={editing} profiles={profiles} onSaved={load} />
       <SocialPostMockupDialog
         open={!!viewing}
         onOpenChange={(o) => { if (!o) setViewing(null); }}
@@ -109,8 +131,8 @@ function SocialPage() {
   );
 }
 
-function PlanDialog({ open, onOpenChange, plan, onSaved }: { open: boolean; onOpenChange: (o: boolean) => void; plan: Plan | null; onSaved: () => void }) {
-  const { activeTenantId } = useAuth();
+function PlanDialog({ open, onOpenChange, plan, profiles, onSaved }: { open: boolean; onOpenChange: (o: boolean) => void; plan: Plan | null; profiles: Profile[]; onSaved: () => void }) {
+  const { activeTenantId, user } = useAuth();
   const [platform, setPlatform] = useState<Platform>("linkedin");
   const [title, setTitle] = useState("");
   const [copy, setCopy] = useState(""); const [scheduledAt, setScheduledAt] = useState("");
@@ -119,6 +141,8 @@ function PlanDialog({ open, onOpenChange, plan, onSaved }: { open: boolean; onOp
   const [mediaPath, setMediaPath] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [custom, setCustom] = useState<Record<string, unknown>>({});
+  const [approvers, setApprovers] = useState<string[]>([]);
+  const previousApproversRef = useRef<string[]>([]);
 
   useEffect(() => {
     setPlatform(plan?.platform ?? "linkedin");
@@ -129,6 +153,9 @@ function PlanDialog({ open, onOpenChange, plan, onSaved }: { open: boolean; onOp
     setStatus(plan?.post_status ?? "not_posted");
     setMediaPath(plan?.media_path ?? null);
     setCustom((plan?.custom as Record<string, unknown>) ?? {});
+    const initial = (plan?.approvers ?? []) as string[];
+    setApprovers(initial);
+    previousApproversRef.current = initial;
   }, [plan, open]);
 
   const onUpload = async (file: File) => {
@@ -142,22 +169,49 @@ function PlanDialog({ open, onOpenChange, plan, onSaved }: { open: boolean; onOp
     toast.success("Uploaded");
   };
 
+  const toggleApprover = (id: string) => {
+    setApprovers((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
+  };
+
+  const notifyApprovers = async (planId: string, newApproverIds: string[]) => {
+    if (newApproverIds.length === 0 || !activeTenantId) return;
+    const rows = newApproverIds.map((uid) => ({
+      user_id: uid,
+      tenant_id: activeTenantId,
+      type: "social_approval_request",
+      title: "Post needs your approval",
+      body: `${title || platform} is awaiting your review`,
+      link: "/social",
+    }));
+    await supabase.from("notifications").insert(rows as never);
+  };
 
   const submit = async () => {
+    const effectiveApprovers = approval === "for_approval" ? approvers : [];
     const payload = {
       platform, title, copy, media_path: mediaPath,
       scheduled_at: scheduledAt ? new Date(scheduledAt).toISOString() : null,
       approval_status: approval, post_status: status,
+      approvers: effectiveApprovers,
       custom: custom as never,
     };
+    let savedId: string;
     if (plan) {
       const { error } = await supabase.from("social_plans").update(payload).eq("id", plan.id);
       if (error) { toast.error(error.message); return; }
+      savedId = plan.id;
       await logActivity({ module: "social", entity_type: "post", entity_id: plan.id, verb: "updated", summary: `Updated ${platform} post` });
     } else {
       const { data, error } = await supabase.from("social_plans").insert(payload).select().single();
       if (error) { toast.error(error.message); return; }
+      savedId = data.id;
       await logActivity({ module: "social", entity_type: "post", entity_id: data.id, verb: "created", summary: `Planned ${platform} post` });
+    }
+    // Notify only newly added approvers (don't spam) and exclude the current user
+    if (approval === "for_approval") {
+      const prev = new Set(previousApproversRef.current);
+      const toNotify = effectiveApprovers.filter((id) => !prev.has(id) && id !== user?.id);
+      await notifyApprovers(savedId, toNotify);
     }
     toast.success("Saved"); onOpenChange(false); onSaved();
   };
@@ -176,6 +230,27 @@ function PlanDialog({ open, onOpenChange, plan, onSaved }: { open: boolean; onOp
             {uploading && <p className="text-xs text-muted-foreground">Uploading…</p>}
             {mediaPath && <MediaPreview path={mediaPath} onRemove={() => setMediaPath(null)} />}
           </div>
+          {approval === "for_approval" && (
+            <div className="space-y-1">
+              <Label>Approvers</Label>
+              <p className="text-xs text-muted-foreground">Selected reviewers will be notified.</p>
+              <div className="max-h-48 overflow-y-auto rounded-md border divide-y">
+                {profiles.length === 0 ? (
+                  <p className="p-3 text-sm text-muted-foreground">No users available.</p>
+                ) : profiles.map((p) => (
+                  <label key={p.id} className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted/40 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={approvers.includes(p.id)}
+                      onChange={() => toggleApprover(p.id)}
+                      className="size-4"
+                    />
+                    <span>{p.full_name || "—"}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
           <CustomFieldValues module="social" value={custom} onChange={setCustom} />
         </div>
         <SheetFooter className="p-6 pt-4 border-t shrink-0">

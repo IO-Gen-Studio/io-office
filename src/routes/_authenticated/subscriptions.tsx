@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { DataTable, type DataTableColumn } from "@/components/DataTable";
 import { Plus, Pencil, Trash2, ArrowLeft, FolderOpen, ChevronDown, FileDown } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
@@ -121,6 +122,27 @@ function SubList({ editable, onOpen }: { editable: boolean; onOpen: (s: Sub) => 
   const customCols = useCustomFieldColumns<Sub>("subscriptions");
   const allColumns = [...columns, ...customCols];
 
+  const activeRows = rows.filter((r) => r.status === "active");
+  const otherRows = rows.filter((r) => r.status !== "active");
+
+  const renderTable = (data: Sub[]) => (
+    <DataTable
+      tableKey="subscriptions"
+      columns={allColumns}
+      rows={data}
+      rowId={(r) => r.id}
+      onSaveCell={saveCell}
+      onRowClick={onOpen}
+      emptyMessage="No subscriptions yet."
+      actions={(r) => (
+        <div className="flex justify-end gap-1">
+          <Button variant="ghost" size="icon" title="Open" onClick={() => onOpen(r)}><FolderOpen className="size-4" /></Button>
+          {editable && <Button variant="ghost" size="icon" title="Delete" onClick={() => remove(r)}><Trash2 className="size-4" /></Button>}
+        </div>
+      )}
+    />
+  );
+
   return (
     <>
       <div className="flex justify-end">
@@ -128,28 +150,21 @@ function SubList({ editable, onOpen }: { editable: boolean; onOpen: (s: Sub) => 
       </div>
 
       <div className="grid md:grid-cols-3 gap-4">
-        <Card className="shadow-soft"><CardContent className="pt-6"><p className="text-xs uppercase text-muted-foreground">Active</p><p className="text-2xl font-semibold mt-1">{rows.filter((r) => r.status === "active").length}</p></CardContent></Card>
+        <Card className="shadow-soft"><CardContent className="pt-6"><p className="text-xs uppercase text-muted-foreground">Active</p><p className="text-2xl font-semibold mt-1">{activeRows.length}</p></CardContent></Card>
         <Card className="shadow-soft"><CardContent className="pt-6"><p className="text-xs uppercase text-muted-foreground">MRR</p><p className="text-2xl font-semibold mt-1">{formatGBP(mrr)}</p></CardContent></Card>
         <Card className="shadow-soft"><CardContent className="pt-6"><p className="text-xs uppercase text-muted-foreground">Total plans</p><p className="text-2xl font-semibold mt-1">{rows.length}</p></CardContent></Card>
       </div>
 
       <Card className="shadow-soft">
         <CardContent className="pt-6">
-          <DataTable
-            tableKey="subscriptions"
-            columns={allColumns}
-            rows={rows}
-            rowId={(r) => r.id}
-            onSaveCell={saveCell}
-            onRowClick={onOpen}
-            emptyMessage="No subscriptions yet."
-            actions={(r) => (
-              <div className="flex justify-end gap-1">
-                <Button variant="ghost" size="icon" title="Open" onClick={() => onOpen(r)}><FolderOpen className="size-4" /></Button>
-                {editable && <Button variant="ghost" size="icon" title="Delete" onClick={() => remove(r)}><Trash2 className="size-4" /></Button>}
-              </div>
-            )}
-          />
+          <Tabs defaultValue="active">
+            <TabsList>
+              <TabsTrigger value="active">Active Subscriptions ({activeRows.length})</TabsTrigger>
+              <TabsTrigger value="others">Others ({otherRows.length})</TabsTrigger>
+            </TabsList>
+            <TabsContent value="active" className="mt-4">{renderTable(activeRows)}</TabsContent>
+            <TabsContent value="others" className="mt-4">{renderTable(otherRows)}</TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
 
@@ -489,7 +504,13 @@ function SubDialog({ open, onOpenChange, sub, orgs, contacts, planOpts, onSaved 
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1"><Label>Renewal date</Label><Input type="date" value={renewal} onChange={(e) => setRenewal(e.target.value)} /></div>
+            <div className="space-y-1">
+              <Label>Renewal date</Label>
+              <div className="flex gap-2">
+                <Input type="date" value={renewal} onChange={(e) => setRenewal(e.target.value)} />
+                {renewal && <Button type="button" variant="ghost" size="sm" onClick={() => setRenewal("")}>Clear</Button>}
+              </div>
+            </div>
             <div className="space-y-1">
               <Label>Status</Label>
               <Select value={status} onValueChange={(v) => setStatus(v as SStatus)}>

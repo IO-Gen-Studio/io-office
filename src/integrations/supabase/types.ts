@@ -1169,6 +1169,7 @@ export type Database = {
       social_plans: {
         Row: {
           approval_status: Database["public"]["Enums"]["approval_status"]
+          approvers: string[]
           copy: string
           created_at: string
           created_by: string | null
@@ -1184,6 +1185,7 @@ export type Database = {
         }
         Insert: {
           approval_status?: Database["public"]["Enums"]["approval_status"]
+          approvers?: string[]
           copy?: string
           created_at?: string
           created_by?: string | null
@@ -1199,6 +1201,7 @@ export type Database = {
         }
         Update: {
           approval_status?: Database["public"]["Enums"]["approval_status"]
+          approvers?: string[]
           copy?: string
           created_at?: string
           created_by?: string | null
@@ -1552,7 +1555,7 @@ export type Database = {
         | "calendar"
         | "settings"
       app_role: "admin" | "member"
-      approval_status: "approved" | "not_approved"
+      approval_status: "approved" | "not_approved" | "for_approval"
       custom_field_type:
         | "text"
         | "number"
@@ -1720,7 +1723,7 @@ export const Constants = {
         "settings",
       ],
       app_role: ["admin", "member"],
-      approval_status: ["approved", "not_approved"],
+      approval_status: ["approved", "not_approved", "for_approval"],
       custom_field_type: [
         "text",
         "number",

@@ -53,6 +53,7 @@ export const BUILTIN_DROPDOWNS: BuiltinFieldSpec[] = [
     module: "social", key: "approval_status", label: "Approval status",
     options: [
       { value: "not_approved", defaultLabel: "Not approved" },
+      { value: "for_approval", defaultLabel: "For Approval" },
       { value: "approved", defaultLabel: "Approved" },
     ],
   },

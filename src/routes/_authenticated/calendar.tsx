@@ -12,6 +12,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ChevronLeft, ChevronRight, Plus, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
+import { formatDateUK } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/calendar")({ component: CalendarPage });
 
@@ -50,12 +51,14 @@ function CalendarPage() {
     evs.forEach((e) => {
       const start = e.event_date;
       const end = e.end_date && e.end_date > e.event_date ? e.end_date : e.event_date;
-      const d = new Date(start + "T00:00:00");
-      const last = new Date(end + "T00:00:00");
-      while (d <= last) {
-        const ds = d.toISOString().slice(0, 10);
+      // Iterate purely on the YYYY-MM-DD string to avoid timezone shifts
+      let ds = start;
+      while (ds <= end) {
         out.push({ date: ds, label: e.title, detail: e.description ?? undefined, kind: "event", eventId: e.id });
-        d.setDate(d.getDate() + 1);
+        // advance one day using UTC math so DST never moves the date
+        const [y, m, d] = ds.split("-").map(Number);
+        const next = new Date(Date.UTC(y, m - 1, d + 1));
+        ds = `${next.getUTCFullYear()}-${String(next.getUTCMonth() + 1).padStart(2, "0")}-${String(next.getUTCDate()).padStart(2, "0")}`;
       }
     });
     setEvents(out);
@@ -157,7 +160,7 @@ function CalendarPage() {
         <SheetContent className="w-full sm:max-w-md overflow-y-auto">
           <SheetHeader>
             <SheetTitle>
-              {selectedDate ? new Date(selectedDate).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" }) : ""}
+              {selectedDate ? (() => { const [y, m, d] = selectedDate.split("-").map(Number); return new Date(y, m - 1, d).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" }); })() : ""}
             </SheetTitle>
           </SheetHeader>
           <div className="mt-4 space-y-4">
@@ -176,7 +179,7 @@ function CalendarPage() {
                           <p className="font-medium">{e.title}</p>
                           {e.end_date && e.end_date > e.event_date && (
                             <p className="text-xs text-muted-foreground">
-                              {new Date(e.event_date).toLocaleDateString("en-GB")} – {new Date(e.end_date).toLocaleDateString("en-GB")}
+                              {formatDateUK(e.event_date)} – {formatDateUK(e.end_date)}
                             </p>
                           )}
                           {(e.start_time || e.end_time) && (
