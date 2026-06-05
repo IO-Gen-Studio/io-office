@@ -179,7 +179,7 @@ function CalendarPage() {
                           <p className="font-medium">{e.title}</p>
                           {e.end_date && e.end_date > e.event_date && (
                             <p className="text-xs text-muted-foreground">
-                              {new Date(e.event_date).toLocaleDateString("en-GB")} – {new Date(e.end_date).toLocaleDateString("en-GB")}
+                              {formatDateUK(e.event_date)} – {formatDateUK(e.end_date)}
                             </p>
                           )}
                           {(e.start_time || e.end_time) && (
