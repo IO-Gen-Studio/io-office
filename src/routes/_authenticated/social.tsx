@@ -94,14 +94,14 @@ function SocialPage() {
                 sortedRows.map((p) => {
                   const isForApproval = p.approval_status === "for_approval";
                   return (
-                  <TableRow key={p.id} className={isForApproval ? "bg-amber-100/60 dark:bg-amber-500/10 hover:bg-amber-100 dark:hover:bg-amber-500/20" : undefined}>
+                  <TableRow key={p.id} className={isForApproval ? "bg-sidebar-accent/60 hover:bg-sidebar-accent" : undefined}>
                     <TableCell><Badge variant="secondary">{platformLabel(p.platform)}</Badge></TableCell>
                     <TableCell className="font-medium">{p.title || "—"}</TableCell>
                     <TableCell className="max-w-md truncate text-muted-foreground">{p.copy || "—"}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">{p.scheduled_at ? new Date(p.scheduled_at).toLocaleDateString() : "—"}</TableCell>
                     <TableCell>
                       {p.approval_status === "approved" ? <Badge>{approvalLabel("approved")}</Badge>
-                        : p.approval_status === "for_approval" ? <Badge className="bg-amber-500 text-white hover:bg-amber-600">{approvalLabel("for_approval")}</Badge>
+                        : p.approval_status === "for_approval" ? <Badge className="bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90">{approvalLabel("for_approval")}</Badge>
                         : <Badge variant="outline">{approvalLabel("not_approved")}</Badge>}
                     </TableCell>
                     <TableCell><Badge variant={p.post_status === "posted" ? "default" : p.post_status === "cancelled" ? "destructive" : "secondary"}>{postStatusLabel(p.post_status)}</Badge></TableCell>

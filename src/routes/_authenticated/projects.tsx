@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { CustomFieldValues } from "@/components/CustomFieldValues";
 import { CustomFieldDisplay, useCustomFieldColumns } from "@/components/CustomFieldDisplay";
 import { CostBreakdown } from "@/components/CostBreakdown";
+import { TodoList } from "@/components/TodoList";
 import { useBuiltinFieldLabel, useBuiltinFieldOptions } from "@/lib/builtin-labels";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -51,6 +52,26 @@ function relabelForType(label: string, type: PType): string {
   return label;
 }
 
+// Sequential milestones mapping → Next Action label.
+// Match against base labels (works variants too).
+const NEXT_ACTION_SEQUENCE: { match: string[]; next: string }[] = [
+  { match: ["initial enquiry"], next: "Submit Cost Proposal" },
+  { match: ["cost proposal submitted"], next: "Waiting for Order Approval" },
+  { match: ["order approved"], next: "Waiting for Purchase Order" },
+  { match: ["order received"], next: "Project In-Progress" },
+  { match: ["project completed", "works completed"], next: "Ready to Invoice" },
+  { match: ["project invoiced", "works invoiced"], next: "Completed" },
+];
+
+function computeNextAction(milestones: { label: string; completed_at: string | null }[]): string {
+  let action = "";
+  for (const step of NEXT_ACTION_SEQUENCE) {
+    const hit = milestones.find((m) => step.match.includes(m.label.trim().toLowerCase()) && !!m.completed_at);
+    if (hit) action = step.next;
+  }
+  return action;
+}
+
 function ProjectsPage() {
   const { canEdit } = useAuth();
   const editable = canEdit("projects");
@@ -73,20 +94,27 @@ function ProjectList({ editable, onOpen }: { editable: boolean; onOpen: (p: Proj
   const [orgs, setOrgs] = useState<Org[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
+  const [milestonesByProject, setMilestonesByProject] = useState<Record<string, { label: string; completed_at: string | null }[]>>({});
   const [tab, setTab] = useState<PType>("project");
   const [open, setOpen] = useState(false);
 
   const load = async () => {
-    const [{ data: p }, { data: o }, { data: pr }, { data: c }] = await Promise.all([
+    const [{ data: p }, { data: o }, { data: pr }, { data: c }, { data: ms }] = await Promise.all([
       supabase.from("projects").select("*").order("created_at", { ascending: false }),
       supabase.from("organisations").select("id,name").order("name"),
       supabase.from("profiles").select("id,full_name").order("full_name"),
       supabase.from("contacts").select("id,first_name,last_name,organisation_id").order("last_name"),
+      supabase.from("milestones").select("parent_id,label,completed_at").eq("parent_type", "project"),
     ]);
     setRows((p ?? []) as Project[]);
     setOrgs((o ?? []) as Org[]);
     setProfiles((pr ?? []) as Profile[]);
     setContacts((c ?? []) as Contact[]);
+    const map: Record<string, { label: string; completed_at: string | null }[]> = {};
+    for (const m of (ms ?? []) as { parent_id: string; label: string; completed_at: string | null }[]) {
+      (map[m.parent_id] ||= []).push({ label: m.label, completed_at: m.completed_at });
+    }
+    setMilestonesByProject(map);
   };
   useEffect(() => { void load(); }, []);
 
@@ -120,6 +148,16 @@ function ProjectList({ editable, onOpen }: { editable: boolean; onOpen: (p: Proj
       render: (r) => <Badge variant="secondary">{statusLabel(r.status)}</Badge>,
       editable, type: "select",
       options: statusOptions,
+    },
+    {
+      key: "next_action", header: "Next Action",
+      accessor: (r) => computeNextAction(milestonesByProject[r.id] ?? []),
+      render: (r) => {
+        const action = computeNextAction(milestonesByProject[r.id] ?? []);
+        if (!action) return <span className="text-muted-foreground">—</span>;
+        const variant = action === "Completed" ? "default" : "secondary";
+        return <Badge variant={variant}>{action}</Badge>;
+      },
     },
     {
       key: "priority", header: "Priority", accessor: (r) => r.priority,
@@ -293,16 +331,14 @@ function ProjectDetail({ project, editable, onBack, onSaved }: { project: Projec
         </Card>
       </Collapsible>
 
-      <Collapsible defaultOpen>
-        <Card className="shadow-soft">
-          <CardContent className="pt-6 space-y-4">
-            <CollapsibleTrigger asChild>
-              <button type="button" className="flex w-full items-center justify-between text-left group">
-                <h3 className="font-semibold">Milestones</h3>
-                <ChevronDown className="size-4 transition-transform group-data-[state=closed]:-rotate-90" />
-              </button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-4 pt-2">
+      <Card className="shadow-soft">
+        <CardContent className="pt-6">
+          <Tabs defaultValue="milestones">
+            <TabsList>
+              <TabsTrigger value="milestones">Milestones</TabsTrigger>
+              <TabsTrigger value="todos">To-dos</TabsTrigger>
+            </TabsList>
+            <TabsContent value="milestones" className="mt-4 space-y-4">
               {milestones.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No milestones yet.</p>
               ) : (
@@ -353,10 +389,13 @@ function ProjectDetail({ project, editable, onBack, onSaved }: { project: Projec
                   <Button onClick={addCustom} disabled={!customLabel.trim()}>Add</Button>
                 </div>
               )}
-            </CollapsibleContent>
-          </CardContent>
-        </Card>
-      </Collapsible>
+            </TabsContent>
+            <TabsContent value="todos" className="mt-4">
+              <TodoList parentType="project" parentId={project.id} editable={editable} />
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
 
       <ProjectDialog open={openEdit} onOpenChange={setOpenEdit} project={project} defaultType={project.type} orgs={orgs} contacts={contacts} profiles={profiles} onSaved={load} />
     </div>
