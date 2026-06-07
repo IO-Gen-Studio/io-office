@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { CustomFieldValues } from "@/components/CustomFieldValues";
 import { CustomFieldDisplay, useCustomFieldColumns } from "@/components/CustomFieldDisplay";
 import { CostBreakdown } from "@/components/CostBreakdown";
+import { TodoList } from "@/components/TodoList";
 import { useBuiltinFieldLabel, useBuiltinFieldOptions } from "@/lib/builtin-labels";
 import type { Database } from "@/integrations/supabase/types";
 
