@@ -94,20 +94,27 @@ function ProjectList({ editable, onOpen }: { editable: boolean; onOpen: (p: Proj
   const [orgs, setOrgs] = useState<Org[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
+  const [milestonesByProject, setMilestonesByProject] = useState<Record<string, { label: string; completed_at: string | null }[]>>({});
   const [tab, setTab] = useState<PType>("project");
   const [open, setOpen] = useState(false);
 
   const load = async () => {
-    const [{ data: p }, { data: o }, { data: pr }, { data: c }] = await Promise.all([
+    const [{ data: p }, { data: o }, { data: pr }, { data: c }, { data: ms }] = await Promise.all([
       supabase.from("projects").select("*").order("created_at", { ascending: false }),
       supabase.from("organisations").select("id,name").order("name"),
       supabase.from("profiles").select("id,full_name").order("full_name"),
       supabase.from("contacts").select("id,first_name,last_name,organisation_id").order("last_name"),
+      supabase.from("milestones").select("parent_id,label,completed_at").eq("parent_type", "project"),
     ]);
     setRows((p ?? []) as Project[]);
     setOrgs((o ?? []) as Org[]);
     setProfiles((pr ?? []) as Profile[]);
     setContacts((c ?? []) as Contact[]);
+    const map: Record<string, { label: string; completed_at: string | null }[]> = {};
+    for (const m of (ms ?? []) as { parent_id: string; label: string; completed_at: string | null }[]) {
+      (map[m.parent_id] ||= []).push({ label: m.label, completed_at: m.completed_at });
+    }
+    setMilestonesByProject(map);
   };
   useEffect(() => { void load(); }, []);
 
@@ -141,6 +148,16 @@ function ProjectList({ editable, onOpen }: { editable: boolean; onOpen: (p: Proj
       render: (r) => <Badge variant="secondary">{statusLabel(r.status)}</Badge>,
       editable, type: "select",
       options: statusOptions,
+    },
+    {
+      key: "next_action", header: "Next Action",
+      accessor: (r) => computeNextAction(milestonesByProject[r.id] ?? []),
+      render: (r) => {
+        const action = computeNextAction(milestonesByProject[r.id] ?? []);
+        if (!action) return <span className="text-muted-foreground">—</span>;
+        const variant = action === "Completed" ? "default" : "secondary";
+        return <Badge variant={variant}>{action}</Badge>;
+      },
     },
     {
       key: "priority", header: "Priority", accessor: (r) => r.priority,
