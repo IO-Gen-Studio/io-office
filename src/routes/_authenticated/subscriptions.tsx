@@ -321,16 +321,14 @@ function SubDetail({ sub, editable, onBack, onSaved }: { sub: Sub; editable: boo
         </Card>
       </Collapsible>
 
-      <Collapsible defaultOpen>
-        <Card className="shadow-soft">
-          <CardContent className="pt-6 space-y-4">
-            <CollapsibleTrigger asChild>
-              <button type="button" className="flex w-full items-center justify-between text-left group">
-                <h3 className="font-semibold">Milestones</h3>
-                <ChevronDown className="size-4 transition-transform group-data-[state=closed]:-rotate-90" />
-              </button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-4 pt-2">
+      <Card className="shadow-soft">
+        <CardContent className="pt-6">
+          <Tabs defaultValue="milestones">
+            <TabsList>
+              <TabsTrigger value="milestones">Milestones</TabsTrigger>
+              <TabsTrigger value="todos">To-dos</TabsTrigger>
+            </TabsList>
+            <TabsContent value="milestones" className="mt-4 space-y-4">
               {milestones.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No milestones yet.</p>
               ) : (
@@ -381,10 +379,13 @@ function SubDetail({ sub, editable, onBack, onSaved }: { sub: Sub; editable: boo
                   <Button onClick={addCustom} disabled={!customLabel.trim()}>Add</Button>
                 </div>
               )}
-            </CollapsibleContent>
-          </CardContent>
-        </Card>
-      </Collapsible>
+            </TabsContent>
+            <TabsContent value="todos" className="mt-4">
+              <TodoList parentType="subscription" parentId={sub.id} editable={editable} />
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
 
       <SubDialog open={openEdit} onOpenChange={setOpenEdit} sub={sub} orgs={orgs} contacts={contacts} planOpts={planOpts} onSaved={load} />
     </div>
