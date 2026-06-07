@@ -331,16 +331,14 @@ function ProjectDetail({ project, editable, onBack, onSaved }: { project: Projec
         </Card>
       </Collapsible>
 
-      <Collapsible defaultOpen>
-        <Card className="shadow-soft">
-          <CardContent className="pt-6 space-y-4">
-            <CollapsibleTrigger asChild>
-              <button type="button" className="flex w-full items-center justify-between text-left group">
-                <h3 className="font-semibold">Milestones</h3>
-                <ChevronDown className="size-4 transition-transform group-data-[state=closed]:-rotate-90" />
-              </button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-4 pt-2">
+      <Card className="shadow-soft">
+        <CardContent className="pt-6">
+          <Tabs defaultValue="milestones">
+            <TabsList>
+              <TabsTrigger value="milestones">Milestones</TabsTrigger>
+              <TabsTrigger value="todos">To-dos</TabsTrigger>
+            </TabsList>
+            <TabsContent value="milestones" className="mt-4 space-y-4">
               {milestones.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No milestones yet.</p>
               ) : (
@@ -391,10 +389,13 @@ function ProjectDetail({ project, editable, onBack, onSaved }: { project: Projec
                   <Button onClick={addCustom} disabled={!customLabel.trim()}>Add</Button>
                 </div>
               )}
-            </CollapsibleContent>
-          </CardContent>
-        </Card>
-      </Collapsible>
+            </TabsContent>
+            <TabsContent value="todos" className="mt-4">
+              <TodoList parentType="project" parentId={project.id} editable={editable} />
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
 
       <ProjectDialog open={openEdit} onOpenChange={setOpenEdit} project={project} defaultType={project.type} orgs={orgs} contacts={contacts} profiles={profiles} onSaved={load} />
     </div>
