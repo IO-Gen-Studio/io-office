@@ -52,6 +52,26 @@ function relabelForType(label: string, type: PType): string {
   return label;
 }
 
+// Sequential milestones mapping → Next Action label.
+// Match against base labels (works variants too).
+const NEXT_ACTION_SEQUENCE: { match: string[]; next: string }[] = [
+  { match: ["initial enquiry"], next: "Submit Cost Proposal" },
+  { match: ["cost proposal submitted"], next: "Waiting for Order Approval" },
+  { match: ["order approved"], next: "Waiting for Purchase Order" },
+  { match: ["order received"], next: "Project In-Progress" },
+  { match: ["project completed", "works completed"], next: "Ready to Invoice" },
+  { match: ["project invoiced", "works invoiced"], next: "Completed" },
+];
+
+function computeNextAction(milestones: { label: string; completed_at: string | null }[]): string {
+  let action = "";
+  for (const step of NEXT_ACTION_SEQUENCE) {
+    const hit = milestones.find((m) => step.match.includes(m.label.trim().toLowerCase()) && !!m.completed_at);
+    if (hit) action = step.next;
+  }
+  return action;
+}
+
 function ProjectsPage() {
   const { canEdit } = useAuth();
   const editable = canEdit("projects");
