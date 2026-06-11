@@ -66,13 +66,8 @@ function SocialPage() {
   const approvalLabel = useBuiltinFieldLabel("social", "approval_status");
   const postStatusLabel = useBuiltinFieldLabel("social", "post_status");
 
-  // Pin "for_approval" rows to the top
-  const sortedRows = [...rows].sort((a, b) => {
-    const aFor = a.approval_status === "for_approval" ? 0 : 1;
-    const bFor = b.approval_status === "for_approval" ? 0 : 1;
-    if (aFor !== bFor) return aFor - bFor;
-    return 0;
-  });
+  const draftRows = rows.filter((r) => r.post_status !== "posted");
+  const postedRows = rows.filter((r) => r.post_status === "posted");
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
@@ -83,43 +78,38 @@ function SocialPage() {
         </div>
         {editable && <Button className="bg-gradient-primary text-primary-foreground" onClick={() => { setEditing(null); setOpen(true); }}><Plus className="size-4 mr-2" />New post</Button>}
       </div>
-      <Card className="shadow-soft">
-        <CardContent className="pt-6">
-          <Table>
-            <TableHeader><TableRow>
-              <TableHead>Platform</TableHead><TableHead>Title</TableHead><TableHead>Copy</TableHead><TableHead>Scheduled</TableHead>
-              <TableHead>Approval</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead>
-            </TableRow></TableHeader>
-            <TableBody>
-              {sortedRows.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No posts planned.</TableCell></TableRow> :
-                sortedRows.map((p) => {
-                  const isForApproval = p.approval_status === "for_approval";
-                  return (
-                  <TableRow key={p.id} className={isForApproval ? "bg-sidebar-accent/60 hover:bg-sidebar-accent" : undefined}>
-                    <TableCell><Badge variant="secondary">{platformLabel(p.platform)}</Badge></TableCell>
-                    <TableCell className="font-medium">{p.title || "—"}</TableCell>
-                    <TableCell className="max-w-md truncate text-muted-foreground">{p.copy || "—"}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{p.scheduled_at ? new Date(p.scheduled_at).toLocaleDateString() : "—"}</TableCell>
-                    <TableCell>
-                      {p.approval_status === "approved" ? <Badge>{approvalLabel("approved")}</Badge>
-                        : p.approval_status === "for_approval" ? <Badge className="bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90">{approvalLabel("for_approval")}</Badge>
-                        : <Badge variant="outline">{approvalLabel("not_approved")}</Badge>}
-                    </TableCell>
-                    <TableCell><Badge variant={p.post_status === "posted" ? "default" : p.post_status === "cancelled" ? "destructive" : "secondary"}>{postStatusLabel(p.post_status)}</Badge></TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" title="Preview" onClick={() => setViewing(p)}><Eye className="size-4" /></Button>
-                      {editable && <>
-                        <Button variant="ghost" size="icon" onClick={() => { setEditing(p); setOpen(true); }}><Pencil className="size-4" /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => remove(p)}><Trash2 className="size-4" /></Button>
-                      </>}
-                    </TableCell>
-                  </TableRow>
-                  );
-                })}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="draft" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="draft">Draft ({draftRows.length})</TabsTrigger>
+          <TabsTrigger value="posted">Posted ({postedRows.length})</TabsTrigger>
+        </TabsList>
+        <TabsContent value="draft">
+          <PlansTable
+            rows={draftRows}
+            highlightForApproval
+            editable={editable}
+            platformLabel={platformLabel}
+            approvalLabel={approvalLabel}
+            postStatusLabel={postStatusLabel}
+            onEdit={(p) => { setEditing(p); setOpen(true); }}
+            onView={setViewing}
+            onRemove={remove}
+          />
+        </TabsContent>
+        <TabsContent value="posted">
+          <PlansTable
+            rows={postedRows}
+            highlightForApproval={false}
+            editable={editable}
+            platformLabel={platformLabel}
+            approvalLabel={approvalLabel}
+            postStatusLabel={postStatusLabel}
+            onEdit={(p) => { setEditing(p); setOpen(true); }}
+            onView={setViewing}
+            onRemove={remove}
+          />
+        </TabsContent>
+      </Tabs>
       <PlanDialog open={open} onOpenChange={setOpen} plan={editing} profiles={profiles} onSaved={load} />
       <SocialPostMockupDialog
         open={!!viewing}
@@ -129,6 +119,125 @@ function SocialPage() {
         onApprovalChange={load}
       />
     </div>
+  );
+}
+
+type SortKey = "platform" | "title" | "scheduled_at" | "approval_status" | "post_status";
+type SortDir = "asc" | "desc";
+
+function PlansTable({
+  rows, highlightForApproval, editable,
+  platformLabel, approvalLabel, postStatusLabel,
+  onEdit, onView, onRemove,
+}: {
+  rows: Plan[]; highlightForApproval: boolean; editable: boolean;
+  platformLabel: (v: string) => string;
+  approvalLabel: (v: string) => string;
+  postStatusLabel: (v: string) => string;
+  onEdit: (p: Plan) => void; onView: (p: Plan) => void; onRemove: (p: Plan) => void;
+}) {
+  const [search, setSearch] = useState("");
+  const [platformFilter, setPlatformFilter] = useState<string>("all");
+  const [approvalFilter, setApprovalFilter] = useState<string>("all");
+  const [sortKey, setSortKey] = useState<SortKey>("scheduled_at");
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
+
+  const platforms = Array.from(new Set(rows.map((r) => r.platform)));
+  const approvals = Array.from(new Set(rows.map((r) => r.approval_status)));
+
+  const toggleSort = (k: SortKey) => {
+    if (sortKey === k) setSortDir(sortDir === "asc" ? "desc" : "asc");
+    else { setSortKey(k); setSortDir("asc"); }
+  };
+  const SortIcon = ({ k }: { k: SortKey }) => sortKey !== k
+    ? <ArrowUpDown className="size-3 inline ml-1 opacity-50" />
+    : sortDir === "asc" ? <ArrowUp className="size-3 inline ml-1" /> : <ArrowDown className="size-3 inline ml-1" />;
+
+  const filtered = rows.filter((p) => {
+    if (platformFilter !== "all" && p.platform !== platformFilter) return false;
+    if (approvalFilter !== "all" && p.approval_status !== approvalFilter) return false;
+    if (search) {
+      const q = search.toLowerCase();
+      if (!(p.title || "").toLowerCase().includes(q) && !(p.copy || "").toLowerCase().includes(q)) return false;
+    }
+    return true;
+  });
+
+  const sorted = [...filtered].sort((a, b) => {
+    if (highlightForApproval) {
+      const aFor = a.approval_status === "for_approval" ? 0 : 1;
+      const bFor = b.approval_status === "for_approval" ? 0 : 1;
+      if (aFor !== bFor) return aFor - bFor;
+    }
+    const av = (a[sortKey] ?? "") as string;
+    const bv = (b[sortKey] ?? "") as string;
+    const cmp = av < bv ? -1 : av > bv ? 1 : 0;
+    return sortDir === "asc" ? cmp : -cmp;
+  });
+
+  return (
+    <Card className="shadow-soft">
+      <CardContent className="pt-6 space-y-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <Input placeholder="Search title or copy…" value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-xs" />
+          <Select value={platformFilter} onValueChange={setPlatformFilter}>
+            <SelectTrigger className="w-44"><SelectValue placeholder="Platform" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All platforms</SelectItem>
+              {platforms.map((p) => <SelectItem key={p} value={p}>{platformLabel(p)}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={approvalFilter} onValueChange={setApprovalFilter}>
+            <SelectTrigger className="w-44"><SelectValue placeholder="Approval" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All approvals</SelectItem>
+              {approvals.map((a) => <SelectItem key={a} value={a}>{approvalLabel(a)}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          {(search || platformFilter !== "all" || approvalFilter !== "all") && (
+            <Button variant="ghost" size="sm" onClick={() => { setSearch(""); setPlatformFilter("all"); setApprovalFilter("all"); }}>Clear</Button>
+          )}
+        </div>
+        <Table>
+          <TableHeader><TableRow>
+            <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("platform")}>Platform<SortIcon k="platform" /></TableHead>
+            <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("title")}>Title<SortIcon k="title" /></TableHead>
+            <TableHead>Copy</TableHead>
+            <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("scheduled_at")}>Scheduled<SortIcon k="scheduled_at" /></TableHead>
+            <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("approval_status")}>Approval<SortIcon k="approval_status" /></TableHead>
+            <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("post_status")}>Status<SortIcon k="post_status" /></TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableRow></TableHeader>
+          <TableBody>
+            {sorted.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No posts.</TableCell></TableRow> :
+              sorted.map((p) => {
+                const isForApproval = highlightForApproval && p.approval_status === "for_approval";
+                return (
+                <TableRow key={p.id} className={isForApproval ? "bg-sidebar-accent/60 hover:bg-sidebar-accent" : undefined}>
+                  <TableCell><Badge variant="secondary">{platformLabel(p.platform)}</Badge></TableCell>
+                  <TableCell className="font-medium">{p.title || "—"}</TableCell>
+                  <TableCell className="max-w-md truncate text-muted-foreground">{p.copy || "—"}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{p.scheduled_at ? new Date(p.scheduled_at).toLocaleDateString() : "—"}</TableCell>
+                  <TableCell>
+                    {p.approval_status === "approved" ? <Badge>{approvalLabel("approved")}</Badge>
+                      : p.approval_status === "for_approval" ? <Badge className="bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90">{approvalLabel("for_approval")}</Badge>
+                      : <Badge variant="outline">{approvalLabel("not_approved")}</Badge>}
+                  </TableCell>
+                  <TableCell><Badge variant={p.post_status === "posted" ? "default" : p.post_status === "cancelled" ? "destructive" : "secondary"}>{postStatusLabel(p.post_status)}</Badge></TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="icon" title="Preview" onClick={() => onView(p)}><Eye className="size-4" /></Button>
+                    {editable && <>
+                      <Button variant="ghost" size="icon" onClick={() => onEdit(p)}><Pencil className="size-4" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => onRemove(p)}><Trash2 className="size-4" /></Button>
+                    </>}
+                  </TableCell>
+                </TableRow>
+                );
+              })}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
   );
 }
 
