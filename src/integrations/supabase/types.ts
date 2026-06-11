@@ -665,6 +665,7 @@ export type Database = {
           end_date: string | null
           end_time: string | null
           event_date: string
+          event_type: string | null
           id: string
           location: string | null
           start_time: string | null
@@ -679,6 +680,7 @@ export type Database = {
           end_date?: string | null
           end_time?: string | null
           event_date: string
+          event_type?: string | null
           id?: string
           location?: string | null
           start_time?: string | null
@@ -693,6 +695,7 @@ export type Database = {
           end_date?: string | null
           end_time?: string | null
           event_date?: string
+          event_type?: string | null
           id?: string
           location?: string | null
           start_time?: string | null
