@@ -1,12 +1,8 @@
 import { createFileRoute, Outlet, Link, useRouterState, useNavigate, redirect } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import {
-  Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
-  SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger, useSidebar,
-} from "@/components/ui/sidebar";
-import {
   LayoutDashboard, Users, Mail, CalendarDays, Megaphone, Briefcase, CreditCard,
-  Bell, Settings, LogOut,
+  Bell, Settings, LogOut, Menu, X,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/auth-context";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,16 +21,18 @@ export const Route = createFileRoute("/_authenticated")({
   component: AuthLayout,
 });
 
-const NAV: { to: string; label: string; icon: typeof LayoutDashboard; module?: string }[] = [
+type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; module?: string };
+
+const NAV: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, module: "dashboard" },
   { to: "/calendar", label: "Calendar", icon: CalendarDays, module: "calendar" },
 ];
-const BIZ_DEV = [
+const BIZ_DEV: NavItem[] = [
   { to: "/crm", label: "Contacts", icon: Users, module: "crm" },
   { to: "/outreach", label: "Email Outreach", icon: Mail, module: "outreach" },
   { to: "/social", label: "Social Planner", icon: Megaphone, module: "social" },
 ];
-const OPS = [
+const OPS: NavItem[] = [
   { to: "/projects", label: "Projects & Works", icon: Briefcase, module: "projects" },
   { to: "/subscriptions", label: "Subscriptions", icon: CreditCard, module: "subscriptions" },
 ];
@@ -42,9 +40,9 @@ const OPS = [
 function AuthLayout() {
   const { profile, signOut, canView, isAdmin, isSuperAdmin, user, loading, tenants, activeTenantId, switchTenant } = useAuth();
   const [unread, setUnread] = useState(0);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
   const redirectedRef = useRef(false);
-  const activeTenantName = tenants.find((tenant) => tenant.id === activeTenantId)?.name ?? (isSuperAdmin ? "Select organisation" : tenants[0]?.name);
 
   useEffect(() => {
     if (!loading && profile?.must_change_password && !redirectedRef.current) {
@@ -68,125 +66,207 @@ function AuthLayout() {
     return () => { void supabase.removeChannel(channel); };
   }, [userId]);
 
+  const adminVisible = isAdmin || isSuperAdmin;
+
   return (
-    <SidebarProvider>
-      <div className="min-h-screen w-full flex bg-background">
-        <AppSidebar canView={canView} isAdmin={isAdmin || isSuperAdmin} />
-        <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-14 border-b border-border bg-card/50 backdrop-blur flex items-center px-4 gap-2 sticky top-0 z-10">
-            <SidebarTrigger />
-            {(tenants.length > 0 || isSuperAdmin) && (
-              tenants.length === 1 && !isSuperAdmin ? (
-                <span className="text-sm font-medium ml-2 truncate max-w-[200px]">{tenants[0].name}</span>
-              ) : (
-                <Select value={activeTenantId ?? undefined} onValueChange={(v) => { void switchTenant(v); }} disabled={tenants.length === 0}>
-                  <SelectTrigger className="w-[220px] h-8 ml-2"><SelectValue placeholder={activeTenantName} /></SelectTrigger>
-                  <SelectContent>
-                    {tenants.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}{!t.active && " (disabled)"}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              )
+    <div className="min-h-screen w-full flex bg-background">
+      <FloatingSidebar
+        canView={canView}
+        adminVisible={adminVisible}
+        onSignOut={() => signOut()}
+      />
+
+      {/* Mobile drawer */}
+      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+        <SheetContent side="left" className="p-0 w-72 bg-card">
+          <SheetHeader className="px-4 pt-4">
+            <SheetTitle className="flex items-center gap-2">
+              <img src={logoUrl} alt="" className="h-7 w-7 object-contain" />
+              <span className="text-sm font-semibold">IO Office</span>
+            </SheetTitle>
+          </SheetHeader>
+          <MobileNavBody
+            canView={canView}
+            adminVisible={adminVisible}
+            onNavigate={() => setMobileOpen(false)}
+            onSignOut={() => { setMobileOpen(false); signOut(); }}
+          />
+        </SheetContent>
+      </Sheet>
+
+      <div className="flex-1 flex flex-col min-w-0 md:pr-3">
+        <header className="flex items-center px-4 md:px-8 h-14 gap-2 sticky top-0 z-10 bg-background/80 backdrop-blur">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={() => setMobileOpen(true)}
+            aria-label="Open menu"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+
+          {(tenants.length > 0 || isSuperAdmin) && (
+            tenants.length === 1 && !isSuperAdmin ? (
+              <span className="text-sm font-medium truncate max-w-[200px]">{tenants[0].name}</span>
+            ) : (
+              <Select value={activeTenantId ?? undefined} onValueChange={(v) => { void switchTenant(v); }} disabled={tenants.length === 0}>
+                <SelectTrigger className="w-[220px] h-9 bg-card border-border/60 rounded-xl"><SelectValue placeholder="Select organisation" /></SelectTrigger>
+                <SelectContent>
+                  {tenants.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}{!t.active && " (disabled)"}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )
+          )}
+          <div className="flex-1" />
+          <Link to="/notifications" className="relative p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors" aria-label="Notifications">
+            <Bell className="h-5 w-5" />
+            {unread > 0 && (
+              <Badge className="absolute -top-0.5 -right-0.5 h-[18px] min-w-[18px] px-1 text-[10px] bg-destructive text-destructive-foreground flex items-center justify-center rounded-full">
+                {unread > 9 ? "9+" : unread}
+              </Badge>
             )}
-            <div className="flex-1" />
-            <Link to="/notifications" className="p-2 rounded-md hover:bg-accent relative">
-              <Bell className="h-4 w-4" />
-              {unread > 0 && (
-                <Badge className="absolute -top-1 -right-1 h-4 min-w-4 px-1 text-[10px] bg-primary text-primary-foreground flex items-center justify-center">
-                  {unread > 9 ? "9+" : unread}
-                </Badge>
-              )}
-            </Link>
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="ghost" className="gap-2 px-2">
-                  <Avatar className="size-7">
-                    <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                      {(profile?.full_name || user?.email || "U").slice(0,2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="hidden md:inline text-sm">{profile?.full_name || user?.email}</span>
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-full sm:max-w-sm">
-                <SheetHeader>
-                  <SheetTitle>Account</SheetTitle>
-                </SheetHeader>
-                <div className="mt-6 space-y-1">
-                  <div className="px-3 py-2 text-xs text-muted-foreground">{profile?.email}</div>
-                  <Link to="/settings/profile" className="block rounded-lg px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground">Profile</Link>
-                  {isAdmin && <Link to="/settings/users" className="block rounded-lg px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground">User management</Link>}
-                  <button onClick={() => signOut()} className="w-full text-left flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground">
-                    <LogOut className="size-4" /> Sign out
-                  </button>
-                </div>
-              </SheetContent>
-            </Sheet>
-          </header>
-          <main className="flex-1 overflow-auto"><Outlet /></main>
-        </div>
+          </Link>
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" className="gap-2 px-2 h-9">
+                <Avatar className="size-7">
+                  <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                    {(profile?.full_name || user?.email || "U").slice(0,2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="hidden md:inline text-sm">{profile?.full_name || user?.email}</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-full sm:max-w-sm">
+              <SheetHeader><SheetTitle>Account</SheetTitle></SheetHeader>
+              <div className="mt-6 space-y-1">
+                <div className="px-3 py-2 text-xs text-muted-foreground">{profile?.email}</div>
+                <Link to="/settings/profile" className="block rounded-lg px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground">Profile</Link>
+                {adminVisible && <Link to="/settings/users" className="block rounded-lg px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground">User management</Link>}
+                <button onClick={() => signOut()} className="w-full text-left flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground">
+                  <LogOut className="size-4" /> Sign out
+                </button>
+              </div>
+            </SheetContent>
+          </Sheet>
+        </header>
+        <main className="flex-1 overflow-auto px-4 md:px-8 pb-6"><Outlet /></main>
       </div>
-    </SidebarProvider>
+    </div>
   );
 }
 
-function AppSidebar({ canView, isAdmin }: { canView: (m: string) => boolean; isAdmin: boolean }) {
-  const { state } = useSidebar();
-  const collapsed = state === "collapsed";
+function navGroups(canView: (m: string) => boolean) {
+  return [
+    { label: "Overview", items: NAV.filter((i) => !i.module || canView(i.module)) },
+    { label: "Business Development", items: BIZ_DEV.filter((i) => !i.module || canView(i.module)) },
+    { label: "Operations", items: OPS.filter((i) => !i.module || canView(i.module)) },
+  ].filter((g) => g.items.length > 0);
+}
+
+function FloatingSidebar({ canView, adminVisible, onSignOut }: { canView: (m: string) => boolean; adminVisible: boolean; onSignOut: () => void }) {
   const path = useRouterState({ select: (r) => r.location.pathname });
   const isActive = (p: string) => path === p || path.startsWith(p + "/");
-
-  const renderGroup = (label: string, items: typeof NAV) => {
-    const visible = items.filter((i) => !i.module || canView(i.module));
-    if (!visible.length) return null;
-    return (
-      <SidebarGroup>
-        <SidebarGroupLabel>{label}</SidebarGroupLabel>
-        <SidebarGroupContent>
-          <SidebarMenu>
-            {visible.map((item) => (
-              <SidebarMenuItem key={item.to}>
-                <SidebarMenuButton asChild isActive={isActive(item.to)}>
-                  <Link to={item.to} className="flex items-center gap-2">
-                    <item.icon className="h-4 w-4" />
-                    {!collapsed && <span>{item.label}</span>}
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
-        </SidebarGroupContent>
-      </SidebarGroup>
-    );
-  };
+  const groups = navGroups(canView);
 
   return (
-    <Sidebar collapsible="icon">
-      <SidebarContent>
-        <div className="p-3 flex items-center gap-2">
-          <img src={logoUrl} alt="Logo" className="size-8 rounded-md object-contain shrink-0" />
-          {!collapsed && <div className="font-semibold tracking-tight"> </div>}
-        </div>
-        {renderGroup("Overview", NAV)}
-        {renderGroup("Business Development", BIZ_DEV)}
-        {renderGroup("Operations", OPS)}
-        {isAdmin && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Admin</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={isActive("/settings")}>
-                    <Link to="/settings/profile" className="flex items-center gap-2">
-                      <Settings className="h-4 w-4" />
-                      {!collapsed && <span>Settings</span>}
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+    <aside className="hidden md:flex flex-col w-[220px] bg-card shrink-0 h-[calc(100vh-1.5rem)] sticky top-3 ml-3 rounded-2xl border border-border/60 shadow-floating overflow-hidden">
+      <div className="flex items-center gap-2 h-14 px-4">
+        <img src={logoUrl} alt="" className="h-7 w-7 object-contain" />
+        <span className="font-semibold text-sm text-foreground tracking-tight">IO Office</span>
+      </div>
+
+      <nav className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-3 pt-1 px-2 pb-2">
+        {groups.map((group) => (
+          <div key={group.label} className="flex flex-col gap-0.5">
+            <div className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">{group.label}</div>
+            {group.items.map((item) => {
+              const active = isActive(item.to);
+              return (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    active
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                      : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                  }`}
+                >
+                  <item.icon className="h-4 w-4 shrink-0" />
+                  <span className="leading-tight truncate">{item.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        ))}
+      </nav>
+
+      <div className="flex flex-col gap-0.5 shrink-0 pb-3 px-2 border-t border-border/60 pt-2">
+        {adminVisible && (
+          <Link
+            to="/settings/profile"
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              isActive("/settings")
+                ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+            }`}
+          >
+            <Settings className="h-4 w-4 shrink-0" />
+            <span className="leading-tight truncate">Settings</span>
+          </Link>
         )}
-      </SidebarContent>
-    </Sidebar>
+        <button
+          onClick={onSignOut}
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground transition-colors"
+        >
+          <LogOut className="h-4 w-4 shrink-0" />
+          <span className="leading-tight truncate">Sign out</span>
+        </button>
+      </div>
+    </aside>
+  );
+}
+
+function MobileNavBody({ canView, adminVisible, onNavigate, onSignOut }: { canView: (m: string) => boolean; adminVisible: boolean; onNavigate: () => void; onSignOut: () => void }) {
+  const path = useRouterState({ select: (r) => r.location.pathname });
+  const isActive = (p: string) => path === p || path.startsWith(p + "/");
+  const groups = navGroups(canView);
+  return (
+    <nav className="flex flex-col gap-3 px-2 pt-2 pb-4">
+      {groups.map((group) => (
+        <div key={group.label} className="flex flex-col gap-0.5">
+          <div className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">{group.label}</div>
+          {group.items.map((item) => {
+            const active = isActive(item.to);
+            return (
+              <Link
+                key={item.to}
+                to={item.to}
+                onClick={onNavigate}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  active
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                    : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                }`}
+              >
+                <item.icon className="h-4 w-4 shrink-0" />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      ))}
+      <div className="border-t border-border/60 mt-2 pt-2 flex flex-col gap-0.5">
+        {adminVisible && (
+          <Link to="/settings/profile" onClick={onNavigate} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground transition-colors">
+            <Settings className="h-4 w-4" /> Settings
+          </Link>
+        )}
+        <button onClick={onSignOut} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground transition-colors">
+          <LogOut className="h-4 w-4" /> Sign out
+        </button>
+      </div>
+    </nav>
   );
 }
