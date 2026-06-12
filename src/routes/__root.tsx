@@ -53,9 +53,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
+      { name: "theme-color", content: "#2d3748" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "default" },
+      { name: "apple-mobile-web-app-title", content: "IO Office" },
       { title: "Business Management Tool" },
-      { name: "description", content: "Internal operations and CRM platform." },
       { property: "og:title", content: "Business Management Tool" },
       { name: "twitter:title", content: "Business Management Tool" },
       { property: "og:description", content: "Internal operations and CRM platform." },
