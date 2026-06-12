@@ -2,7 +2,7 @@ import { createFileRoute, Outlet, Link, useRouterState, useNavigate, redirect } 
 import { useEffect, useRef, useState } from "react";
 import {
   LayoutDashboard, Users, Mail, CalendarDays, Megaphone, Briefcase, CreditCard,
-  Bell, Settings, LogOut, Menu, X,
+  Bell, Settings, LogOut, Menu,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/auth-context";
 import { supabase } from "@/integrations/supabase/client";
