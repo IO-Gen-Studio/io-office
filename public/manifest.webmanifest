@@ -1,0 +1,14 @@
+{
+  "name": "IO Office",
+  "short_name": "IO Office",
+  "description": "Business management workspace — CRM, projects, subscriptions, social planner.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#2d3748",
+  "background_color": "#f7f8fa",
+  "icons": [
+    { "src": "/favicon.ico", "sizes": "any", "type": "image/x-icon" }
+  ]
+}
