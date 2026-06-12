@@ -59,6 +59,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "apple-mobile-web-app-status-bar-style", content: "default" },
       { name: "apple-mobile-web-app-title", content: "IO Office" },
       { title: "Business Management Tool" },
+      { name: "description", content: "Internal operations and CRM platform." },
       { property: "og:title", content: "Business Management Tool" },
       { name: "twitter:title", content: "Business Management Tool" },
       { property: "og:description", content: "Internal operations and CRM platform." },
