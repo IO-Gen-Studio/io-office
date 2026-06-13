@@ -12,7 +12,7 @@ import appCss from "../styles.css?url";
 function NotFoundComponent() {
   return (
     <div className="flex min-h-dvh items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
+      <main className="max-w-md text-center">
         <h1 className="text-7xl font-semibold text-gradient">404</h1>
         <h2 className="mt-4 text-xl font-medium">Page not found</h2>
         <p className="mt-2 text-sm text-muted-foreground">
@@ -21,7 +21,7 @@ function NotFoundComponent() {
         <div className="mt-6">
           <Button asChild><Link to="/">Go home</Link></Button>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
@@ -31,14 +31,14 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   const router = useRouter();
   return (
     <div className="flex min-h-dvh items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
+      <main className="max-w-md text-center">
         <h1 className="text-xl font-semibold">Something went wrong</h1>
         <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <Button onClick={() => { router.invalidate(); reset(); }}>Try again</Button>
           <Button asChild variant="outline"><a href="/">Go home</a></Button>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
