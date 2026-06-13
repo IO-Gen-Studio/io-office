@@ -180,7 +180,7 @@ function FloatingSidebar({ canView, adminVisible, onSignOut }: { canView: (m: st
       <nav className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-3 pt-1 px-2 pb-2">
         {groups.map((group) => (
           <div key={group.label} className="flex flex-col gap-0.5">
-            <div className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">{group.label}</div>
+            <div className="px-3 pt-2 pb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{group.label}</div>
             {group.items.map((item) => {
               const active = isActive(item.to);
               return (
@@ -237,7 +237,7 @@ function MobileNavBody({ canView, adminVisible, onNavigate, onSignOut }: { canVi
     <nav className="flex flex-col gap-3 px-2 pt-2 pb-4">
       {groups.map((group) => (
         <div key={group.label} className="flex flex-col gap-0.5">
-          <div className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">{group.label}</div>
+          <div className="px-3 pt-2 pb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{group.label}</div>
           {group.items.map((item) => {
             const active = isActive(item.to);
             return (

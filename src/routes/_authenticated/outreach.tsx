@@ -130,7 +130,18 @@ function CampaignsTab({ editable, onOpen }: { editable: boolean; onOpen: (c: Cam
                 const contacts = contactsByCampaign[c.id] ?? [];
                 const next = computeNext(c, contacts);
                 return (
-                  <TableRow key={c.id} className="cursor-pointer hover:bg-muted/40" onClick={() => onOpen(c)}>
+                  <TableRow
+                    key={c.id}
+                    className="cursor-pointer hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    tabIndex={0}
+                    onClick={() => onOpen(c)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        onOpen(c);
+                      }
+                    }}
+                  >
                     <TableCell className="font-medium">{c.name}</TableCell>
                     <TableCell className="text-muted-foreground">{c.description || "—"}</TableCell>
                     <TableCell className="text-right">{contacts.length}</TableCell>
