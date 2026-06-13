@@ -142,7 +142,7 @@ export function TodoList({
                   </td>
                   {editable && (
                     <td className="p-2 text-right">
-                      <Button variant="ghost" size="icon" onClick={() => remove(t)}><Trash2 className="size-4" /></Button>
+                      <Button variant="ghost" size="icon" aria-label={`Delete ${t.title}`} onClick={() => remove(t)}><Trash2 className="size-4" /></Button>
                     </td>
                   )}
                 </tr>

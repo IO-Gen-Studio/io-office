@@ -227,8 +227,8 @@ function PlansTable({
                   <TableCell className="text-right">
                     <Button variant="ghost" size="icon" title="Preview" onClick={() => onView(p)}><Eye className="size-4" /></Button>
                     {editable && <>
-                      <Button variant="ghost" size="icon" onClick={() => onEdit(p)}><Pencil className="size-4" /></Button>
-                      <Button variant="ghost" size="icon" onClick={() => onRemove(p)}><Trash2 className="size-4" /></Button>
+                      <Button variant="ghost" size="icon" aria-label={`Edit ${p.title}`} onClick={() => onEdit(p)}><Pencil className="size-4" /></Button>
+                      <Button variant="ghost" size="icon" aria-label={`Delete ${p.title}`} onClick={() => onRemove(p)}><Trash2 className="size-4" /></Button>
                     </>}
                   </TableCell>
                 </TableRow>

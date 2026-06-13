@@ -153,9 +153,9 @@ function CalendarPage() {
           <p className="text-muted-foreground mt-1">Events, milestones, posts, renewals and deadlines.</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={() => setCursor(new Date(year, month - 1, 1))}><ChevronLeft className="size-4" /></Button>
+          <Button variant="outline" size="icon" aria-label="Previous month" onClick={() => setCursor(new Date(year, month - 1, 1))}><ChevronLeft className="size-4" /></Button>
           <div className="font-medium w-40 text-center">{monthName}</div>
-          <Button variant="outline" size="icon" onClick={() => setCursor(new Date(year, month + 1, 1))}><ChevronRight className="size-4" /></Button>
+          <Button variant="outline" size="icon" aria-label="Next month" onClick={() => setCursor(new Date(year, month + 1, 1))}><ChevronRight className="size-4" /></Button>
           <Button variant="ghost" size="sm" onClick={() => { const d = new Date(); setCursor(new Date(d.getFullYear(), d.getMonth(), 1)); }}>Today</Button>
           <Button className="bg-gradient-primary text-primary-foreground" size="sm" onClick={() => { setEditing(null); setDialogOpen(true); }}>
             <Plus className="size-4 mr-1" />New event
@@ -245,9 +245,9 @@ function CalendarPage() {
                           {e.location && <p className="text-xs text-muted-foreground">📍 {e.location}</p>}
                         </div>
                         <div className="flex gap-1">
-                          <Button variant="ghost" size="icon" onClick={() => { setEditing(e); setDialogOpen(true); }}><Pencil className="size-4" /></Button>
+                          <Button variant="ghost" size="icon" aria-label={`Edit ${e.title}`} onClick={() => { setEditing(e); setDialogOpen(true); }}><Pencil className="size-4" /></Button>
                           {(e.created_by === user?.id) && (
-                            <Button variant="ghost" size="icon" onClick={() => removeEvent(e.id)}><Trash2 className="size-4" /></Button>
+                            <Button variant="ghost" size="icon" aria-label={`Delete ${e.title}`} onClick={() => removeEvent(e.id)}><Trash2 className="size-4" /></Button>
                           )}
                         </div>
                       </div>

@@ -96,8 +96,8 @@ function OrgsTab({ editable }: { editable: boolean }) {
           toolbarLeft={editable && <Button className="bg-gradient-primary text-primary-foreground" onClick={() => { setEditing(null); setOpen(true); }}><Plus className="size-4 mr-2" />New organisation</Button>}
           actions={editable ? (o) => (
             <>
-              <Button variant="ghost" size="icon" onClick={() => { setEditing(o); setOpen(true); }}><Pencil className="size-4" /></Button>
-              <Button variant="ghost" size="icon" onClick={() => remove(o)}><Trash2 className="size-4" /></Button>
+              <Button variant="ghost" size="icon" aria-label={`Edit ${o.name}`} onClick={() => { setEditing(o); setOpen(true); }}><Pencil className="size-4" /></Button>
+              <Button variant="ghost" size="icon" aria-label={`Delete ${o.name}`} onClick={() => remove(o)}><Trash2 className="size-4" /></Button>
             </>
           ) : undefined}
         />
@@ -221,8 +221,8 @@ function ContactsTab({ editable }: { editable: boolean }) {
           toolbarLeft={editable && <Button className="bg-gradient-primary text-primary-foreground" onClick={() => { setEditing(null); setOpen(true); }}><Plus className="size-4 mr-2" />New contact</Button>}
           actions={editable ? (c) => (
             <>
-              <Button variant="ghost" size="icon" onClick={() => { setEditing(c); setOpen(true); }}><Pencil className="size-4" /></Button>
-              <Button variant="ghost" size="icon" onClick={() => remove(c)}><Trash2 className="size-4" /></Button>
+              <Button variant="ghost" size="icon" aria-label="Edit contact" onClick={() => { setEditing(c); setOpen(true); }}><Pencil className="size-4" /></Button>
+              <Button variant="ghost" size="icon" aria-label="Delete contact" onClick={() => remove(c)}><Trash2 className="size-4" /></Button>
             </>
           ) : undefined}
         />

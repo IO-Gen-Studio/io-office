@@ -348,7 +348,7 @@ export function CostBreakdown({
                     <td className="p-1.5"><Input className="h-8 text-right" type="number" disabled={!canEdit} value={i.final_cost} onChange={(e) => updateItem(i.id, { final_cost: Number(e.target.value) || 0 })} /></td>
                     <td className="p-1.5"><Input className="h-8 text-right" type="number" disabled={!canEdit} value={i.supplier_cost} onChange={(e) => updateItem(i.id, { supplier_cost: Number(e.target.value) || 0 })} /></td>
                     <td className="p-2 text-right tabular-nums">{formatGBP(lineFinal - lineInv)}</td>
-                    {editable && editMode && <td className="p-1.5 text-right"><Button variant="ghost" size="icon" onClick={() => removeItem(i.id)}><Trash2 className="size-4" /></Button></td>}
+                    {editable && editMode && <td className="p-1.5 text-right"><Button variant="ghost" size="icon" aria-label="Delete cost item" onClick={() => removeItem(i.id)}><Trash2 className="size-4" /></Button></td>}
                   </tr>
                 );
               })}
