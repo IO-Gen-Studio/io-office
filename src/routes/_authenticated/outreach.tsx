@@ -138,8 +138,8 @@ function CampaignsTab({ editable, onOpen }: { editable: boolean; onOpen: (c: Cam
                     <TableCell className="text-muted-foreground">{next.date}</TableCell>
                     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                       {editable && <>
-                        <Button variant="ghost" size="icon" onClick={() => { setEditing(c); setOpen(true); }}><Pencil className="size-4" /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => remove(c)}><Trash2 className="size-4" /></Button>
+                        <Button variant="ghost" size="icon" aria-label="Edit campaign" onClick={() => { setEditing(c); setOpen(true); }}><Pencil className="size-4" /></Button>
+                        <Button variant="ghost" size="icon" aria-label="Delete campaign" onClick={() => remove(c)}><Trash2 className="size-4" /></Button>
                       </>}
                     </TableCell>
                   </TableRow>
@@ -451,8 +451,8 @@ function CampaignDetail({ campaign, editable, onBack }: { campaign: Campaign; ed
                     })}
                     <TableCell className="text-right">
                       {editable && <>
-                        <Button variant="ghost" size="icon" onClick={() => { setEditing(r); setOpen(true); }}><Pencil className="size-4" /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => remove(r)}><Trash2 className="size-4" /></Button>
+                        <Button variant="ghost" size="icon" aria-label="Edit contact" onClick={() => { setEditing(r); setOpen(true); }}><Pencil className="size-4" /></Button>
+                        <Button variant="ghost" size="icon" aria-label="Delete contact" onClick={() => remove(r)}><Trash2 className="size-4" /></Button>
                       </>}
                     </TableCell>
                   </TableRow>
@@ -572,8 +572,8 @@ function TemplatesTab({ editable }: { editable: boolean }) {
                   <TableCell>{t.approved ? <Badge>Approved</Badge> : <Badge variant="secondary">Draft</Badge>}</TableCell>
                   <TableCell className="text-right">
                     {editable && <>
-                      <Button variant="ghost" size="icon" onClick={() => { setEditing(t); setOpen(true); }}><Pencil className="size-4" /></Button>
-                      <Button variant="ghost" size="icon" onClick={() => remove(t)}><Trash2 className="size-4" /></Button>
+                      <Button variant="ghost" size="icon" aria-label="Edit email template" onClick={() => { setEditing(t); setOpen(true); }}><Pencil className="size-4" /></Button>
+                      <Button variant="ghost" size="icon" aria-label="Delete email template" onClick={() => remove(t)}><Trash2 className="size-4" /></Button>
                     </>}
                   </TableCell>
                 </TableRow>

@@ -375,7 +375,7 @@ function ProjectDetail({ project, editable, onBack, onSaved }: { project: Projec
                           </td>
                           <td className="p-2 text-muted-foreground">{formatDateUK(m.completed_at)}</td>
                           {editable && <td className="p-2 text-right">
-                            {m.is_custom && <Button variant="ghost" size="icon" onClick={() => removeMilestone(m)}><Trash2 className="size-4" /></Button>}
+                            {m.is_custom && <Button variant="ghost" size="icon" aria-label="Delete custom milestone" onClick={() => removeMilestone(m)}><Trash2 className="size-4" /></Button>}
                           </td>}
                         </tr>
                       ))}
