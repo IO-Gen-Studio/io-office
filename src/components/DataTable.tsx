@@ -176,9 +176,9 @@ export function DataTable<T>(props: DataTableProps<T>) {
                   </label>
                 ))}
                 <div className="my-2 border-t border-border" />
-                <button onClick={reset} className="w-full text-left flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-accent">
+                <Button variant="ghost" onClick={reset} className="w-full justify-start rounded-lg px-3">
                   <RotateCcw className="size-4" />Reset to default
-                </button>
+                </Button>
               </div>
             </SheetContent>
           </Sheet>

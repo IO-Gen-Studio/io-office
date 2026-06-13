@@ -49,7 +49,7 @@ function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-subtle p-4">
+    <div className="min-h-dvh flex items-center justify-center bg-gradient-subtle p-4">
       <Card className="w-full max-w-md shadow-elegant border-border/60">
         <CardHeader className="space-y-1">
           <div className="flex justify-center py-2">
@@ -75,12 +75,12 @@ function LoginPage() {
             </Button>
             {mode === "login" ? (
               <div className="text-center">
-                <button type="button" className="text-xs text-primary hover:underline"
-                  onClick={() => setMode("forgot")}>Forgot password?</button>
+                <Button type="button" variant="link" className="h-auto min-h-11 px-2 text-xs"
+                  onClick={() => setMode("forgot")}>Forgot password?</Button>
               </div>
             ) : (
-              <button type="button" className="w-full text-xs text-muted-foreground hover:underline"
-                onClick={() => setMode("login")}>Back to sign in</button>
+              <Button type="button" variant="link" className="min-h-11 w-full text-xs"
+                onClick={() => setMode("login")}>Back to sign in</Button>
             )}
             <p className="text-xs text-muted-foreground text-center pt-2">
               Accounts are created by an administrator. Contact your admin if you need access.

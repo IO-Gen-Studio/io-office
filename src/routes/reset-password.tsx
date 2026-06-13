@@ -44,7 +44,7 @@ function ResetPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-subtle p-4">
+    <div className="min-h-dvh flex items-center justify-center bg-gradient-subtle p-4">
       <Card className="w-full max-w-md shadow-elegant">
         <CardHeader><CardTitle>Set a new password</CardTitle></CardHeader>
         <CardContent>
