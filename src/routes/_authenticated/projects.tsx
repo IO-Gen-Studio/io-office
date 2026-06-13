@@ -310,10 +310,10 @@ function ProjectDetail({ project, editable, onBack, onSaved }: { project: Projec
         <Card className="shadow-soft">
           <CardContent className="pt-6 space-y-4">
             <CollapsibleTrigger asChild>
-              <button type="button" className="flex w-full items-center justify-between text-left group">
+              <Button type="button" variant="ghost" className="group h-auto min-h-11 w-full justify-between px-0 text-left hover:bg-transparent">
                 <h3 className="font-semibold">Cost Breakdown</h3>
                 <ChevronDown className="size-4 transition-transform group-data-[state=closed]:-rotate-90" />
-              </button>
+              </Button>
             </CollapsibleTrigger>
             <CollapsibleContent className="space-y-4">
               <CostBreakdown
@@ -375,7 +375,7 @@ function ProjectDetail({ project, editable, onBack, onSaved }: { project: Projec
                           </td>
                           <td className="p-2 text-muted-foreground">{formatDateUK(m.completed_at)}</td>
                           {editable && <td className="p-2 text-right">
-                            {m.is_custom && <Button variant="ghost" size="icon" onClick={() => removeMilestone(m)}><Trash2 className="size-4" /></Button>}
+                            {m.is_custom && <Button variant="ghost" size="icon" aria-label="Delete custom milestone" onClick={() => removeMilestone(m)}><Trash2 className="size-4" /></Button>}
                           </td>}
                         </tr>
                       ))}

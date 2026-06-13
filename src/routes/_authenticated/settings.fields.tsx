@@ -207,10 +207,10 @@ function FieldsPage() {
                                 : "—"}
                           </TableCell>
                           <TableCell className="text-right">
-                            <Button size="icon" variant="ghost" onClick={() => setEditing(f)}>
+                            <Button size="icon" variant="ghost" aria-label="Edit field" onClick={() => setEditing(f)}>
                               <Pencil className="h-4 w-4" />
                             </Button>
-                            <Button size="icon" variant="ghost" onClick={() => onDelete(f.id)}>
+                            <Button size="icon" variant="ghost" aria-label="Delete field" onClick={() => onDelete(f.id)}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </TableCell>

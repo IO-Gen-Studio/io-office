@@ -69,7 +69,7 @@ function AuthLayout() {
   const adminVisible = isAdmin || isSuperAdmin;
 
   return (
-    <div className="min-h-screen w-full flex bg-background">
+    <div className="min-h-dvh w-full flex bg-background">
       <FloatingSidebar
         canView={canView}
         adminVisible={adminVisible}
@@ -144,9 +144,9 @@ function AuthLayout() {
                 <div className="px-3 py-2 text-xs text-muted-foreground">{profile?.email}</div>
                 <Link to="/settings/profile" className="block rounded-lg px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground">Profile</Link>
                 {adminVisible && <Link to="/settings/users" className="block rounded-lg px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground">User management</Link>}
-                <button onClick={() => signOut()} className="w-full text-left flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground">
+                <Button variant="ghost" onClick={() => signOut()} className="w-full justify-start rounded-lg px-3">
                   <LogOut className="size-4" /> Sign out
-                </button>
+                </Button>
               </div>
             </SheetContent>
           </Sheet>
@@ -180,7 +180,7 @@ function FloatingSidebar({ canView, adminVisible, onSignOut }: { canView: (m: st
       <nav className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-3 pt-1 px-2 pb-2">
         {groups.map((group) => (
           <div key={group.label} className="flex flex-col gap-0.5">
-            <div className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">{group.label}</div>
+            <div className="px-3 pt-2 pb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{group.label}</div>
             {group.items.map((item) => {
               const active = isActive(item.to);
               return (
@@ -216,13 +216,14 @@ function FloatingSidebar({ canView, adminVisible, onSignOut }: { canView: (m: st
             <span className="leading-tight truncate">Settings</span>
           </Link>
         )}
-        <button
+        <Button
+          variant="ghost"
           onClick={onSignOut}
-          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground transition-colors"
+          className="w-full justify-start gap-3 px-3 rounded-lg text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
         >
           <LogOut className="h-4 w-4 shrink-0" />
           <span className="leading-tight truncate">Sign out</span>
-        </button>
+        </Button>
       </div>
     </aside>
   );
@@ -236,7 +237,7 @@ function MobileNavBody({ canView, adminVisible, onNavigate, onSignOut }: { canVi
     <nav className="flex flex-col gap-3 px-2 pt-2 pb-4">
       {groups.map((group) => (
         <div key={group.label} className="flex flex-col gap-0.5">
-          <div className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">{group.label}</div>
+          <div className="px-3 pt-2 pb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{group.label}</div>
           {group.items.map((item) => {
             const active = isActive(item.to);
             return (
@@ -263,9 +264,9 @@ function MobileNavBody({ canView, adminVisible, onNavigate, onSignOut }: { canVi
             <Settings className="h-4 w-4" /> Settings
           </Link>
         )}
-        <button onClick={onSignOut} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground transition-colors">
+        <Button variant="ghost" onClick={onSignOut} className="w-full justify-start gap-3 px-3 rounded-lg text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground">
           <LogOut className="h-4 w-4" /> Sign out
-        </button>
+        </Button>
       </div>
     </nav>
   );

@@ -200,12 +200,12 @@ function PlansTable({
         </div>
         <Table>
           <TableHeader><TableRow>
-            <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("platform")}>Platform<SortIcon k="platform" /></TableHead>
-            <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("title")}>Title<SortIcon k="title" /></TableHead>
+            <TableHead><button type="button" className="inline-flex min-h-11 items-center select-none hover:text-foreground" onClick={() => toggleSort("platform")}>Platform<SortIcon k="platform" /></button></TableHead>
+            <TableHead><button type="button" className="inline-flex min-h-11 items-center select-none hover:text-foreground" onClick={() => toggleSort("title")}>Title<SortIcon k="title" /></button></TableHead>
             <TableHead>Copy</TableHead>
-            <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("scheduled_at")}>Scheduled<SortIcon k="scheduled_at" /></TableHead>
-            <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("approval_status")}>Approval<SortIcon k="approval_status" /></TableHead>
-            <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("post_status")}>Status<SortIcon k="post_status" /></TableHead>
+            <TableHead><button type="button" className="inline-flex min-h-11 items-center select-none hover:text-foreground" onClick={() => toggleSort("scheduled_at")}>Scheduled<SortIcon k="scheduled_at" /></button></TableHead>
+            <TableHead><button type="button" className="inline-flex min-h-11 items-center select-none hover:text-foreground" onClick={() => toggleSort("approval_status")}>Approval<SortIcon k="approval_status" /></button></TableHead>
+            <TableHead><button type="button" className="inline-flex min-h-11 items-center select-none hover:text-foreground" onClick={() => toggleSort("post_status")}>Status<SortIcon k="post_status" /></button></TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow></TableHeader>
           <TableBody>
@@ -227,8 +227,8 @@ function PlansTable({
                   <TableCell className="text-right">
                     <Button variant="ghost" size="icon" title="Preview" onClick={() => onView(p)}><Eye className="size-4" /></Button>
                     {editable && <>
-                      <Button variant="ghost" size="icon" onClick={() => onEdit(p)}><Pencil className="size-4" /></Button>
-                      <Button variant="ghost" size="icon" onClick={() => onRemove(p)}><Trash2 className="size-4" /></Button>
+                      <Button variant="ghost" size="icon" aria-label={`Edit ${p.title}`} onClick={() => onEdit(p)}><Pencil className="size-4" /></Button>
+                      <Button variant="ghost" size="icon" aria-label={`Delete ${p.title}`} onClick={() => onRemove(p)}><Trash2 className="size-4" /></Button>
                     </>}
                   </TableCell>
                 </TableRow>

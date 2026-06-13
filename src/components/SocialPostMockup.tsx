@@ -58,7 +58,7 @@ function InstagramMockup({ plan }: { plan: MockupPlan }) {
         <MoreHorizontal className="size-5" />
       </div>
       <div className="bg-zinc-100 aspect-square grid place-items-center overflow-hidden">
-        {plan.media_path ? <Media path={plan.media_path} className="w-full h-full object-cover" /> : <span className="text-zinc-400 text-sm">No image</span>}
+        {plan.media_path ? <Media path={plan.media_path} className="w-full h-full object-cover" /> : <span className="text-zinc-600 text-sm">No image</span>}
       </div>
       <div className="px-3 py-2 flex items-center gap-3">
         <Heart className="size-6" /><MessageCircle className="size-6" /><Send className="size-6" />
@@ -98,10 +98,10 @@ function XMockup({ plan }: { plan: MockupPlan }) {
       <div className="flex items-start gap-3 p-3">
         <Avatar />
         <div className="flex-1">
-          <div className="text-sm"><span className="font-bold">Your Brand</span> <span className="text-zinc-500">@yourbrand · {plan.scheduled_at ? new Date(plan.scheduled_at).toLocaleDateString() : "now"}</span></div>
+          <div className="text-sm"><span className="font-bold">Your Brand</span> <span className="text-zinc-300">@yourbrand · {plan.scheduled_at ? new Date(plan.scheduled_at).toLocaleDateString() : "now"}</span></div>
           <div className="text-[15px] mt-1 whitespace-pre-wrap">{plan.copy}</div>
           {plan.media_path && <div className="mt-2 rounded-xl overflow-hidden border border-zinc-800"><Media path={plan.media_path} className="w-full max-h-[420px] object-cover" /></div>}
-          <div className="flex justify-between text-zinc-500 mt-3 max-w-[320px] text-xs">
+          <div className="flex justify-between text-zinc-300 mt-3 max-w-[320px] text-xs">
             <MessageCircle className="size-4" /><Repeat2 className="size-4" /><Heart className="size-4" /><Share className="size-4" />
           </div>
         </div>
@@ -190,7 +190,7 @@ function EventbriteMockup({ plan }: { plan: MockupPlan }) {
       <div className="bg-zinc-100 aspect-[2/1] grid place-items-center overflow-hidden">
         {plan.media_path
           ? <Media path={plan.media_path} className="w-full h-full object-cover" />
-          : <span className="text-zinc-400 text-sm">Event cover image</span>}
+          : <span className="text-zinc-600 text-sm">Event cover image</span>}
       </div>
       <div className="p-4 space-y-3">
         {eventDate && (

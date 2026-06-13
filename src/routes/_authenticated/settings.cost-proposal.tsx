@@ -211,7 +211,7 @@ function ConditionsEditor({
                     onChange(next);
                   }}
                 />
-                <Button variant="ghost" size="icon" onClick={() => onChange(items.filter((_, i) => i !== idx))}>
+                <Button variant="ghost" size="icon" aria-label="Delete item" onClick={() => onChange(items.filter((_, i) => i !== idx))}>
                   <Trash2 className="size-4" />
                 </Button>
               </div>

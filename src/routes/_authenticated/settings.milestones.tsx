@@ -113,12 +113,12 @@ function MilestonesSettings() {
                 filtered.map((t, i) => (
                   <div key={t.id} className="flex items-center gap-2">
                     <div className="flex flex-col">
-                      <Button variant="ghost" size="icon" className="h-5 w-5"
+                      <Button variant="ghost" size="icon" className="h-11 w-11 md:h-8 md:w-8" aria-label="Move milestone up"
                         disabled={i === 0}
                         onClick={() => swap(t, filtered[i - 1])}>
                         <ArrowUp className="size-3" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-5 w-5"
+                      <Button variant="ghost" size="icon" className="h-11 w-11 md:h-8 md:w-8" aria-label="Move milestone down"
                         disabled={i === filtered.length - 1}
                         onClick={() => swap(t, filtered[i + 1])}>
                         <ArrowDown className="size-3" />

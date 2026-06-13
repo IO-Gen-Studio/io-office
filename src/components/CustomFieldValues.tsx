@@ -160,7 +160,7 @@ export function AttachmentPreview({ path }: { path: string }) {
   if (kind === "image") {
     return (
       <>
-        <button type="button" onClick={() => setOpen(true)} className="block rounded-md border bg-muted/30 overflow-hidden hover:opacity-90 transition">
+        <button type="button" aria-label={`View ${filename}`} onClick={() => setOpen(true)} className="block rounded-md border bg-muted/30 overflow-hidden hover:opacity-90 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
           <img src={url} alt={filename} className="max-h-48 object-contain" />
         </button>
         <Dialog open={open} onOpenChange={setOpen}>

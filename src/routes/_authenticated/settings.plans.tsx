@@ -77,10 +77,10 @@ function PlansSettings() {
             rows.map((t, i) => (
               <div key={t.id} className="flex items-center gap-2">
                 <div className="flex flex-col">
-                  <Button variant="ghost" size="icon" className="h-5 w-5" disabled={i === 0} onClick={() => swap(t, rows[i - 1])}>
+                  <Button variant="ghost" size="icon" className="h-11 w-11 md:h-8 md:w-8" aria-label="Move plan up" disabled={i === 0} onClick={() => swap(t, rows[i - 1])}>
                     <ArrowUp className="size-3" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-5 w-5" disabled={i === rows.length - 1} onClick={() => swap(t, rows[i + 1])}>
+                  <Button variant="ghost" size="icon" className="h-11 w-11 md:h-8 md:w-8" aria-label="Move plan down" disabled={i === rows.length - 1} onClick={() => swap(t, rows[i + 1])}>
                     <ArrowDown className="size-3" />
                   </Button>
                 </div>
