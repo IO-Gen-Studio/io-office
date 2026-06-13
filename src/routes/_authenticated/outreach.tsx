@@ -373,7 +373,8 @@ function CampaignDetail({ campaign, editable, onBack }: { campaign: Campaign; ed
                         type="button"
                         variant="outline"
                         size="icon"
-                        className="h-8 w-8 shrink-0"
+                        className="h-11 w-11 shrink-0 md:h-8 md:w-8"
+                        aria-label={linked ? `Open ${linked.name}` : "Open selected template"}
                         title={linked ? `Open "${linked.name}"` : "Select a template first"}
                         disabled={!linked}
                         onClick={() => openTemplate(cfg.template_id)}

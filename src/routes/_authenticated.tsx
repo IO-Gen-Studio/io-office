@@ -69,7 +69,7 @@ function AuthLayout() {
   const adminVisible = isAdmin || isSuperAdmin;
 
   return (
-    <div className="min-h-screen w-full flex bg-background">
+    <div className="min-h-dvh w-full flex bg-background">
       <FloatingSidebar
         canView={canView}
         adminVisible={adminVisible}
