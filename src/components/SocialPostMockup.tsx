@@ -190,7 +190,7 @@ function EventbriteMockup({ plan }: { plan: MockupPlan }) {
       <div className="bg-zinc-100 aspect-[2/1] grid place-items-center overflow-hidden">
         {plan.media_path
           ? <Media path={plan.media_path} className="w-full h-full object-cover" />
-          : <span className="text-zinc-400 text-sm">Event cover image</span>}
+          : <span className="text-zinc-600 text-sm">Event cover image</span>}
       </div>
       <div className="p-4 space-y-3">
         {eventDate && (
