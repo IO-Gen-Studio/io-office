@@ -1,8 +1,25 @@
-import { createFileRoute, Outlet, Link, useRouterState, useNavigate, redirect } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Outlet,
+  Link,
+  useRouterState,
+  useNavigate,
+  redirect,
+} from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import {
-  LayoutDashboard, Users, Mail, CalendarDays, Megaphone, Briefcase, CreditCard,
-  Bell, Settings, LogOut, Menu,
+  LayoutDashboard,
+  Users,
+  Mail,
+  CalendarDays,
+  Megaphone,
+  Briefcase,
+  CreditCard,
+  Bell,
+  Settings,
+  LogOut,
+  Menu,
+  CircleAlert,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/auth-context";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,7 +27,13 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import logoUrl from "@/assets/io-gen-logo.png";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -35,10 +58,22 @@ const BIZ_DEV: NavItem[] = [
 const OPS: NavItem[] = [
   { to: "/projects", label: "Projects & Works", icon: Briefcase, module: "projects" },
   { to: "/subscriptions", label: "Subscriptions", icon: CreditCard, module: "subscriptions" },
+  { to: "/issues", label: "Issues Tracker", icon: CircleAlert, module: "issues" },
 ];
 
 function AuthLayout() {
-  const { profile, signOut, canView, isAdmin, isSuperAdmin, user, loading, tenants, activeTenantId, switchTenant } = useAuth();
+  const {
+    profile,
+    signOut,
+    canView,
+    isAdmin,
+    isSuperAdmin,
+    user,
+    loading,
+    tenants,
+    activeTenantId,
+    switchTenant,
+  } = useAuth();
   const [unread, setUnread] = useState(0);
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
@@ -55,26 +90,32 @@ function AuthLayout() {
   useEffect(() => {
     if (!userId) return;
     const load = async () => {
-      const { count } = await supabase.from("notifications").select("*", { count: "exact", head: true }).is("read_at", null).eq("user_id", userId);
+      const { count } = await supabase
+        .from("notifications")
+        .select("*", { count: "exact", head: true })
+        .is("read_at", null)
+        .eq("user_id", userId);
       setUnread(count ?? 0);
     };
     void load();
-    const channel = supabase.channel(`notif:${userId}`).on("postgres_changes",
-      { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` },
-      () => void load(),
-    ).subscribe();
-    return () => { void supabase.removeChannel(channel); };
+    const channel = supabase
+      .channel(`notif:${userId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` },
+        () => void load(),
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
   }, [userId]);
 
   const adminVisible = isAdmin || isSuperAdmin;
 
   return (
     <div className="min-h-dvh w-full flex bg-background">
-      <FloatingSidebar
-        canView={canView}
-        adminVisible={adminVisible}
-        onSignOut={() => signOut()}
-      />
+      <FloatingSidebar canView={canView} adminVisible={adminVisible} onSignOut={() => signOut()} />
 
       {/* Mobile drawer */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
@@ -89,7 +130,10 @@ function AuthLayout() {
             canView={canView}
             adminVisible={adminVisible}
             onNavigate={() => setMobileOpen(false)}
-            onSignOut={() => { setMobileOpen(false); signOut(); }}
+            onSignOut={() => {
+              setMobileOpen(false);
+              signOut();
+            }}
           />
         </SheetContent>
       </Sheet>
@@ -106,20 +150,36 @@ function AuthLayout() {
             <Menu className="h-5 w-5" />
           </Button>
 
-          {(tenants.length > 0 || isSuperAdmin) && (
-            tenants.length === 1 && !isSuperAdmin ? (
+          {(tenants.length > 0 || isSuperAdmin) &&
+            (tenants.length === 1 && !isSuperAdmin ? (
               <span className="text-sm font-medium truncate max-w-[200px]">{tenants[0].name}</span>
             ) : (
-              <Select value={activeTenantId ?? undefined} onValueChange={(v) => { void switchTenant(v); }} disabled={tenants.length === 0}>
-                <SelectTrigger className="w-[220px] h-9 bg-card border-border/60 rounded-xl"><SelectValue placeholder="Select organisation" /></SelectTrigger>
+              <Select
+                value={activeTenantId ?? undefined}
+                onValueChange={(v) => {
+                  void switchTenant(v);
+                }}
+                disabled={tenants.length === 0}
+              >
+                <SelectTrigger className="w-[220px] h-9 bg-card border-border/60 rounded-xl">
+                  <SelectValue placeholder="Select organisation" />
+                </SelectTrigger>
                 <SelectContent>
-                  {tenants.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}{!t.active && " (disabled)"}</SelectItem>)}
+                  {tenants.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.name}
+                      {!t.active && " (disabled)"}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
-            )
-          )}
+            ))}
           <div className="flex-1" />
-          <Link to="/notifications" className="relative p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors" aria-label="Notifications">
+          <Link
+            to="/notifications"
+            className="relative p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors"
+            aria-label="Notifications"
+          >
             <Bell className="h-5 w-5" />
             {unread > 0 && (
               <Badge className="absolute -top-0.5 -right-0.5 h-[18px] min-w-[18px] px-1 text-[10px] bg-destructive text-destructive-foreground flex items-center justify-center rounded-full">
@@ -132,26 +192,48 @@ function AuthLayout() {
               <Button variant="ghost" className="gap-2 px-2 h-9">
                 <Avatar className="size-7">
                   <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                    {(profile?.full_name || user?.email || "U").slice(0,2).toUpperCase()}
+                    {(profile?.full_name || user?.email || "U").slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <span className="hidden md:inline text-sm">{profile?.full_name || user?.email}</span>
+                <span className="hidden md:inline text-sm">
+                  {profile?.full_name || user?.email}
+                </span>
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-full sm:max-w-sm">
-              <SheetHeader><SheetTitle>Account</SheetTitle></SheetHeader>
+              <SheetHeader>
+                <SheetTitle>Account</SheetTitle>
+              </SheetHeader>
               <div className="mt-6 space-y-1">
                 <div className="px-3 py-2 text-xs text-muted-foreground">{profile?.email}</div>
-                <Link to="/settings/profile" className="block rounded-lg px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground">Profile</Link>
-                {adminVisible && <Link to="/settings/users" className="block rounded-lg px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground">User management</Link>}
-                <Button variant="ghost" onClick={() => signOut()} className="w-full justify-start rounded-lg px-3">
+                <Link
+                  to="/settings/profile"
+                  className="block rounded-lg px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
+                >
+                  Profile
+                </Link>
+                {adminVisible && (
+                  <Link
+                    to="/settings/users"
+                    className="block rounded-lg px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
+                  >
+                    User management
+                  </Link>
+                )}
+                <Button
+                  variant="ghost"
+                  onClick={() => signOut()}
+                  className="w-full justify-start rounded-lg px-3"
+                >
                   <LogOut className="size-4" /> Sign out
                 </Button>
               </div>
             </SheetContent>
           </Sheet>
         </header>
-        <main className="flex-1 overflow-auto px-4 md:px-8 pb-6"><Outlet /></main>
+        <main className="flex-1 overflow-auto px-4 md:px-8 pb-6">
+          <Outlet />
+        </main>
       </div>
     </div>
   );
@@ -165,7 +247,15 @@ function navGroups(canView: (m: string) => boolean) {
   ].filter((g) => g.items.length > 0);
 }
 
-function FloatingSidebar({ canView, adminVisible, onSignOut }: { canView: (m: string) => boolean; adminVisible: boolean; onSignOut: () => void }) {
+function FloatingSidebar({
+  canView,
+  adminVisible,
+  onSignOut,
+}: {
+  canView: (m: string) => boolean;
+  adminVisible: boolean;
+  onSignOut: () => void;
+}) {
   const path = useRouterState({ select: (r) => r.location.pathname });
   const isActive = (p: string) => path === p || path.startsWith(p + "/");
   const groups = navGroups(canView);
@@ -180,7 +270,9 @@ function FloatingSidebar({ canView, adminVisible, onSignOut }: { canView: (m: st
       <nav className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-3 pt-1 px-2 pb-2">
         {groups.map((group) => (
           <div key={group.label} className="flex flex-col gap-0.5">
-            <div className="px-3 pt-2 pb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{group.label}</div>
+            <div className="px-3 pt-2 pb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              {group.label}
+            </div>
             {group.items.map((item) => {
               const active = isActive(item.to);
               return (
@@ -229,7 +321,17 @@ function FloatingSidebar({ canView, adminVisible, onSignOut }: { canView: (m: st
   );
 }
 
-function MobileNavBody({ canView, adminVisible, onNavigate, onSignOut }: { canView: (m: string) => boolean; adminVisible: boolean; onNavigate: () => void; onSignOut: () => void }) {
+function MobileNavBody({
+  canView,
+  adminVisible,
+  onNavigate,
+  onSignOut,
+}: {
+  canView: (m: string) => boolean;
+  adminVisible: boolean;
+  onNavigate: () => void;
+  onSignOut: () => void;
+}) {
   const path = useRouterState({ select: (r) => r.location.pathname });
   const isActive = (p: string) => path === p || path.startsWith(p + "/");
   const groups = navGroups(canView);
@@ -237,7 +339,9 @@ function MobileNavBody({ canView, adminVisible, onNavigate, onSignOut }: { canVi
     <nav className="flex flex-col gap-3 px-2 pt-2 pb-4">
       {groups.map((group) => (
         <div key={group.label} className="flex flex-col gap-0.5">
-          <div className="px-3 pt-2 pb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{group.label}</div>
+          <div className="px-3 pt-2 pb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            {group.label}
+          </div>
           {group.items.map((item) => {
             const active = isActive(item.to);
             return (
@@ -260,11 +364,19 @@ function MobileNavBody({ canView, adminVisible, onNavigate, onSignOut }: { canVi
       ))}
       <div className="border-t border-border/60 mt-2 pt-2 flex flex-col gap-0.5">
         {adminVisible && (
-          <Link to="/settings/profile" onClick={onNavigate} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground transition-colors">
+          <Link
+            to="/settings/profile"
+            onClick={onNavigate}
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground transition-colors"
+          >
             <Settings className="h-4 w-4" /> Settings
           </Link>
         )}
-        <Button variant="ghost" onClick={onSignOut} className="w-full justify-start gap-3 px-3 rounded-lg text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground">
+        <Button
+          variant="ghost"
+          onClick={onSignOut}
+          className="w-full justify-start gap-3 px-3 rounded-lg text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+        >
           <LogOut className="h-4 w-4" /> Sign out
         </Button>
       </div>

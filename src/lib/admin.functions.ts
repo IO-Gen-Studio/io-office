@@ -5,21 +5,38 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 async function isSuperAdmin(userId: string) {
   const { data } = await supabaseAdmin
-    .from("super_admins").select("user_id").eq("user_id", userId).maybeSingle();
+    .from("super_admins")
+    .select("user_id")
+    .eq("user_id", userId)
+    .maybeSingle();
   return !!data;
 }
 async function isTenantAdmin(userId: string, tenantId: string) {
   if (await isSuperAdmin(userId)) return true;
   const [{ data: role }, { data: mem }] = await Promise.all([
-    supabaseAdmin.from("user_roles").select("role").eq("user_id", userId).eq("role", "admin").maybeSingle(),
-    supabaseAdmin.from("tenant_members").select("role").eq("user_id", userId).eq("tenant_id", tenantId).maybeSingle(),
+    supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "admin")
+      .maybeSingle(),
+    supabaseAdmin
+      .from("tenant_members")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("tenant_id", tenantId)
+      .maybeSingle(),
   ]);
-  return !!role || (mem?.role === "owner");
+  return !!role || mem?.role === "owner";
 }
 async function assertAdmin(userId: string) {
   if (await isSuperAdmin(userId)) return;
   const { data } = await supabaseAdmin
-    .from("user_roles").select("role").eq("user_id", userId).eq("role", "admin").maybeSingle();
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("role", "admin")
+    .maybeSingle();
   if (!data) throw new Error("Forbidden: admin only");
 }
 async function assertSuperAdmin(userId: string) {
@@ -28,13 +45,17 @@ async function assertSuperAdmin(userId: string) {
 
 export const adminCreateUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({
-    email: z.string().email(),
-    password: z.string().min(8).max(128),
-    full_name: z.string().min(1).max(120),
-    job_title: z.string().max(120).optional().default(""),
-    tenant_id: z.string().uuid().optional(),
-  }).parse(d))
+  .inputValidator((d) =>
+    z
+      .object({
+        email: z.string().email(),
+        password: z.string().min(8).max(128),
+        full_name: z.string().min(1).max(120),
+        job_title: z.string().max(120).optional().default(""),
+        tenant_id: z.string().uuid().optional(),
+      })
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
     const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
@@ -49,20 +70,31 @@ export const adminCreateUser = createServerFn({ method: "POST" })
     });
     if (error) throw new Error(error.message);
     const uid = created.user!.id;
-    await supabaseAdmin.from("profiles").update({
-      full_name: data.full_name, job_title: data.job_title, must_change_password: true,
-    }).eq("id", uid);
+    await supabaseAdmin
+      .from("profiles")
+      .update({
+        full_name: data.full_name,
+        job_title: data.job_title,
+        must_change_password: true,
+      })
+      .eq("id", uid);
     // Auto-add to tenant if provided; otherwise to creator's active tenant
     let tenantId = data.tenant_id;
     if (!tenantId) {
-      const { data: p } = await supabaseAdmin.from("profiles").select("active_tenant_id").eq("id", context.userId).maybeSingle();
+      const { data: p } = await supabaseAdmin
+        .from("profiles")
+        .select("active_tenant_id")
+        .eq("id", context.userId)
+        .maybeSingle();
       tenantId = (p?.active_tenant_id ?? undefined) as string | undefined;
     }
     if (tenantId) {
-      await supabaseAdmin.from("tenant_members").upsert(
-        { tenant_id: tenantId, user_id: uid, role: "member" } as never,
-        { onConflict: "tenant_id,user_id" } as never,
-      );
+      await supabaseAdmin
+        .from("tenant_members")
+        .upsert(
+          { tenant_id: tenantId, user_id: uid, role: "member" } as never,
+          { onConflict: "tenant_id,user_id" } as never,
+        );
       await supabaseAdmin.from("profiles").update({ active_tenant_id: tenantId }).eq("id", uid);
     }
     return { user_id: uid };
@@ -70,76 +102,131 @@ export const adminCreateUser = createServerFn({ method: "POST" })
 
 export const adminResetPassword = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({
-    user_id: z.string().uuid(),
-    password: z.string().min(8).max(128),
-  }).parse(d))
+  .inputValidator((d) =>
+    z
+      .object({
+        user_id: z.string().uuid(),
+        password: z.string().min(8).max(128),
+      })
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
-    const { error } = await supabaseAdmin.auth.admin.updateUserById(data.user_id, { password: data.password });
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(data.user_id, {
+      password: data.password,
+    });
     if (error) throw new Error(error.message);
-    await supabaseAdmin.from("profiles").update({ must_change_password: true }).eq("id", data.user_id);
+    await supabaseAdmin
+      .from("profiles")
+      .update({ must_change_password: true })
+      .eq("id", data.user_id);
     return { ok: true };
   });
 
 export const adminUpdateProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({
-    user_id: z.string().uuid(),
-    full_name: z.string().min(1).max(120),
-    job_title: z.string().max(120).nullable(),
-    active: z.boolean(),
-  }).parse(d))
+  .inputValidator((d) =>
+    z
+      .object({
+        user_id: z.string().uuid(),
+        full_name: z.string().min(1).max(120),
+        job_title: z.string().max(120).nullable(),
+        active: z.boolean(),
+      })
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
-    const { error } = await supabaseAdmin.from("profiles").update({
-      full_name: data.full_name, job_title: data.job_title, active: data.active,
-    }).eq("id", data.user_id);
+    const { error } = await supabaseAdmin
+      .from("profiles")
+      .update({
+        full_name: data.full_name,
+        job_title: data.job_title,
+        active: data.active,
+      })
+      .eq("id", data.user_id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
 
 export const adminSetAdminRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({
-    user_id: z.string().uuid(),
-    is_admin: z.boolean(),
-  }).parse(d))
+  .inputValidator((d) =>
+    z
+      .object({
+        user_id: z.string().uuid(),
+        is_admin: z.boolean(),
+      })
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
     if (data.is_admin) {
-      await supabaseAdmin.from("user_roles").upsert(
-        { user_id: data.user_id, role: "admin" } as never,
-        { onConflict: "user_id,role" } as never,
-      );
+      await supabaseAdmin
+        .from("user_roles")
+        .upsert(
+          { user_id: data.user_id, role: "admin" } as never,
+          { onConflict: "user_id,role" } as never,
+        );
     } else {
-      await supabaseAdmin.from("user_roles").delete().eq("user_id", data.user_id).eq("role", "admin");
+      await supabaseAdmin
+        .from("user_roles")
+        .delete()
+        .eq("user_id", data.user_id)
+        .eq("role", "admin");
     }
     return { ok: true };
   });
 
-const MODULES = ["dashboard","calendar","crm","outreach","social","projects","subscriptions","settings"] as const;
+const MODULES = [
+  "dashboard",
+  "calendar",
+  "crm",
+  "outreach",
+  "social",
+  "projects",
+  "subscriptions",
+  "issues",
+  "settings",
+] as const;
 
 export const adminSetModuleAccess = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({
-    user_id: z.string().uuid(),
-    tenant_id: z.string().uuid(),
-    entries: z.array(z.object({
-      module: z.enum(MODULES),
-      can_view: z.boolean(),
-      can_edit: z.boolean(),
-    })).max(20),
-  }).parse(d))
+  .inputValidator((d) =>
+    z
+      .object({
+        user_id: z.string().uuid(),
+        tenant_id: z.string().uuid(),
+        entries: z
+          .array(
+            z.object({
+              module: z.enum(MODULES),
+              can_view: z.boolean(),
+              can_edit: z.boolean(),
+            }),
+          )
+          .max(20),
+      })
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
     if (!(await isTenantAdmin(context.userId, data.tenant_id))) {
       throw new Error("Forbidden: admin only");
     }
-    await supabaseAdmin.from("module_access").delete()
-      .eq("user_id", data.user_id).eq("tenant_id", data.tenant_id);
+    await supabaseAdmin
+      .from("module_access")
+      .delete()
+      .eq("user_id", data.user_id)
+      .eq("tenant_id", data.tenant_id);
     const rows = data.entries
       .filter((e) => e.can_view || e.can_edit)
-      .map((e) => ({ user_id: data.user_id, tenant_id: data.tenant_id, module: e.module, can_view: e.can_view || e.can_edit, can_edit: e.can_edit }));
+      .map((e) => ({
+        user_id: data.user_id,
+        tenant_id: data.tenant_id,
+        module: e.module,
+        can_view: e.can_view || e.can_edit,
+        can_edit: e.can_edit,
+      }));
     if (rows.length) {
       const { error } = await supabaseAdmin.from("module_access").insert(rows as never);
       if (error) throw new Error(error.message);
@@ -154,7 +241,13 @@ export const adminListUsers = createServerFn({ method: "POST" })
     await assertAdmin(context.userId);
     const superAdmin = await isSuperAdmin(context.userId);
 
-    const [{ data: profiles }, { data: roles }, { data: access }, { data: members }, { data: supers }] = await Promise.all([
+    const [
+      { data: profiles },
+      { data: roles },
+      { data: access },
+      { data: members },
+      { data: supers },
+    ] = await Promise.all([
       supabaseAdmin.from("profiles").select("*").order("created_at", { ascending: true }),
       supabaseAdmin.from("user_roles").select("user_id, role"),
       supabaseAdmin.from("module_access").select("*"),
@@ -166,7 +259,9 @@ export const adminListUsers = createServerFn({ method: "POST" })
     const tenantId = data.tenant_id;
     let visibleProfiles = profiles ?? [];
     if (!superAdmin && tenantId) {
-      const memberIds = new Set((members ?? []).filter((m) => m.tenant_id === tenantId).map((m) => m.user_id));
+      const memberIds = new Set(
+        (members ?? []).filter((m) => m.tenant_id === tenantId).map((m) => m.user_id),
+      );
       visibleProfiles = visibleProfiles.filter((p) => memberIds.has(p.id));
     }
     return {
@@ -190,29 +285,45 @@ export const adminListTenants = createServerFn({ method: "POST" })
 
 export const adminCreateTenant = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({
-    name: z.string().min(1).max(120),
-    slug: z.string().min(1).max(60).regex(/^[a-z0-9-]+$/),
-  }).parse(d))
+  .inputValidator((d) =>
+    z
+      .object({
+        name: z.string().min(1).max(120),
+        slug: z
+          .string()
+          .min(1)
+          .max(60)
+          .regex(/^[a-z0-9-]+$/),
+      })
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context.userId);
     const { data: created, error } = await supabaseAdmin
-      .from("tenants").insert(data as never).select().single();
+      .from("tenants")
+      .insert(data as never)
+      .select()
+      .single();
     if (error) throw new Error(error.message);
     return { tenant: created };
   });
 
 export const adminUpdateTenant = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({
-    id: z.string().uuid(),
-    name: z.string().min(1).max(120),
-    active: z.boolean(),
-    logo_url: z.string().url().nullable().optional(),
-  }).parse(d))
+  .inputValidator((d) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        name: z.string().min(1).max(120),
+        active: z.boolean(),
+        logo_url: z.string().url().nullable().optional(),
+      })
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context.userId);
-    const { error } = await supabaseAdmin.from("tenants")
+    const { error } = await supabaseAdmin
+      .from("tenants")
       .update({ name: data.name, active: data.active, logo_url: data.logo_url ?? null } as never)
       .eq("id", data.id);
     if (error) throw new Error(error.message);
@@ -231,50 +342,70 @@ export const adminDeleteTenant = createServerFn({ method: "POST" })
 
 export const adminAssignTenantMember = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({
-    user_id: z.string().uuid(),
-    tenant_id: z.string().uuid(),
-    role: z.enum(["owner","member"]).default("member"),
-  }).parse(d))
+  .inputValidator((d) =>
+    z
+      .object({
+        user_id: z.string().uuid(),
+        tenant_id: z.string().uuid(),
+        role: z.enum(["owner", "member"]).default("member"),
+      })
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context.userId);
-    const { error } = await supabaseAdmin.from("tenant_members").upsert(
-      { tenant_id: data.tenant_id, user_id: data.user_id, role: data.role } as never,
-      { onConflict: "tenant_id,user_id" } as never,
-    );
+    const { error } = await supabaseAdmin
+      .from("tenant_members")
+      .upsert(
+        { tenant_id: data.tenant_id, user_id: data.user_id, role: data.role } as never,
+        { onConflict: "tenant_id,user_id" } as never,
+      );
     if (error) throw new Error(error.message);
     return { ok: true };
   });
 
 export const adminRemoveTenantMember = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({
-    user_id: z.string().uuid(),
-    tenant_id: z.string().uuid(),
-  }).parse(d))
+  .inputValidator((d) =>
+    z
+      .object({
+        user_id: z.string().uuid(),
+        tenant_id: z.string().uuid(),
+      })
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context.userId);
-    const { error } = await supabaseAdmin.from("tenant_members")
-      .delete().eq("user_id", data.user_id).eq("tenant_id", data.tenant_id);
+    const { error } = await supabaseAdmin
+      .from("tenant_members")
+      .delete()
+      .eq("user_id", data.user_id)
+      .eq("tenant_id", data.tenant_id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
 
 export const adminSetSuperAdmin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({
-    user_id: z.string().uuid(),
-    is_super: z.boolean(),
-  }).parse(d))
+  .inputValidator((d) =>
+    z
+      .object({
+        user_id: z.string().uuid(),
+        is_super: z.boolean(),
+      })
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context.userId);
     if (data.is_super) {
-      await supabaseAdmin.from("super_admins").upsert(
-        { user_id: data.user_id, granted_by: context.userId } as never,
-        { onConflict: "user_id" } as never,
-      );
+      await supabaseAdmin
+        .from("super_admins")
+        .upsert(
+          { user_id: data.user_id, granted_by: context.userId } as never,
+          { onConflict: "user_id" } as never,
+        );
     } else {
-      if (data.user_id === context.userId) throw new Error("Cannot remove your own super admin role");
+      if (data.user_id === context.userId)
+        throw new Error("Cannot remove your own super admin role");
       await supabaseAdmin.from("super_admins").delete().eq("user_id", data.user_id);
     }
     return { ok: true };
