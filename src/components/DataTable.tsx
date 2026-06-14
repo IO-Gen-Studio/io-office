@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowDown, ArrowUp, ArrowUpDown, Filter, Settings2, RotateCcw } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Filter, Search, Settings2, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type ColumnType = "text" | "number" | "date" | "select" | "boolean";
@@ -75,6 +75,7 @@ export function DataTable<T>(props: DataTableProps<T>) {
       return { ...defaultPrefs(columns), ...parsed, order };
     } catch { return defaultPrefs(columns); }
   });
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     if (typeof window !== "undefined") window.localStorage.setItem(storeKey, JSON.stringify(prefs));
@@ -89,15 +90,20 @@ export function DataTable<T>(props: DataTableProps<T>) {
   // Filtering
   const filteredRows = useMemo(() => {
     const active = Object.entries(prefs.filters).filter(([, v]) => v && v.trim().length > 0);
-    if (active.length === 0) return rows;
-    return rows.filter((row) => active.every(([key, q]) => {
+    const query = search.trim().toLowerCase();
+    return rows.filter((row) => {
+      const matchesColumns = active.every(([key, q]) => {
       const col = columns.find((c) => c.key === key);
       if (!col) return true;
       const v = col.accessor(row);
       if (v === null || v === undefined) return false;
       return String(v).toLowerCase().includes(q.toLowerCase());
-    }));
-  }, [rows, prefs.filters, columns]);
+      });
+      if (!matchesColumns) return false;
+      if (!query) return true;
+      return columns.some((col) => String(col.accessor(row) ?? "").toLowerCase().includes(query));
+    });
+  }, [rows, prefs.filters, columns, search]);
 
   // Sorting
   const sortedRows = useMemo(() => {
@@ -153,6 +159,16 @@ export function DataTable<T>(props: DataTableProps<T>) {
     <div className="space-y-3">
       <div className="flex items-center gap-2 flex-wrap">
         {toolbarLeft}
+        <div className="relative min-w-48 flex-1 sm:max-w-xs">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search all columns…"
+            aria-label="Search all columns"
+            className="pl-9"
+          />
+        </div>
         <div className="ml-auto flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => setPrefs((p) => ({ ...p, showFilters: !p.showFilters }))}>
             <Filter className="size-4 mr-1" />Filters
