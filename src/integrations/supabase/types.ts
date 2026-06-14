@@ -757,6 +757,106 @@ export type Database = {
           },
         ]
       }
+      issue_column_defs: {
+        Row: {
+          created_at: string
+          id: string
+          key: string
+          label: string
+          options: Json
+          position: number
+          tenant_id: string
+          type: Database["public"]["Enums"]["custom_field_type"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key: string
+          label: string
+          options?: Json
+          position?: number
+          tenant_id?: string
+          type?: Database["public"]["Enums"]["custom_field_type"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key?: string
+          label?: string
+          options?: Json
+          position?: number
+          tenant_id?: string
+          type?: Database["public"]["Enums"]["custom_field_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "issue_column_defs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      issues: {
+        Row: {
+          comment: string | null
+          created_at: string
+          created_by: string | null
+          custom: Json
+          id: string
+          issue_date: string | null
+          issue_number: number
+          owner: string | null
+          priority: string | null
+          status: string
+          task: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          created_by?: string | null
+          custom?: Json
+          id?: string
+          issue_date?: string | null
+          issue_number: number
+          owner?: string | null
+          priority?: string | null
+          status?: string
+          task: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          created_by?: string | null
+          custom?: Json
+          id?: string
+          issue_date?: string | null
+          issue_number?: number
+          owner?: string | null
+          priority?: string | null
+          status?: string
+          task?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "issues_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_status_options: {
         Row: {
           id: string
