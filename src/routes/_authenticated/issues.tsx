@@ -65,7 +65,10 @@ function IssuesPage() {
       ? { custom: { ...(row.custom ?? {}), [key.slice(7)]: value } }
       : { [key]: value };
     const { error } = await supabase.from("issues").update(update as never).eq("id", row.id);
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     void load();
   };
 

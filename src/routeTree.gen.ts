@@ -19,6 +19,7 @@ import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
 import { Route as AuthenticatedOutreachRouteImport } from './routes/_authenticated/outreach'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
+import { Route as AuthenticatedIssuesRouteImport } from './routes/_authenticated/issues'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCrmRouteImport } from './routes/_authenticated/crm'
 import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
@@ -82,6 +83,11 @@ const AuthenticatedNotificationsRoute =
     path: '/notifications',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedIssuesRoute = AuthenticatedIssuesRouteImport.update({
+  id: '/issues',
+  path: '/issues',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -153,6 +159,7 @@ export interface FileRoutesByFullPath {
   '/calendar': typeof AuthenticatedCalendarRoute
   '/crm': typeof AuthenticatedCrmRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/issues': typeof AuthenticatedIssuesRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/outreach': typeof AuthenticatedOutreachRoute
   '/projects': typeof AuthenticatedProjectsRoute
@@ -175,6 +182,7 @@ export interface FileRoutesByTo {
   '/calendar': typeof AuthenticatedCalendarRoute
   '/crm': typeof AuthenticatedCrmRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/issues': typeof AuthenticatedIssuesRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/outreach': typeof AuthenticatedOutreachRoute
   '/projects': typeof AuthenticatedProjectsRoute
@@ -199,6 +207,7 @@ export interface FileRoutesById {
   '/_authenticated/calendar': typeof AuthenticatedCalendarRoute
   '/_authenticated/crm': typeof AuthenticatedCrmRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/issues': typeof AuthenticatedIssuesRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/outreach': typeof AuthenticatedOutreachRoute
   '/_authenticated/projects': typeof AuthenticatedProjectsRoute
@@ -223,6 +232,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/crm'
     | '/dashboard'
+    | '/issues'
     | '/notifications'
     | '/outreach'
     | '/projects'
@@ -245,6 +255,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/crm'
     | '/dashboard'
+    | '/issues'
     | '/notifications'
     | '/outreach'
     | '/projects'
@@ -268,6 +279,7 @@ export interface FileRouteTypes {
     | '/_authenticated/calendar'
     | '/_authenticated/crm'
     | '/_authenticated/dashboard'
+    | '/_authenticated/issues'
     | '/_authenticated/notifications'
     | '/_authenticated/outreach'
     | '/_authenticated/projects'
@@ -362,6 +374,13 @@ declare module '@tanstack/react-router' {
       path: '/notifications'
       fullPath: '/notifications'
       preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/issues': {
+      id: '/_authenticated/issues'
+      path: '/issues'
+      fullPath: '/issues'
+      preLoaderRoute: typeof AuthenticatedIssuesRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/dashboard': {
@@ -474,6 +493,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedCalendarRoute: typeof AuthenticatedCalendarRoute
   AuthenticatedCrmRoute: typeof AuthenticatedCrmRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedIssuesRoute: typeof AuthenticatedIssuesRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedOutreachRoute: typeof AuthenticatedOutreachRoute
   AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
@@ -486,6 +506,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCalendarRoute: AuthenticatedCalendarRoute,
   AuthenticatedCrmRoute: AuthenticatedCrmRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedIssuesRoute: AuthenticatedIssuesRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedOutreachRoute: AuthenticatedOutreachRoute,
   AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,
