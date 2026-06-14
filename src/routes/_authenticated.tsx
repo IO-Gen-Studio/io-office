@@ -2,7 +2,7 @@ import { createFileRoute, Outlet, Link, useRouterState, useNavigate, redirect } 
 import { useEffect, useRef, useState } from "react";
 import {
   LayoutDashboard, Users, Mail, CalendarDays, Megaphone, Briefcase, CreditCard,
-  Bell, Settings, LogOut, Menu,
+  Bell, Settings, LogOut, Menu, CircleAlert,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/auth-context";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,6 +35,7 @@ const BIZ_DEV: NavItem[] = [
 const OPS: NavItem[] = [
   { to: "/projects", label: "Projects & Works", icon: Briefcase, module: "projects" },
   { to: "/subscriptions", label: "Subscriptions", icon: CreditCard, module: "subscriptions" },
+  { to: "/issues", label: "Issues Tracker", icon: CircleAlert, module: "issues" },
 ];
 
 function AuthLayout() {

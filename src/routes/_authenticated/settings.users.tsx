@@ -43,6 +43,7 @@ const MODULES = [
   { key: "social", label: "Social Planner" },
   { key: "projects", label: "Projects & Works" },
   { key: "subscriptions", label: "Subscriptions" },
+  { key: "issues", label: "Issues Tracker" },
 ] as const;
 
 type Profile = { id: string; email: string; full_name: string; job_title: string | null; active: boolean; must_change_password: boolean };
