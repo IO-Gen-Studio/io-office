@@ -1602,6 +1602,7 @@ export type Database = {
         | "subscriptions"
         | "calendar"
         | "settings"
+        | "issues"
       app_role: "admin" | "member"
       approval_status: "approved" | "not_approved" | "for_approval"
       custom_field_type:
@@ -1769,6 +1770,7 @@ export const Constants = {
         "subscriptions",
         "calendar",
         "settings",
+        "issues",
       ],
       app_role: ["admin", "member"],
       approval_status: ["approved", "not_approved", "for_approval"],
