@@ -1706,6 +1706,10 @@ export type Database = {
           read_ct: number
         }[]
       }
+      seed_issue_columns_for_tenant: {
+        Args: { _tenant_id: string }
+        Returns: undefined
+      }
       set_active_tenant: { Args: { _tenant_id: string }; Returns: undefined }
     }
     Enums: {
