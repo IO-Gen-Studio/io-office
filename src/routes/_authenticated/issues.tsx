@@ -214,14 +214,15 @@ function IssuesPage() {
           : undefined,
       render: (r) => {
         const val = (r.custom ?? {})[def.key];
-        if (!val) return null;
+        if (val === null || val === undefined || val === "") return <span className="text-muted-foreground">—</span>;
         if (def.type === "reference" && typeof val === "string") {
           return <ReferencePreview target={(def.options as { target?: string })?.target ?? "contacts"} value={val} />;
         }
         if (def.type === "checkbox") {
           return <Badge variant={val ? "default" : "secondary"}>{val ? "Yes" : "No"}</Badge>;
         }
-        return undefined;
+        if (Array.isArray(val)) return val.join(", ");
+        return String(val);
       },
     }));
     const customMap = new Map(custom.map((column) => [column.key.slice(7), column]));
