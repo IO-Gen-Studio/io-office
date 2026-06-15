@@ -543,16 +543,14 @@ function IssueDialog({
       activeTenantId &&
       form.owner_id !== currentUserId
     ) {
-      await supabase
-        .from("notifications")
-        .insert({
-          user_id: form.owner_id,
-          tenant_id: activeTenantId,
-          type: "issue_assignment",
-          title: "Issue assigned to you",
-          body: `Task ${number}: ${form.task.trim()}`,
-          link: "/issues",
-        });
+      await supabase.from("notifications").insert({
+        user_id: form.owner_id,
+        tenant_id: activeTenantId,
+        type: "issue_assignment",
+        title: "Issue assigned to you",
+        body: `Task ${number}: ${form.task.trim()}`,
+        link: "/issues",
+      });
     }
     toast.success(issue ? "Issue updated" : "Issue created");
     onSaved();
