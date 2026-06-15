@@ -17,7 +17,7 @@ export type ModuleKey = "crm" | "outreach" | "social" | "projects" | "subscripti
 
 export type FieldDef = {
   id: string;
-  module: ModuleKey;
+  module?: ModuleKey;
   key: string;
   label: string;
   type: FieldType;
@@ -106,7 +106,7 @@ export function FieldDialog({
       const payload = module === "issues"
         ? { label: finalLabel, key: finalKey, type, options: options as never, position: nextPosition, is_builtin: false, is_active: true }
         : { module, label: finalLabel, key: finalKey, type, options: options as never, position: nextPosition };
-      const { error } = await supabase.from(table).insert(payload);
+      const { error } = await supabase.from(table).insert(payload as never);
       setSaving(false);
       if (error) return toast.error(error.message);
       toast.success("Field added");
