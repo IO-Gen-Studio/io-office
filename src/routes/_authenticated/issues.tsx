@@ -44,17 +44,6 @@ type Issue = {
   custom: Record<string, unknown>;
 };
 
-/* Replaced by FieldDef */
-// type ColumnDef = {
-  module: string;
-  id: string;
-  key: string;
-  label: string;
-  type: "text" | "long_text" | "number" | "date" | "dropdown" | "checkbox" | "checklist" | "attachment" | "reference";
-  options: unknown;
-  position: number;
-};
-
 const EMPTY_ISSUE = {
   task: "",
   issue_date: "",
@@ -82,7 +71,7 @@ function IssuesPage() {
     if (issueError || columnError)
       toast.error(issueError?.message ?? columnError?.message ?? "Unable to load issues");
     setRows((issues ?? []) as Issue[]);
-    setDefs((columns ?? []) as ColumnDef[]);
+    setDefs((columns ?? []) as FieldDef[]);
   };
 
   useEffect(() => {
@@ -540,154 +529,6 @@ function ColumnsDialog({
             onSaved={() => { setCreating(false); setEditing(null); onChanged(); }}
           />
         )}
-      </DialogContent>
-    </Dialog>
-  );
-}: {
-  defs: ColumnDef[];
-  onClose: () => void;
-  onChanged: () => void;
-}) {
-  const [label, setLabel] = useState("");
-  const [type, setType] = useState<ColumnDef["type"]>("text");
-  const [options, setOptions] = useState("");
-  const add = async () => {
-    const key = label
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9]+/g, "_")
-      .replace(/^_|_$/g, "");
-    if (!key) return toast.error("Column name is required");
-    const parsedOptions =
-      type === "dropdown"
-        ? options
-            .split("\n")
-            .map((v) => v.trim())
-            .filter(Boolean)
-        : [];
-    if (type === "dropdown" && !parsedOptions.length)
-      return toast.error("Add at least one dropdown option");
-    const { error } = await supabase.from("custom_field_defs").insert({
-      module: "issues",
-      key,
-      label: label.trim(),
-      type,
-      options: parsedOptions,
-      position: defs.length,
-    } as never);
-    if (error) return toast.error(error.message);
-    setLabel("");
-    setType("text");
-    setOptions("");
-    toast.success("Column added");
-    onChanged();
-  };
-  const remove = async (def: ColumnDef) => {
-    if (
-      !confirm(
-        `Delete the “${def.label}” column? Existing values in this column will no longer be shown.`,
-      )
-    )
-      return;
-    const { error } = await supabase.from("custom_field_defs").delete().eq("id", def.id);
-    if (error) return toast.error(error.message);
-    toast.success("Column deleted");
-    onChanged();
-  };
-  return (
-    <Dialog
-      open
-      onOpenChange={(open) => {
-        if (!open) onClose();
-      }}
-    >
-      <DialogContent className="sm:max-w-xl">
-        <DialogHeader>
-          <DialogTitle>Manage shared columns</DialogTitle>
-          <DialogDescription>
-            New columns are available to everyone in this organisation. Each person can drag, hide,
-            sort, and filter them in their own view.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-2">
-          {defs.length === 0 ? (
-            <p className="rounded-lg bg-muted/50 p-4 text-sm text-muted-foreground">
-              No custom columns yet.
-            </p>
-          ) : (
-            defs.map((def) => (
-              <div key={def.id} className="flex items-center gap-3 rounded-lg border p-3">
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium">{def.label}</p>
-                  <p className="text-xs capitalize text-muted-foreground">
-                    {def.type.replace("_", " ")}
-                  </p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label={`Delete ${def.label} column`}
-                  onClick={() => void remove(def)}
-                >
-                  <Trash2 className="size-4" />
-                </Button>
-              </div>
-            ))
-          )}
-        </div>
-        <div className="space-y-4 border-t pt-4">
-          <p className="text-sm font-semibold">Add a column</p>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="column-label">Column name</Label>
-              <Input
-                id="column-label"
-                value={label}
-                onChange={(e) => setLabel(e.target.value)}
-                placeholder="e.g. Site"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Type</Label>
-              <Select value={type} onValueChange={(value) => setType(value as ColumnDef["type"])}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="text">Short text</SelectItem>
-                  <SelectItem value="long_text">Long text</SelectItem>
-                  <SelectItem value="number">Number</SelectItem>
-                  <SelectItem value="date">Date</SelectItem>
-                  <SelectItem value="dropdown">Dropdown</SelectItem>
-                  <SelectItem value="checkbox">Checkbox</SelectItem>
-                  <SelectItem value="checklist">Checklist</SelectItem>
-                  <SelectItem value="attachment">Attachment</SelectItem>
-                  <SelectItem value="reference">Reference</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          {type === "dropdown" && (
-            <div className="space-y-1.5">
-              <Label htmlFor="column-options">Options, one per line</Label>
-              <Textarea
-                id="column-options"
-                value={options}
-                onChange={(e) => setOptions(e.target.value)}
-                rows={4}
-              />
-            </div>
-          )}
-          <Button onClick={() => void add()}>
-            <Plus className="size-4" />
-            Add column
-          </Button>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Done
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
