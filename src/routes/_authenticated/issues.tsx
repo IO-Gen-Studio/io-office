@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { CircleAlert, Pencil, Plus, Settings2, Trash2 } from "lucide-react";
+import { ReferencePreview } from "@/components/CustomFieldValues";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth/auth-context";
@@ -42,10 +43,11 @@ type Issue = {
 };
 
 type ColumnDef = {
+  module: string;
   id: string;
   key: string;
   label: string;
-  type: "text" | "number" | "date" | "dropdown" | "checkbox";
+  type: "text" | "long_text" | "number" | "date" | "dropdown" | "checkbox" | "checklist" | "attachment" | "reference";
   options: unknown;
   position: number;
 };
@@ -192,16 +194,27 @@ function IssuesPage() {
       key: `custom.${def.key}`,
       header: def.label,
       accessor: (r) => (r.custom ?? {})[def.key],
-      editable,
+      editable: editable && ["text", "number", "date", "dropdown", "checkbox"].includes(def.type),
       type: (def.type === "dropdown"
         ? "select"
         : def.type === "checkbox"
           ? "boolean"
-          : def.type) as ColumnType,
+          : ["text", "number", "date"].includes(def.type) ? def.type : "text") as ColumnType,
       options:
         def.type === "dropdown" && Array.isArray(def.options)
           ? def.options.map((option) => ({ value: String(option), label: String(option) }))
           : undefined,
+      render: (r) => {
+        const val = (r.custom ?? {})[def.key];
+        if (!val) return null;
+        if (def.type === "reference" && typeof val === "string") {
+          return <ReferencePreview target={(def.options as { target?: string })?.target ?? "contacts"} value={val} />;
+        }
+        if (def.type === "checkbox") {
+          return <Badge variant={val ? "default" : "secondary"}>{val ? "Yes" : "No"}</Badge>;
+        }
+        return undefined;
+      },
     }));
     return [...builtIn, ...custom];
   }, [defs, editable]);
@@ -475,7 +488,8 @@ function ColumnsDialog({
         : [];
     if (type === "dropdown" && !parsedOptions.length)
       return toast.error("Add at least one dropdown option");
-    const { error } = await supabase.from("issue_column_defs").insert({
+    const { error } = await supabase.from("custom_field_defs").insert({
+      module: "issues",
       key,
       label: label.trim(),
       type,
@@ -496,7 +510,7 @@ function ColumnsDialog({
       )
     )
       return;
-    const { error } = await supabase.from("issue_column_defs").delete().eq("id", def.id);
+    const { error } = await supabase.from("custom_field_defs").delete().eq("id", def.id);
     if (error) return toast.error(error.message);
     toast.success("Column deleted");
     onChanged();
@@ -595,3 +609,4 @@ function ColumnsDialog({
     </Dialog>
   );
 }
+
