@@ -123,7 +123,7 @@ function AuthLayout() {
           <SheetHeader className="px-4 pt-4">
             <SheetTitle className="flex items-center gap-2">
               <img src={logoUrl} alt="" className="h-7 w-7 object-contain" />
-              <span className="text-sm font-semibold">IO Office</span>
+              <span className="text-sm font-semibold">Business Management</span>
             </SheetTitle>
           </SheetHeader>
           <MobileNavBody
@@ -264,7 +264,7 @@ function FloatingSidebar({
     <aside className="hidden md:flex flex-col w-[220px] bg-card shrink-0 h-[calc(100vh-1.5rem)] sticky top-3 ml-3 rounded-2xl border border-border/60 shadow-floating overflow-hidden">
       <div className="flex items-center gap-2 h-14 px-4">
         <img src={logoUrl} alt="" className="h-7 w-7 object-contain" />
-        <span className="font-semibold text-sm text-foreground tracking-tight">IO Office</span>
+        <span className="font-semibold text-sm text-foreground tracking-tight">Business Management</span>
       </div>
 
       <nav className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-3 pt-1 px-2 pb-2">
