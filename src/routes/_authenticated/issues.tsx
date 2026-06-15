@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { CircleAlert, Pencil, Plus, Settings2, Trash2 } from "lucide-react";
-import { FieldDialog, type FieldDef, type ModuleKey, TYPE_LABELS, REFERENCE_TARGETS } from "@/components/CustomFieldDialog";
+import { CircleAlert, CheckCircle2, CircleDot, Pencil, Plus, Settings2, Trash2, UserRound } from "lucide-react";
+import { FieldDialog, type FieldDef, TYPE_LABELS } from "@/components/CustomFieldDialog";
 import { CustomFieldValues } from "@/components/CustomFieldValues";
 import { ReferencePreview } from "@/components/CustomFieldValues";
 import { toast } from "sonner";
@@ -11,14 +11,9 @@ import { DataTable, type DataTableColumn, type ColumnType } from "@/components/D
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -39,39 +34,45 @@ type Issue = {
   issue_date: string | null;
   priority: string | null;
   owner: string | null;
+  owner_id: string | null;
   status: string;
   comment: string | null;
   custom: Record<string, unknown>;
 };
 
+type Profile = { id: string; full_name: string; email: string };
+
 const EMPTY_ISSUE = {
   task: "",
   issue_date: "",
   priority: "",
-  owner: "",
+  owner_id: "",
   status: "Open",
   comment: "",
 };
 
 function IssuesPage() {
-  const { canEdit } = useAuth();
+  const { canEdit, user, activeTenantId } = useAuth();
   const editable = canEdit("issues");
   const [rows, setRows] = useState<Issue[]>([]);
   const [defs, setDefs] = useState<FieldDef[]>([]);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
   const [issueOpen, setIssueOpen] = useState(false);
   const [editingIssue, setEditingIssue] = useState<Issue | null>(null);
   const [columnsOpen, setColumnsOpen] = useState(false);
 
   const load = async () => {
-    const [{ data: issues, error: issueError }, { data: columns, error: columnError }] =
+    const [{ data: issues, error: issueError }, { data: columns, error: columnError }, { data: people, error: profileError }] =
       await Promise.all([
         supabase.from("issues").select("*").order("issue_number", { ascending: true }),
         supabase.from("issue_column_defs").select("*").order("position", { ascending: true }),
+        supabase.from("profiles").select("id,full_name,email").eq("active", true).order("full_name"),
       ]);
-    if (issueError || columnError)
-      toast.error(issueError?.message ?? columnError?.message ?? "Unable to load issues");
+    if (issueError || columnError || profileError)
+      toast.error(issueError?.message ?? columnError?.message ?? profileError?.message ?? "Unable to load issues");
     setRows((issues ?? []) as Issue[]);
     setDefs((columns ?? []) as FieldDef[]);
+    setProfiles((people ?? []) as Profile[]);
   };
 
   useEffect(() => {
@@ -90,6 +91,12 @@ function IssuesPage() {
       toast.error(error.message);
       return;
     }
+    if (key === "owner_id" && value && value !== row.owner_id && activeTenantId && value !== user?.id) {
+      await supabase.from("notifications").insert({
+        user_id: String(value), tenant_id: activeTenantId, type: "issue_assignment",
+        title: "Issue assigned to you", body: `Task ${row.issue_number}: ${row.task}`, link: "/issues",
+      });
+    }
     void load();
   };
 
@@ -102,16 +109,18 @@ function IssuesPage() {
   };
 
   const columns = useMemo<DataTableColumn<Issue>[]>(() => {
-    const builtIn: DataTableColumn<Issue>[] = [
+    const builtIn = new Map<string, DataTableColumn<Issue>>([
+      ["issue_number",
       {
         key: "issue_number",
-        header: "Number",
+        header: "Task ID",
         accessor: (r) => r.issue_number,
         type: "number",
         align: "right",
         width: "90px",
         editable,
-      },
+      }],
+      ["task",
       {
         key: "task",
         header: "Task",
@@ -119,7 +128,8 @@ function IssuesPage() {
         type: "text",
         editable,
         width: "320px",
-      },
+      }],
+      ["issue_date",
       {
         key: "issue_date",
         header: "Date",
@@ -127,7 +137,8 @@ function IssuesPage() {
         type: "date",
         editable,
         width: "140px",
-      },
+      }],
+      ["priority",
       {
         key: "priority",
         header: "Priority",
@@ -151,8 +162,12 @@ function IssuesPage() {
           ) : (
             <span className="text-muted-foreground">—</span>
           ),
-      },
-      { key: "owner", header: "Owner", accessor: (r) => r.owner, type: "text", editable },
+      }],
+      ["owner_id", { key: "owner_id", header: "Owner", accessor: (r) => r.owner_id ?? r.owner, type: "select", editable,
+        options: profiles.map((profile) => ({ value: profile.id, label: profile.full_name || profile.email })),
+        render: (r) => profiles.find((profile) => profile.id === r.owner_id)?.full_name || r.owner || <span className="text-muted-foreground">—</span>,
+      }],
+      ["status",
       {
         key: "status",
         header: "Status",
@@ -172,7 +187,8 @@ function IssuesPage() {
             {r.status}
           </Badge>
         ),
-      },
+      }],
+      ["comment",
       {
         key: "comment",
         header: "Comment",
@@ -180,9 +196,9 @@ function IssuesPage() {
         type: "text",
         editable,
         width: "360px",
-      },
-    ];
-    const custom = defs.map<DataTableColumn<Issue>>((def) => ({
+      }],
+    ]);
+    const custom = defs.filter((def) => !def.is_builtin && def.is_active !== false).map<DataTableColumn<Issue>>((def) => ({
       key: `custom.${def.key}`,
       header: def.label,
       accessor: (r) => (r.custom ?? {})[def.key],
@@ -208,8 +224,16 @@ function IssuesPage() {
         return undefined;
       },
     }));
-    return [...builtIn, ...custom];
-  }, [defs, editable]);
+    const customMap = new Map(custom.map((column) => [column.key.slice(7), column]));
+    return defs.filter((def) => def.is_active !== false).map((def) => {
+      const column = def.is_builtin ? builtIn.get(def.key) : customMap.get(def.key);
+      return column ? { ...column, header: def.label } : null;
+    }).filter((column): column is DataTableColumn<Issue> => column !== null);
+  }, [defs, editable, profiles]);
+
+  const resolved = rows.filter((row) => row.status === "Resolved" || row.status === "Closed");
+  const ongoing = rows.filter((row) => row.status !== "Resolved" && row.status !== "Closed");
+  const assignedToMe = rows.filter((row) => row.owner_id === user?.id);
 
   return (
     <div className="mx-auto max-w-[1600px] space-y-6 py-6">
