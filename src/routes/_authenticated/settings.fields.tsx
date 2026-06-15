@@ -17,7 +17,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Pencil, Plus, Trash2 } from "lucide-react";
 import { BUILTIN_DROPDOWNS, useBuiltinLabels, type BuiltinModule } from "@/lib/builtin-labels";
 
 export const Route = createFileRoute("/_authenticated/settings/fields")({
@@ -142,6 +142,19 @@ function FieldsPage() {
     void reload();
   };
 
+  const moveIssueField = async (field: FieldDef, direction: -1 | 1) => {
+    const list = byModule.issues ?? [];
+    const index = list.findIndex((item) => item.id === field.id);
+    const other = list[index + direction];
+    if (index < 0 || !other) return;
+    const [{ error: firstError }, { error: secondError }] = await Promise.all([
+      supabase.from("issue_column_defs").update({ position: other.position }).eq("id", field.id),
+      supabase.from("issue_column_defs").update({ position: field.position }).eq("id", other.id),
+    ]);
+    if (firstError || secondError) return toast.error(firstError?.message ?? secondError?.message ?? "Unable to reorder fields");
+    void reload();
+  };
+
   return (
     <div className="space-y-4">
       <div>
@@ -196,7 +209,17 @@ function FieldsPage() {
                                 ? `→ ${REFERENCE_TARGETS.find((t) => t.value === (f.options as { target?: string })?.target)?.label ?? "—"}`
                                 : "—"}
                           </TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className="text-right whitespace-nowrap">
+                            {m.key === "issues" && (
+                              <>
+                                <Button size="icon" variant="ghost" aria-label={`Move ${f.label} up`} disabled={f === byModule.issues?.[0]} onClick={() => void moveIssueField(f, -1)}>
+                                  <ArrowUp className="h-4 w-4" />
+                                </Button>
+                                <Button size="icon" variant="ghost" aria-label={`Move ${f.label} down`} disabled={f === byModule.issues?.[(byModule.issues?.length ?? 1) - 1]} onClick={() => void moveIssueField(f, 1)}>
+                                  <ArrowDown className="h-4 w-4" />
+                                </Button>
+                              </>
+                            )}
                             <Button size="icon" variant="ghost" aria-label="Edit field" onClick={() => setEditing(f)}>
                               <Pencil className="h-4 w-4" />
                             </Button>
@@ -212,7 +235,7 @@ function FieldsPage() {
               </CardContent>
             </Card>
 
-            <Card>
+            {m.key !== "issues" && <Card>
               <CardHeader>
                 <CardTitle className="text-base">Built-in fields</CardTitle>
                 <p className="text-xs text-muted-foreground">
@@ -247,7 +270,7 @@ function FieldsPage() {
                   </div>
                 )}
               </CardContent>
-            </Card>
+            </Card>}
           </TabsContent>
         ))}
       </Tabs>
