@@ -1,4 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
+import { FieldDialog, type FieldDef, type FieldType, type ModuleKey, TYPE_LABELS, REFERENCE_TARGETS, slugify } from "@/components/CustomFieldDialog";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,39 +30,14 @@ export const Route = createFileRoute("/_authenticated/settings/fields")({
   component: FieldsPage,
 });
 
-type FieldType = "text" | "long_text" | "number" | "date" | "dropdown" | "checkbox" | "checklist" | "attachment" | "reference";
-type ModuleKey = "crm" | "outreach" | "social" | "projects" | "subscriptions" | "issues";
 
-type FieldDef = {
-  id: string;
-  module: ModuleKey;
-  key: string;
-  label: string;
-  type: FieldType;
-  options: unknown;
-  position: number;
-};
 
-const TYPE_LABELS: Record<FieldType, string> = {
-  text: "Short text",
-  long_text: "Long text",
-  number: "Number",
-  date: "Date",
-  dropdown: "Dropdown",
-  checkbox: "Checkbox",
-  checklist: "Checklist",
-  attachment: "Attachment",
-  reference: "Reference",
-};
 
-const REFERENCE_TARGETS = [
-  { value: "contacts", label: "CRM Contact" },
-  { value: "organisations", label: "Organisation" },
-  { value: "campaigns", label: "Outreach Campaign" },
-  { value: "projects", label: "Project / Work" },
-  { value: "subscriptions", label: "Subscription" },
-  { value: "profiles", label: "Team member" },
-];
+
+
+
+
+
 
 const MODULES: { key: ModuleKey; label: string; builtIn: { label: string; type: string }[] }[] = [
   {
@@ -125,9 +101,7 @@ const MODULES: { key: ModuleKey; label: string; builtIn: { label: string; type: 
   },
 ];
 
-function slugify(s: string) {
-  return s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 50);
-}
+
 
 function FieldsPage() {
   const [defs, setDefs] = useState<FieldDef[]>([]);
@@ -285,9 +259,7 @@ function FieldsPage() {
   );
 }
 
-function FieldDialog({
-  module, existing, existingKeys, nextPosition, onClose, onSaved,
-}: {
+: {
   module: ModuleKey;
   existing: FieldDef | null;
   existingKeys: Set<string>;
@@ -480,3 +452,4 @@ function BuiltinDropdownEditor({
     </div>
   );
 }
+
