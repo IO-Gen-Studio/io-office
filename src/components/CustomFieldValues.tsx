@@ -10,7 +10,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { ExternalLink, FileText, Trash2 } from "lucide-react";
 
-export type CustomFieldModule = "crm" | "outreach" | "social" | "projects" | "subscriptions";
+export type CustomFieldModule = "crm" | "outreach" | "social" | "projects" | "subscriptions" | "issues";
 
 type FieldType =
   | "text" | "long_text" | "number" | "date"

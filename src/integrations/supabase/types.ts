@@ -761,6 +761,8 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          is_active: boolean
+          is_builtin: boolean
           key: string
           label: string
           options: Json
@@ -772,6 +774,8 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          is_active?: boolean
+          is_builtin?: boolean
           key: string
           label: string
           options?: Json
@@ -783,6 +787,8 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          is_active?: boolean
+          is_builtin?: boolean
           key?: string
           label?: string
           options?: Json
@@ -811,6 +817,7 @@ export type Database = {
           issue_date: string | null
           issue_number: number
           owner: string | null
+          owner_id: string | null
           priority: string | null
           status: string
           task: string
@@ -826,6 +833,7 @@ export type Database = {
           issue_date?: string | null
           issue_number: number
           owner?: string | null
+          owner_id?: string | null
           priority?: string | null
           status?: string
           task: string
@@ -841,6 +849,7 @@ export type Database = {
           issue_date?: string | null
           issue_number?: number
           owner?: string | null
+          owner_id?: string | null
           priority?: string | null
           status?: string
           task?: string
@@ -848,6 +857,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "issues_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "issues_tenant_id_fkey"
             columns: ["tenant_id"]

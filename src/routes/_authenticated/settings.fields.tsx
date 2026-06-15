@@ -30,7 +30,7 @@ export const Route = createFileRoute("/_authenticated/settings/fields")({
 });
 
 type FieldType = "text" | "long_text" | "number" | "date" | "dropdown" | "checkbox" | "checklist" | "attachment" | "reference";
-type ModuleKey = "crm" | "outreach" | "social" | "projects" | "subscriptions";
+type ModuleKey = "crm" | "outreach" | "social" | "projects" | "subscriptions" | "issues";
 
 type FieldDef = {
   id: string;
@@ -112,6 +112,15 @@ const MODULES: { key: ModuleKey; label: string; builtIn: { label: string; type: 
       { label: "Billing cycle", type: "Dropdown" }, { label: "Renewal date", type: "Date" },
       { label: "Status", type: "Dropdown" },
       { label: "Client organisation", type: "Reference" }, { label: "Client contact", type: "Reference" },
+    ],
+  },
+  {
+    key: "issues", label: "Issues Tracker",
+    builtIn: [
+      { label: "Number", type: "Number" }, { label: "Task", type: "Short text" },
+      { label: "Date", type: "Date" }, { label: "Priority", type: "Dropdown" },
+      { label: "Owner", type: "Short text" }, { label: "Status", type: "Dropdown" },
+      { label: "Comment", type: "Long text" },
     ],
   },
 ];
