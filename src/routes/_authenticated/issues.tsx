@@ -304,7 +304,7 @@ function KpiCard({ label, value, icon }: { label: string; value: number; icon: R
   return <Card><CardContent className="flex items-center justify-between p-5"><div><p className="text-sm text-muted-foreground">{label}</p><p className="mt-1 text-3xl font-semibold tracking-tight">{value}</p></div>{icon}</CardContent></Card>;
 }
 
-function IssuesGrid({ tableKey, rows, columns, editable, onSaveCell, onEdit, onRemove }: { tableKey: string; rows: Issue[]; columns: DataTableColumn<Issue>[]; editable: boolean; onSaveCell: (row: Issue, key: string, value: unknown) => Promise<void>; onEdit: (issue: Issue) => void; onRemove: (issue: Issue) => Promise<void> }) {
+function IssuesGrid({ tableKey, rows, columns, editable, onSaveCell, onEdit, onRemove }: { tableKey: string; rows: Issue[]; columns: DataTableColumn<Issue>[]; editable: boolean; onSaveCell: (row: Issue, key: string, value: unknown) => Promise<void>; onEdit: (issue: Issue) => void; onRemove: (issue: Issue) => Promise<unknown> }) {
   return <Card className="shadow-soft"><CardContent className="pt-6"><DataTable tableKey={tableKey} columns={columns} rows={rows} rowId={(row) => row.id} onSaveCell={onSaveCell} emptyMessage="No issues in this view." actions={editable ? (issue) => <div className="flex justify-end gap-1"><Button variant="ghost" size="icon" aria-label={`Edit issue ${issue.issue_number}`} onClick={() => onEdit(issue)}><Pencil className="size-4" /></Button><Button variant="ghost" size="icon" aria-label={`Delete issue ${issue.issue_number}`} onClick={() => void onRemove(issue)}><Trash2 className="size-4" /></Button></div> : undefined} /></CardContent></Card>;
 }
 
