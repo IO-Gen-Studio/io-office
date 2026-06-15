@@ -40,8 +40,10 @@ export function useCustomFieldDefs(module: CustomFieldModule) {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data } = await supabase
-        .from("custom_field_defs").select("*").eq("module", module).order("position");
+      const query = module === "issues"
+        ? supabase.from("issue_column_defs").select("*").eq("is_builtin", false).eq("is_active", true).order("position")
+        : supabase.from("custom_field_defs").select("*").eq("module", module).order("position");
+      const { data } = await query;
       if (!cancelled) setDefs((data ?? []) as CustomFieldDef[]);
     })();
     return () => { cancelled = true; };

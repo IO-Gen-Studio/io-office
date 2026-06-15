@@ -339,8 +339,8 @@ function IssueDialog({
       custom: form.custom,
     };
     const result = issue
-      ? await supabase.from("issues").update(payload).eq("id", issue.id)
-      : await supabase.from("issues").insert(payload);
+      ? await supabase.from("issues").update(payload as never).eq("id", issue.id)
+      : await supabase.from("issues").insert(payload as never);
     setSaving(false);
     if (result.error) return toast.error(result.error.message);
     toast.success(issue ? "Issue updated" : "Issue created");
@@ -475,7 +475,7 @@ function ColumnsDialog({
 
   const remove = async (def: FieldDef) => {
     if (!confirm(`Delete the “${def.label}” column? Existing values in this column will no longer be shown.`)) return;
-    const { error } = await supabase.from("custom_field_defs").delete().eq("id", def.id);
+    const { error } = await supabase.from("issue_column_defs").delete().eq("id", def.id);
     if (error) return toast.error(error.message);
     toast.success("Column deleted");
     onChanged();

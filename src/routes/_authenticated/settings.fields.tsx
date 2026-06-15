@@ -112,10 +112,15 @@ function FieldsPage() {
 
   const reload = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("custom_field_defs").select("*").order("module").order("position");
-    if (error) toast.error(error.message);
-    setDefs((data ?? []) as FieldDef[]);
+    const [{ data, error }, { data: issueData, error: issueError }] = await Promise.all([
+      supabase.from("custom_field_defs").select("*").order("module").order("position"),
+      supabase.from("issue_column_defs").select("*").order("position"),
+    ]);
+    if (error || issueError) toast.error(error?.message ?? issueError?.message ?? "Unable to load fields");
+    setDefs([
+      ...((data ?? []) as FieldDef[]),
+      ...((issueData ?? []).map((field) => ({ ...field, module: "issues" as const })) as FieldDef[]),
+    ]);
     setLoading(false);
   };
 
@@ -123,13 +128,15 @@ function FieldsPage() {
 
   const byModule = useMemo(() => {
     const m: Record<string, FieldDef[]> = {};
-    for (const d of defs) (m[d.module] ??= []).push(d);
+    for (const d of defs) if (d.module) (m[d.module] ??= []).push(d);
     return m;
   }, [defs]);
 
   const onDelete = async (id: string) => {
     if (!confirm("Delete this field? This cannot be undone.")) return;
-    const { error } = await supabase.from("custom_field_defs").delete().eq("id", id);
+    const field = defs.find((item) => item.id === id);
+    const table = field?.module === "issues" ? "issue_column_defs" : "custom_field_defs";
+    const { error } = await supabase.from(table).delete().eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("Field deleted");
     void reload();
