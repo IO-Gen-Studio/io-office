@@ -266,48 +266,25 @@ function IssuesPage() {
           </div>
         )}
       </div>
-      <Card className="shadow-soft">
-        <CardContent className="pt-6">
-          <DataTable
-            tableKey="issues"
-            columns={columns}
-            rows={rows}
-            rowId={(r) => r.id}
-            onSaveCell={saveCell}
-            emptyMessage="No issues yet."
-            actions={
-              editable
-                ? (issue) => (
-                    <div className="flex justify-end gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label={`Edit issue ${issue.issue_number}`}
-                        onClick={() => {
-                          setEditingIssue(issue);
-                          setIssueOpen(true);
-                        }}
-                      >
-                        <Pencil className="size-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label={`Delete issue ${issue.issue_number}`}
-                        onClick={() => void removeIssue(issue)}
-                      >
-                        <Trash2 className="size-4" />
-                      </Button>
-                    </div>
-                  )
-                : undefined
-            }
-          />
-        </CardContent>
-      </Card>
+      <div className="grid gap-4 sm:grid-cols-3">
+        <KpiCard label="Open Issues" value={ongoing.length} icon={<CircleDot className="size-5 text-primary" />} />
+        <KpiCard label="Resolved Issues" value={resolved.length} icon={<CheckCircle2 className="size-5 text-primary" />} />
+        <KpiCard label="Assigned to Me" value={assignedToMe.length} icon={<UserRound className="size-5 text-primary" />} />
+      </div>
+      <Tabs defaultValue="ongoing">
+        <TabsList>
+          <TabsTrigger value="ongoing">Ongoing ({ongoing.length})</TabsTrigger>
+          <TabsTrigger value="resolved">Resolved ({resolved.length})</TabsTrigger>
+        </TabsList>
+        <TabsContent value="ongoing"><IssuesGrid tableKey="issues-ongoing" rows={ongoing} columns={columns} editable={editable} onSaveCell={saveCell} onEdit={(issue) => { setEditingIssue(issue); setIssueOpen(true); }} onRemove={removeIssue} /></TabsContent>
+        <TabsContent value="resolved"><IssuesGrid tableKey="issues-resolved" rows={resolved} columns={columns} editable={editable} onSaveCell={saveCell} onEdit={(issue) => { setEditingIssue(issue); setIssueOpen(true); }} onRemove={removeIssue} /></TabsContent>
+      </Tabs>
       {issueOpen && (
         <IssueDialog
           issue={editingIssue}
+          profiles={profiles}
+          activeTenantId={activeTenantId}
+          currentUserId={user?.id}
           nextNumber={Math.max(0, ...rows.map((r) => r.issue_number)) + 1}
           onClose={() => setIssueOpen(false)}
           onSaved={() => {
@@ -323,13 +300,27 @@ function IssuesPage() {
   );
 }
 
+function KpiCard({ label, value, icon }: { label: string; value: number; icon: React.ReactNode }) {
+  return <Card><CardContent className="flex items-center justify-between p-5"><div><p className="text-sm text-muted-foreground">{label}</p><p className="mt-1 text-3xl font-semibold tracking-tight">{value}</p></div>{icon}</CardContent></Card>;
+}
+
+function IssuesGrid({ tableKey, rows, columns, editable, onSaveCell, onEdit, onRemove }: { tableKey: string; rows: Issue[]; columns: DataTableColumn<Issue>[]; editable: boolean; onSaveCell: (row: Issue, key: string, value: unknown) => Promise<void>; onEdit: (issue: Issue) => void; onRemove: (issue: Issue) => Promise<void> }) {
+  return <Card className="shadow-soft"><CardContent className="pt-6"><DataTable tableKey={tableKey} columns={columns} rows={rows} rowId={(row) => row.id} onSaveCell={onSaveCell} emptyMessage="No issues in this view." actions={editable ? (issue) => <div className="flex justify-end gap-1"><Button variant="ghost" size="icon" aria-label={`Edit issue ${issue.issue_number}`} onClick={() => onEdit(issue)}><Pencil className="size-4" /></Button><Button variant="ghost" size="icon" aria-label={`Delete issue ${issue.issue_number}`} onClick={() => void onRemove(issue)}><Trash2 className="size-4" /></Button></div> : undefined} /></CardContent></Card>;
+}
+
 function IssueDialog({
   issue,
+  profiles,
+  activeTenantId,
+  currentUserId,
   nextNumber,
   onClose,
   onSaved,
 }: {
   issue: Issue | null;
+  profiles: Profile[];
+  activeTenantId: string | null;
+  currentUserId: string | undefined;
   nextNumber: number;
   onClose: () => void;
   onSaved: () => void;
@@ -340,7 +331,7 @@ function IssueDialog({
           task: issue.task,
           issue_date: issue.issue_date ?? "",
           priority: issue.priority ?? "",
-          owner: issue.owner ?? "",
+          owner_id: issue.owner_id ?? "",
           status: issue.status,
           comment: issue.comment ?? "",
           custom: issue.custom ?? {},
@@ -357,7 +348,8 @@ function IssueDialog({
       task: form.task.trim(),
       issue_date: form.issue_date || null,
       priority: form.priority || null,
-      owner: form.owner.trim() || null,
+      owner_id: form.owner_id || null,
+      owner: profiles.find((profile) => profile.id === form.owner_id)?.full_name ?? issue?.owner ?? null,
       status: form.status,
       comment: form.comment.trim() || null,
       custom: form.custom,
@@ -367,27 +359,26 @@ function IssueDialog({
       : await supabase.from("issues").insert(payload as never);
     setSaving(false);
     if (result.error) return toast.error(result.error.message);
+    if (form.owner_id && form.owner_id !== issue?.owner_id && activeTenantId && form.owner_id !== currentUserId) {
+      await supabase.from("notifications").insert({ user_id: form.owner_id, tenant_id: activeTenantId, type: "issue_assignment", title: "Issue assigned to you", body: `Task ${number}: ${form.task.trim()}`, link: "/issues" });
+    }
     toast.success(issue ? "Issue updated" : "Issue created");
     onSaved();
   };
   return (
-    <Dialog
+    <Sheet
       open
       onOpenChange={(open) => {
         if (!open) onClose();
       }}
     >
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>{issue ? `Edit issue #${issue.issue_number}` : "New issue"}</DialogTitle>
-          <DialogDescription>
-            Add the core issue details. Extra organisation columns can be edited directly in the
-            grid.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-4 sm:grid-cols-2">
+      <SheetContent className="flex w-[95vw] flex-col gap-0 p-0 sm:max-w-[min(760px,95vw)]">
+        <SheetHeader className="shrink-0 border-b p-6 pb-4">
+          <SheetTitle>{issue ? `Edit task ${issue.issue_number}` : "New issue"}</SheetTitle>
+        </SheetHeader>
+        <div className="grid flex-1 gap-4 overflow-y-auto p-6 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <Label htmlFor="issue-number">Number</Label>
+            <Label htmlFor="issue-number">Task ID</Label>
             <Input
               id="issue-number"
               type="number"
@@ -433,12 +424,11 @@ function IssueDialog({
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="issue-owner">Owner</Label>
-            <Input
-              id="issue-owner"
-              value={form.owner}
-              onChange={(e) => setForm({ ...form, owner: e.target.value })}
-            />
+            <Label>Owner</Label>
+            <Select value={form.owner_id || "none"} onValueChange={(owner_id) => setForm({ ...form, owner_id: owner_id === "none" ? "" : owner_id })}>
+              <SelectTrigger><SelectValue placeholder="Select owner" /></SelectTrigger>
+              <SelectContent><SelectItem value="none">Unassigned</SelectItem>{profiles.map((profile) => <SelectItem key={profile.id} value={profile.id}>{profile.full_name || profile.email}</SelectItem>)}</SelectContent>
+            </Select>
           </div>
           <div className="space-y-1.5">
             <Label>Status</Label>
@@ -472,16 +462,16 @@ function IssueDialog({
             />
           </div>
         </div>
-        <DialogFooter>
+        <SheetFooter className="shrink-0 border-t p-6 pt-4">
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
           <Button disabled={saving} onClick={() => void save()}>
             {saving ? "Saving…" : "Save issue"}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }
 
