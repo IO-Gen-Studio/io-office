@@ -330,8 +330,9 @@ function IssueDialog({
           owner: issue.owner ?? "",
           status: issue.status,
           comment: issue.comment ?? "",
+          custom: issue.custom ?? {},
         }
-      : EMPTY_ISSUE,
+      : { ...EMPTY_ISSUE, custom: {} },
   );
   const [number, setNumber] = useState(issue?.issue_number ?? nextNumber);
   const [saving, setSaving] = useState(false);
@@ -346,6 +347,7 @@ function IssueDialog({
       owner: form.owner.trim() || null,
       status: form.status,
       comment: form.comment.trim() || null,
+      custom: form.custom,
     };
     const result = issue
       ? await supabase.from("issues").update(payload).eq("id", issue.id)
@@ -447,6 +449,13 @@ function IssueDialog({
               rows={4}
               value={form.comment}
               onChange={(e) => setForm({ ...form, comment: e.target.value })}
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <CustomFieldValues
+              module="issues"
+              value={form.custom}
+              onChange={(custom) => setForm({ ...form, custom })}
             />
           </div>
         </div>
@@ -683,6 +692,7 @@ function ColumnsDialog({
     </Dialog>
   );
 }
+
 
 
 
