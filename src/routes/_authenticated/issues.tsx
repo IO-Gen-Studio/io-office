@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { CircleAlert, Pencil, Plus, Settings2, Trash2 } from "lucide-react";
+import { FieldDialog, type FieldDef, type ModuleKey, TYPE_LABELS, REFERENCE_TARGETS } from "@/components/CustomFieldDialog";
 import { ReferencePreview } from "@/components/CustomFieldValues";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
