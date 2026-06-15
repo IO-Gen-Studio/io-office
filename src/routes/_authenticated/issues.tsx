@@ -43,7 +43,8 @@ type Issue = {
   custom: Record<string, unknown>;
 };
 
-type ColumnDef = {
+/* Replaced by FieldDef */
+// type ColumnDef = {
   module: string;
   id: string;
   key: string;
@@ -66,7 +67,7 @@ function IssuesPage() {
   const { canEdit } = useAuth();
   const editable = canEdit("issues");
   const [rows, setRows] = useState<Issue[]>([]);
-  const [defs, setDefs] = useState<ColumnDef[]>([]);
+  const [defs, setDefs] = useState<FieldDef[]>([]);
   const [issueOpen, setIssueOpen] = useState(false);
   const [editingIssue, setEditingIssue] = useState<Issue | null>(null);
   const [columnsOpen, setColumnsOpen] = useState(false);
@@ -466,6 +467,73 @@ function ColumnsDialog({
   onClose,
   onChanged,
 }: {
+  defs: FieldDef[];
+  onClose: () => void;
+  onChanged: () => void;
+}) {
+  const [editing, setEditing] = useState<FieldDef | null>(null);
+  const [creating, setCreating] = useState(false);
+
+  const remove = async (def: FieldDef) => {
+    if (!confirm(`Delete the “${def.label}” column? Existing values in this column will no longer be shown.`)) return;
+    const { error } = await supabase.from("custom_field_defs").delete().eq("id", def.id);
+    if (error) return toast.error(error.message);
+    toast.success("Column deleted");
+    onChanged();
+  };
+
+  return (
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Manage shared columns</DialogTitle>
+          <DialogDescription>
+            New columns are available to everyone. Each person can drag, hide, sort, and filter them in their own view.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="flex justify-end">
+            <Button onClick={() => setCreating(true)}>
+              <Plus className="size-4" /> Add column
+            </Button>
+          </div>
+          <div className="max-h-[400px] overflow-auto space-y-2">
+            {defs.map((def) => (
+              <div key={def.id} className="flex items-center gap-3 rounded-lg border p-3">
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium">{def.label}</p>
+                  <p className="text-xs capitalize text-muted-foreground">{TYPE_LABELS[def.type]}</p>
+                </div>
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="icon" onClick={() => setEditing(def)}>
+                    <Pencil className="size-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={() => void remove(def)}>
+                    <Trash2 className="size-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Done</Button>
+        </DialogFooter>
+
+        {(creating || editing) && (
+          <FieldDialog
+            module="issues"
+            existing={editing}
+            existingKeys={new Set(defs.filter(f => f.id !== editing?.id).map(f => f.key))}
+            nextPosition={defs.length}
+            onClose={() => { setCreating(false); setEditing(null); }}
+            onSaved={() => { setCreating(false); setEditing(null); onChanged(); }}
+          />
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}: {
   defs: ColumnDef[];
   onClose: () => void;
   onChanged: () => void;
@@ -614,5 +682,6 @@ function ColumnsDialog({
     </Dialog>
   );
 }
+
 
 

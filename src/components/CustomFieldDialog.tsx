@@ -23,6 +23,8 @@ export type FieldDef = {
   type: FieldType;
   options: unknown;
   position: number;
+  is_builtin?: boolean;
+  is_active?: boolean;
 };
 
 export const TYPE_LABELS: Record<FieldType, string> = {
@@ -91,17 +93,20 @@ export function FieldDialog({
     }
 
     setSaving(true);
+    const table = module === "issues" ? "issue_column_defs" : "custom_field_defs";
     if (existing) {
-      const { error } = await supabase.from("custom_field_defs").update({
-        label: finalLabel, key: finalKey, type, options: options as never,
-      }).eq("id", existing.id);
+      const update = existing.is_builtin
+        ? { label: finalLabel, type, options: options as never }
+        : { label: finalLabel, key: finalKey, type, options: options as never };
+      const { error } = await supabase.from(table).update(update).eq("id", existing.id);
       setSaving(false);
       if (error) return toast.error(error.message);
       toast.success("Field updated");
     } else {
-      const { error } = await supabase.from("custom_field_defs").insert({
-        module, label: finalLabel, key: finalKey, type, options: options as never, position: nextPosition,
-      });
+      const payload = module === "issues"
+        ? { label: finalLabel, key: finalKey, type, options: options as never, position: nextPosition, is_builtin: false, is_active: true }
+        : { module, label: finalLabel, key: finalKey, type, options: options as never, position: nextPosition };
+      const { error } = await supabase.from(table).insert(payload);
       setSaving(false);
       if (error) return toast.error(error.message);
       toast.success("Field added");
@@ -128,6 +133,7 @@ export function FieldDialog({
             <Input
               value={effectiveKey}
               onChange={(e) => { setKeyTouched(true); setKey(e.target.value); }}
+              disabled={existing?.is_builtin === true}
               placeholder="auto from label"
               className="font-mono"
             />
