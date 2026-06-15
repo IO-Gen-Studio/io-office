@@ -575,11 +575,15 @@ function ColumnsDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="text">Text</SelectItem>
+                  <SelectItem value="text">Short text</SelectItem>
+                  <SelectItem value="long_text">Long text</SelectItem>
                   <SelectItem value="number">Number</SelectItem>
                   <SelectItem value="date">Date</SelectItem>
                   <SelectItem value="dropdown">Dropdown</SelectItem>
                   <SelectItem value="checkbox">Checkbox</SelectItem>
+                  <SelectItem value="checklist">Checklist</SelectItem>
+                  <SelectItem value="attachment">Attachment</SelectItem>
+                  <SelectItem value="reference">Reference</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -609,4 +613,5 @@ function ColumnsDialog({
     </Dialog>
   );
 }
+
 
