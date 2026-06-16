@@ -75,6 +75,7 @@ type Profile = {
   job_title: string | null;
   active: boolean;
   must_change_password: boolean;
+  last_sign_in_at: string | null;
 };
 type Access = {
   user_id: string;
