@@ -417,6 +417,13 @@ function SubDialog({ open, onOpenChange, sub, orgs, contacts, planOpts, onSaved 
   const [org, setOrg] = useState<string>("__none__"); const [contact, setContact] = useState<string>("__none__");
   const [description, setDescription] = useState("");
   const [customVals, setCustomVals] = useState<Record<string, unknown>>({});
+  const [localOrgs, setLocalOrgs] = useState<Org[]>(orgs);
+  const [localContacts, setLocalContacts] = useState<Contact[]>(contacts);
+  const [quickOrgOpen, setQuickOrgOpen] = useState(false);
+  const [quickContactOpen, setQuickContactOpen] = useState(false);
+
+  useEffect(() => { setLocalOrgs(orgs); }, [orgs]);
+  useEffect(() => { setLocalContacts(contacts); }, [contacts]);
 
   const cycleOptions = useBuiltinFieldOptions("subscriptions", "billing_cycle");
   const statusOptions = useBuiltinFieldOptions("subscriptions", "status");
