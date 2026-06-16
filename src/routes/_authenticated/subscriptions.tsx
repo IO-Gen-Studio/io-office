@@ -587,13 +587,3 @@ function SubDialog({ open, onOpenChange, sub, orgs, contacts, planOpts, onSaved 
     </Dialog>
   );
 }
-          <CustomFieldValues module="subscriptions" value={customVals} onChange={setCustomVals} />
-        </div>
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={submit} className="bg-gradient-primary text-primary-foreground" disabled={!plan.trim()}>Save</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
