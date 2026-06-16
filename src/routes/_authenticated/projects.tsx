@@ -20,6 +20,7 @@ import { generateCostProposalPdf, fetchCostItems } from "@/lib/cost-proposal-pdf
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import { CustomFieldValues } from "@/components/CustomFieldValues";
+import { QuickCreateOrgDialog, QuickCreateContactDialog } from "@/components/QuickCreateCrm";
 import { CustomFieldDisplay, useCustomFieldColumns } from "@/components/CustomFieldDisplay";
 import { CostBreakdown } from "@/components/CostBreakdown";
 import { TodoList } from "@/components/TodoList";
