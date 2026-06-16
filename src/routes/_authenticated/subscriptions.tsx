@@ -536,9 +536,12 @@ function SubDialog({ open, onOpenChange, sub, orgs, contacts, planOpts, onSaved 
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__none__">None</SelectItem>
-                  {orgs.map((o) => <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>)}
+                  {localOrgs.map((o) => <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>)}
                 </SelectContent>
               </Select>
+              <Button type="button" variant="ghost" size="sm" className="h-7 px-2 -ml-2 text-xs" onClick={() => setQuickOrgOpen(true)}>
+                <Plus className="size-3 mr-1" /> New organisation
+              </Button>
             </div>
             <div className="space-y-1">
               <Label>Contact</Label>
@@ -549,8 +552,41 @@ function SubDialog({ open, onOpenChange, sub, orgs, contacts, planOpts, onSaved 
                   {filteredContacts.map((c) => <SelectItem key={c.id} value={c.id}>{c.first_name} {c.last_name}</SelectItem>)}
                 </SelectContent>
               </Select>
+              <Button type="button" variant="ghost" size="sm" className="h-7 px-2 -ml-2 text-xs" onClick={() => setQuickContactOpen(true)}>
+                <Plus className="size-3 mr-1" /> New contact
+              </Button>
             </div>
           </div>
+          <CustomFieldValues module="subscriptions" value={customVals} onChange={setCustomVals} />
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button onClick={submit} className="bg-gradient-primary text-primary-foreground" disabled={!plan.trim()}>Save</Button>
+        </DialogFooter>
+      </DialogContent>
+      <QuickCreateOrgDialog
+        open={quickOrgOpen}
+        onOpenChange={setQuickOrgOpen}
+        onCreated={(newOrg) => {
+          setLocalOrgs((prev) => [...prev, newOrg].sort((a, b) => a.name.localeCompare(b.name)));
+          setOrg(newOrg.id);
+          setContact("__none__");
+        }}
+      />
+      <QuickCreateContactDialog
+        open={quickContactOpen}
+        onOpenChange={setQuickContactOpen}
+        orgs={localOrgs}
+        defaultOrgId={org === "__none__" ? null : org}
+        onCreated={(newContact) => {
+          setLocalContacts((prev) => [...prev, newContact]);
+          if (newContact.organisation_id) setOrg(newContact.organisation_id);
+          setContact(newContact.id);
+        }}
+      />
+    </Dialog>
+  );
+}
           <CustomFieldValues module="subscriptions" value={customVals} onChange={setCustomVals} />
         </div>
         <DialogFooter>
