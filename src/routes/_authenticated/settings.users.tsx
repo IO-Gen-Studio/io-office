@@ -151,6 +151,7 @@ function UsersPage() {
                 <TableHead>Job title</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Last login</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -173,6 +174,14 @@ function UsersPage() {
                     ) : (
                       <Badge variant="destructive">Disabled</Badge>
                     )}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground text-sm">
+                    {p.last_sign_in_at
+                      ? new Date(p.last_sign_in_at).toLocaleString(undefined, {
+                          dateStyle: "medium",
+                          timeStyle: "short",
+                        })
+                      : "Never"}
                   </TableCell>
                   <TableCell className="text-right">
                     <Button size="sm" variant="ghost" onClick={() => setEditing(p)}>
