@@ -358,8 +358,8 @@ function IssuesPage() {
       </div>
       <Tabs defaultValue="ongoing">
         <TabsList>
-          <TabsTrigger value="ongoing">Ongoing ({ongoing.length})</TabsTrigger>
-          <TabsTrigger value="resolved">Resolved ({resolved.length})</TabsTrigger>
+          <TabsTrigger value="ongoing">Ongoing</TabsTrigger>
+          <TabsTrigger value="resolved">Resolved</TabsTrigger>
         </TabsList>
         <TabsContent value="ongoing">
           <IssuesGrid

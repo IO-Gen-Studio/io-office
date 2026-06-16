@@ -110,6 +110,25 @@ export function DataTable<T>(props: DataTableProps<T>) {
     if (typeof window !== "undefined") window.localStorage.setItem(storeKey, JSON.stringify(prefs));
   }, [prefs, storeKey]);
 
+  // Reconcile saved order with the current column set whenever columns change.
+  // Initial mount may receive an empty columns array (data still loading); without
+  // this, the saved order stays empty and the table renders blank until remount.
+  useEffect(() => {
+    setPrefs((prev) => {
+      const known = new Set(columns.map((c) => c.key));
+      const filtered = prev.order.filter((k) => known.has(k));
+      const next = [...filtered];
+      let changed = filtered.length !== prev.order.length;
+      columns.forEach((c) => {
+        if (!next.includes(c.key)) {
+          next.push(c.key);
+          changed = true;
+        }
+      });
+      return changed ? { ...prev, order: next } : prev;
+    });
+  }, [columns]);
+
   const orderedCols = useMemo(() => {
     const map = new Map(columns.map((c) => [c.key, c]));
     return prefs.order
