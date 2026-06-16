@@ -432,6 +432,12 @@ function ProjectDialog({ open, onOpenChange, project, defaultType, orgs, contact
   const [startDate, setStartDate] = useState(""); const [endDate, setEndDate] = useState("");
   const [totalCost, setTotalCost] = useState("0"); const [supplierCost, setSupplierCost] = useState("0");
   const [customVals, setCustomVals] = useState<Record<string, unknown>>({});
+  const [localOrgs, setLocalOrgs] = useState<Org[]>(orgs);
+  const [localContacts, setLocalContacts] = useState<Contact[]>(contacts);
+  const [quickOrgOpen, setQuickOrgOpen] = useState(false);
+  const [quickContactOpen, setQuickContactOpen] = useState(false);
+  useEffect(() => { setLocalOrgs(orgs); }, [orgs]);
+  useEffect(() => { setLocalContacts(contacts); }, [contacts]);
 
   useEffect(() => {
     setTitle(project?.title ?? ""); setDescription(project?.description ?? "");
