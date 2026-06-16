@@ -471,7 +471,7 @@ function SubDialog({ open, onOpenChange, sub, orgs, contacts, planOpts, onSaved 
     toast.success("Saved"); onOpenChange(false); onSaved();
   };
 
-  const filteredContacts = org === "__none__" ? contacts : contacts.filter((c) => c.organisation_id === org);
+  const filteredContacts = org === "__none__" ? localContacts : localContacts.filter((c) => c.organisation_id === org);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
