@@ -255,6 +255,28 @@ export const adminListUsers = createServerFn({ method: "POST" })
       supabaseAdmin.from("super_admins").select("user_id"),
     ]);
 
+    // Pull last_sign_in_at from auth.users via the Admin API (paginate to cover all users).
+    const lastSignInById = new Map<string, string | null>();
+    try {
+      let page = 1;
+      // perPage max is 1000 in supabase-js
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        const { data: authPage, error: authErr } = await supabaseAdmin.auth.admin.listUsers({
+          page,
+          perPage: 1000,
+        });
+        if (authErr) break;
+        for (const u of authPage.users) {
+          lastSignInById.set(u.id, u.last_sign_in_at ?? null);
+        }
+        if (authPage.users.length < 1000) break;
+        page += 1;
+      }
+    } catch {
+      // non-fatal — column will just show "—"
+    }
+
     // Non-super admins only see users in their tenant
     const tenantId = data.tenant_id;
     let visibleProfiles = profiles ?? [];
@@ -264,8 +286,12 @@ export const adminListUsers = createServerFn({ method: "POST" })
       );
       visibleProfiles = visibleProfiles.filter((p) => memberIds.has(p.id));
     }
+    const profilesWithLogin = visibleProfiles.map((p) => ({
+      ...p,
+      last_sign_in_at: lastSignInById.get(p.id) ?? null,
+    }));
     return {
-      profiles: visibleProfiles,
+      profiles: profilesWithLogin,
       roles: roles ?? [],
       access: access ?? [],
       members: members ?? [],
