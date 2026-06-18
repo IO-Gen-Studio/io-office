@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth/auth-context";
+import { clearMustChangePassword } from "@/lib/admin.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,7 +34,7 @@ function ResetPage() {
       if (error) throw error;
       const { data: u } = await supabase.auth.getUser();
       if (u.user) {
-        await supabase.from("profiles").update({ must_change_password: false }).eq("id", u.user.id);
+        await clearMustChangePassword();
       }
       await refresh();
       toast.success("Password updated");

@@ -43,6 +43,19 @@ async function assertSuperAdmin(userId: string) {
   if (!(await isSuperAdmin(userId))) throw new Error("Forbidden: super admin only");
 }
 
+export const clearMustChangePassword = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { error } = await supabaseAdmin
+      .from("profiles")
+      .update({ must_change_password: false })
+      .eq("id", context.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+
+
 export const adminCreateUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) =>
