@@ -34,7 +34,7 @@ function ResetPage() {
       if (error) throw error;
       const { data: u } = await supabase.auth.getUser();
       if (u.user) {
-        await supabase.from("profiles").update({ must_change_password: false }).eq("id", u.user.id);
+        await clearMustChangePassword();
       }
       await refresh();
       toast.success("Password updated");
