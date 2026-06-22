@@ -20,6 +20,7 @@ import {
   LogOut,
   Menu,
   CircleAlert,
+  Gauge,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/auth-context";
 import { supabase } from "@/integrations/supabase/client";
@@ -44,7 +45,14 @@ export const Route = createFileRoute("/_authenticated")({
   component: AuthLayout,
 });
 
-type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; module?: string };
+type NavItem = {
+  to: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  module?: string;
+  external?: boolean;
+  href?: string;
+};
 
 const NAV: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, module: "dashboard" },
@@ -59,6 +67,13 @@ const OPS: NavItem[] = [
   { to: "/projects", label: "Projects & Works", icon: Briefcase, module: "projects" },
   { to: "/subscriptions", label: "Subscriptions", icon: CreditCard, module: "subscriptions" },
   { to: "/issues", label: "Issues Tracker", icon: CircleAlert, module: "issues" },
+  {
+    to: "https://data.io-gen.app",
+    label: "Data Flow Tracker",
+    icon: Gauge,
+    module: "issues",
+    external: true,
+  },
 ];
 
 function AuthLayout() {
@@ -274,17 +289,28 @@ function FloatingSidebar({
               {group.label}
             </div>
             {group.items.map((item) => {
-              const active = isActive(item.to);
+              const active = !item.external && isActive(item.to);
+              const className = `w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                active
+                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                  : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+              }`;
+              if (item.external) {
+                return (
+                  <a
+                    key={item.to}
+                    href={item.to}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={className}
+                  >
+                    <item.icon className="h-4 w-4 shrink-0" />
+                    <span className="leading-tight truncate">{item.label}</span>
+                  </a>
+                );
+              }
               return (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    active
-                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                      : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
-                  }`}
-                >
+                <Link key={item.to} to={item.to} className={className}>
                   <item.icon className="h-4 w-4 shrink-0" />
                   <span className="leading-tight truncate">{item.label}</span>
                 </Link>
@@ -343,18 +369,29 @@ function MobileNavBody({
             {group.label}
           </div>
           {group.items.map((item) => {
-            const active = isActive(item.to);
+            const active = !item.external && isActive(item.to);
+            const className = `w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              active
+                ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+            }`;
+            if (item.external) {
+              return (
+                <a
+                  key={item.to}
+                  href={item.to}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={onNavigate}
+                  className={className}
+                >
+                  <item.icon className="h-4 w-4 shrink-0" />
+                  <span>{item.label}</span>
+                </a>
+              );
+            }
             return (
-              <Link
-                key={item.to}
-                to={item.to}
-                onClick={onNavigate}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  active
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                    : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
-                }`}
-              >
+              <Link key={item.to} to={item.to} onClick={onNavigate} className={className}>
                 <item.icon className="h-4 w-4 shrink-0" />
                 <span>{item.label}</span>
               </Link>
