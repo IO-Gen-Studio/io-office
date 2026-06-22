@@ -289,17 +289,28 @@ function FloatingSidebar({
               {group.label}
             </div>
             {group.items.map((item) => {
-              const active = isActive(item.to);
+              const active = !item.external && isActive(item.to);
+              const className = `w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                active
+                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                  : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+              }`;
+              if (item.external) {
+                return (
+                  <a
+                    key={item.to}
+                    href={item.to}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={className}
+                  >
+                    <item.icon className="h-4 w-4 shrink-0" />
+                    <span className="leading-tight truncate">{item.label}</span>
+                  </a>
+                );
+              }
               return (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    active
-                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                      : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
-                  }`}
-                >
+                <Link key={item.to} to={item.to} className={className}>
                   <item.icon className="h-4 w-4 shrink-0" />
                   <span className="leading-tight truncate">{item.label}</span>
                 </Link>
@@ -358,18 +369,29 @@ function MobileNavBody({
             {group.label}
           </div>
           {group.items.map((item) => {
-            const active = isActive(item.to);
+            const active = !item.external && isActive(item.to);
+            const className = `w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              active
+                ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+            }`;
+            if (item.external) {
+              return (
+                <a
+                  key={item.to}
+                  href={item.to}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={onNavigate}
+                  className={className}
+                >
+                  <item.icon className="h-4 w-4 shrink-0" />
+                  <span>{item.label}</span>
+                </a>
+              );
+            }
             return (
-              <Link
-                key={item.to}
-                to={item.to}
-                onClick={onNavigate}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  active
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                    : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
-                }`}
-              >
+              <Link key={item.to} to={item.to} onClick={onNavigate} className={className}>
                 <item.icon className="h-4 w-4 shrink-0" />
                 <span>{item.label}</span>
               </Link>
