@@ -53,9 +53,9 @@ Deno.serve(async (req) => {
     if (maxErr) throw maxErr;
     const nextNumber = (maxRow?.issue_number ?? 0) + 1;
 
-    const metadata: Record<string, unknown> = {};
-    if (sourceMeterIds !== undefined) metadata.source_meter_ids = sourceMeterIds;
-    if (sourceUserEmail) metadata.source_user_email = sourceUserEmail;
+    const custom: Record<string, unknown> = {};
+    if (sourceMeterIds !== undefined) custom.source_meter_ids = sourceMeterIds;
+    if (sourceUserEmail) custom.source_user_email = sourceUserEmail;
 
     const { data: inserted, error: insErr } = await supabase
       .from("issues")
