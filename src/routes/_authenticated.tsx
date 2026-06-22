@@ -20,6 +20,7 @@ import {
   LogOut,
   Menu,
   CircleAlert,
+  Gauge,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/auth-context";
 import { supabase } from "@/integrations/supabase/client";
@@ -44,7 +45,14 @@ export const Route = createFileRoute("/_authenticated")({
   component: AuthLayout,
 });
 
-type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; module?: string };
+type NavItem = {
+  to: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  module?: string;
+  external?: boolean;
+  href?: string;
+};
 
 const NAV: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, module: "dashboard" },
@@ -59,6 +67,13 @@ const OPS: NavItem[] = [
   { to: "/projects", label: "Projects & Works", icon: Briefcase, module: "projects" },
   { to: "/subscriptions", label: "Subscriptions", icon: CreditCard, module: "subscriptions" },
   { to: "/issues", label: "Issues Tracker", icon: CircleAlert, module: "issues" },
+  {
+    to: "https://data.io-gen.app",
+    label: "Data Flow Tracker",
+    icon: Gauge,
+    module: "issues",
+    external: true,
+  },
 ];
 
 function AuthLayout() {
