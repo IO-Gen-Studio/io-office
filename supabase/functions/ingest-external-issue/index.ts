@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
         priority: priority ?? "M",
         status: "Open",
         issue_date: new Date().toISOString().slice(0, 10),
-        metadata,
+        custom,
       })
       .select()
       .single();
